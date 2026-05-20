@@ -4,70 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nyxium AI - Premium Discord Bot</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0b12;
+            color: #ffffff;
+            text-align: center;
+        }
+        .banner {
+            background: linear-gradient(135deg, #140727 0%, #05020a 100%);
+            padding: 80px 20px;
+            border-bottom: 2px solid #3d1b6e;
+        }
+        h1 {
+            font-size: 3.5rem;
+            margin: 0;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, #b066ff, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #a29bfe;
+            margin-top: 10px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #7000ff, #00c8ff);
+            color: white;
+            padding: 15px 35px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 30px;
+            margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(112, 0, 255, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 200, 255, 0.6);
+        }
+        .features {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            gap: 20px;
+        }
+        .card {
+            background: #13131f;
+            padding: 25px;
+            border-radius: 12px;
+            flex: 1;
+            border: 1px solid #232335;
+        }
+        .card h3 {
+            color: #00e5ff;
+            margin-top: 0;
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="logo">Nyxium AI<span>.</span></div>
-        <ul class="nav-links">
-            <li><a href="#features">Features</a></li>
-            <li><a href="#stats">Stats</a></li>
-            <li><a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=8&scope=bot+applications.commands" target="_blank" class="btn-nav">Invite Bot</a></li>
-        </ul>
-    </nav>
+    <div class="banner">
+        <h1>NYXIUM AI</h1>
+        <p class="subtitle">Simple • Powerful • Reliable</p>
+        <a href="#" class="btn">Invite Nyxium AI</a>
+    </div>
 
-    <header class="hero">
-        <div class="hero-content">
-            <h1>Elevate Your Server With <span class="highlight">Nyxium AI</span></h1>
-            <p>The ultimate multi-purpose Discord bot featuring high-speed latency optimization and a next-generation built-in Gemini AI engine.</p>
-            <div class="hero-buttons">
-                <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=8&scope=bot+applications.commands" target="_blank" class="btn btn-primary">Add to Discord</a>
-                <a href="#features" class="btn btn-secondary">Learn More</a>
+    <div class="container">
+        <h2>Features</h2>
+        <div class="features">
+            <div class="card">
+                <h3>🧠 Smart AI Ask</h3>
+                <p>Get instant, deep, and complete answers to any question powered by the advanced Nyxium AI text engine.</p>
+            </div>
+            <div class="card">
+                <h3>🎨 Creative Draw</h3>
+                <p>Generate breathtaking, ultra-high-quality artwork right inside your Discord server channels instantly.</p>
             </div>
         </div>
-    </header>
-
-    <section id="stats" class="stats-section">
-        <div class="stat-box">
-            <h3>100+</h3>
-            <p>Servers Guarded</p>
-        </div>
-        <div class="stat-box">
-            <h3>50k+</h3>
-            <p>Active Users</p>
-        </div>
-        <div class="stat-box">
-            <h3>24/7</h3>
-            <p>Uptime Active</p>
-        </div>
-    </section>
-
-    <section id="features" class="features-section">
-        <h2>Engine Features</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="icon">🤖</div>
-                <h3>Advanced Gemini AI</h3>
-                <p>Chat seamlessly using our synced `/ask` slash commands powered by lightning-fast AI architecture.</p>
-            </div>
-            <div class="feature-card">
-                <div class="icon">⚡</div>
-                <h3>Premium Performance</h3>
-                <p>Engineered for low latency response times to ensure your server interactions stay instant.</p>
-            </div>
-            <div class="feature-card">
-                <div class="icon">🛡️</div>
-                <h3>Guild Synced</h3>
-                <p>Fully secure application setup synced across server structures perfectly out of the box.</p>
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2026 Nyxium AI Bot. All Rights Reserved.</p>
-    </footer>
+    </div>
 
 </body>
 </html>
