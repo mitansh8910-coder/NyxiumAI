@@ -7,8 +7,8 @@ export default async function handler(req, res) {
         const apiKey = process.env.GEMINI_API_KEY;
         const genAI = new GoogleGenerativeAI(apiKey);
         
-        // CHANGE THIS LINE TO 'gemini-pro'
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // CHANGE THE MODEL NAME TO THIS EXACT STRING
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
         const { message } = req.body;
         const result = await model.generateContent(message);
