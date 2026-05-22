@@ -1,16 +1,27 @@
-# This is a sample Python script.
+# nyxium_limits.py - Add this dictionary at the top of your bot code
+user_search_counts = {}
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+@bot.command(name="play")
+async def play(ctx, *, search: str):
+    user_id = ctx.author.id
+    
+    # Track searches
+    count = user_search_counts.get(user_id, 0)
+    
+    if count >= 7:
+        # Create a professional Nyxium branding embed
+        embed = discord.Embed(
+            title="Nyxium AI Access Limit 🤖",
+            description="You've reached your free 7-search limit. To get **unlimited music access** and enable 24/7 playback, add Nyxium AI to your own server!",
+            color=0x7289da # Discord blurple color
+        )
+        embed.set_thumbnail(url="YOUR_BOT_AVATAR_URL")
+        embed.add_field(name="Upgrade to Nyxium AI", value="[Invite Nyxium to your server](https://your-invite-link-here.com)")
+        await ctx.send(embed=embed)
+        return
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    # If they are under the limit, track the search
+    user_search_counts[user_id] = count + 1
+    
+    # Your existing Cobalt/Search logic goes here...
+    await ctx.send(f"🤖 Nyxium AI is processing '{search}' ({7 - user_search_counts[user_id]} searches left)...")
