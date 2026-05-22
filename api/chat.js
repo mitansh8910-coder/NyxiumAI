@@ -1,21 +1,27 @@
-// api/chat.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    // Enable CORS to allow your website to talk to this API
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    
-    if (req.method !== 'POST') return res.status(405).end();
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+        return res.status(405).json({ reply: "Method not allowed" });
+    }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ reply: "Server error: API Key missing" });
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
         const { message } = req.body;
         const result = await model.generateContent(message);
-        const response = await result.response;
-        res.status(200).json({ reply: response.text() });
+        const responseText = result.response.text();
+        
+        res.status(200).json({ reply: responseText });
     } catch (error) {
-        res.status(500).json({ error: "Failed to connect to Nyxium AI" });
+        console.error("AI Error:", error);
+        res.status(500).json({ reply: "AI failed to respond. Check server logs." });
     }
 }
