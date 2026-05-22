@@ -9,13 +9,16 @@ export default async function handler(req, res) {
         
         const genAI = new GoogleGenerativeAI(apiKey);
         
-        // UPDATE THIS LINE to a modern, supported model
+        // Use the current stable model
         const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
         
         const { message } = req.body;
         if (!message) throw new Error("NO_MESSAGE_PROVIDED");
         
-        const result = await model.generateContent(message);
+        // Instruct the model to use Markdown bullet points
+        const prompt = `${message} \n\n(Please provide your response in Markdown, using bullet points for lists.)`;
+        
+        const result = await model.generateContent(prompt);
         res.status(200).json({ reply: result.response.text() });
         
     } catch (error) {
