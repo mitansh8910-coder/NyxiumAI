@@ -5,24 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nyxium AI - Premium Discord Bot</title>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #0b0b12; color: #ffffff; text-align: center; }
-        .banner { background: linear-gradient(135deg, #140727 0%, #05020a 100%); padding: 60px 20px; border-bottom: 2px solid #3d1b6e; }
-        h1 { font-size: 3.5rem; margin: 0; background: linear-gradient(45deg, #b066ff, #00e5ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+        :root { --accent: #7000ff; --glow: #00e5ff; }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: #050508; color: #ffffff; }
         
-        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        /* Flashy Gradient Banner */
+        .banner { padding: 80px 20px; text-align: center; background: radial-gradient(circle at top, #1a0b35 0%, #050508 70%); border-bottom: 1px solid #3d1b6e; }
+        h1 { font-size: 4rem; margin: 0; background: linear-gradient(90deg, #b066ff, #00e5ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.5)); }
         
-        /* Sidebar Analytics Card */
-        .analytics-card { background: #13131f; padding: 20px; border-radius: 12px; border: 1px solid #3d1b6e; text-align: left; height: fit-content; }
-        .progress-bar { background: #232335; height: 10px; border-radius: 5px; margin: 10px 0; }
-        .progress-fill { background: linear-gradient(90deg, #7000ff, #00c8ff); height: 100%; border-radius: 5px; width: 0%; transition: 0.5s; }
+        .container { max-width: 1000px; margin: 30px auto; display: grid; grid-template-columns: 2fr 1fr; gap: 25px; padding: 20px; }
         
-        /* Main Features */
-        .main-content { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #13131f; padding: 25px; border-radius: 12px; border: 1px solid #232335; text-align: left; }
+        /* Modern Glass Cards */
+        .card { background: rgba(19, 19, 31, 0.6); backdrop-filter: blur(10px); border: 1px solid rgba(61, 27, 110, 0.5); padding: 25px; border-radius: 20px; transition: 0.3s; }
+        .card:hover { border-color: var(--glow); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); }
         
-        /* Chat Styling */
-        #chat-messages { height: 200px; overflow-y: auto; background: #0b0b12; border: 1px solid #3d1b6e; padding: 10px; margin: 10px 0; border-radius: 8px; text-align: left; }
-        .btn { display: inline-block; background: linear-gradient(90deg, #7000ff, #00c8ff); color: white; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 30px; margin-top: 15px; }
+        /* Chat Input Styling */
+        #chat-messages { height: 200px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 10px; font-size: 0.9rem; }
+        input { width: 70%; padding: 12px; border-radius: 10px; border: 1px solid #3d1b6e; background: #0b0b12; color: white; }
+        button { padding: 12px 20px; border-radius: 10px; border: none; background: var(--accent); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: var(--glow); color: #000; }
+
+        /* Fancy Buttons */
+        .btn { display: block; background: linear-gradient(90deg, var(--accent), var(--glow)); padding: 15px; text-align: center; border-radius: 12px; text-decoration: none; color: white; font-weight: bold; transition: 0.3s; }
+        .btn:hover { filter: brightness(1.2); box-shadow: 0 0 20px var(--accent); }
     </style>
 </head>
 <body>
@@ -34,31 +38,21 @@
 
     <div class="container">
         <div class="main-content">
-            <div class="card">
-                <h3>🧠 Smart AI Ask</h3>
-                <p>Advanced context-aware processing for deep, reliable answers.</p>
-            </div>
-            <div class="card">
-                <h3>🎨 Creative Draw</h3>
-                <p>Generate high-definition AI art instantly within your server.</p>
-            </div>
-
+            <div class="card"><h3>🧠 Smart AI Ask</h3><p>Context-aware processing for deep, reliable answers.</p></div>
+            <div class="card"><h3>🎨 Creative Draw</h3><p>Generate high-definition AI art instantly.</p></div>
+            
             <div class="card">
                 <h3>💬 Nyxium AI Chat</h3>
                 <div id="chat-messages"></div>
-                <input type="text" id="user-input" placeholder="Ask anything..." style="width: 70%; padding: 8px; border-radius: 5px; border: none; color: black;">
-                <button onclick="sendToAI()" style="padding: 8px 15px; cursor: pointer; background: #7000ff; color: white; border: none; border-radius: 5px;">Send</button>
+                <input type="text" id="user-input" placeholder="Ask Nyxium AI...">
+                <button onclick="sendToAI()">Send</button>
             </div>
         </div>
 
-        <div class="analytics-card">
+        <div class="card">
             <h3>Bot Status</h3>
-            <p style="color: #00ff9d;">● Online (Network Stable)</p>
-            <hr style="border: 0; border-top: 1px solid #333;">
-            <h3>Free Search Limit</h3>
-            <p>Usage: <span id="usage">0</span> / 7 Searches</p>
-            <div class="progress-bar"><div id="bar" class="progress-fill"></div></div>
-            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=0&integration_type=0&scope=bot+applications.commands" class="btn" target="_blank" style="width: 100%; box-sizing: border-box; text-align: center;">Invite Nyxium</a>
+            <p style="color: #00ff9d;">● Online</p>
+            <a href="YOUR_LINK_HERE" class="btn">Invite Nyxium</a>
         </div>
     </div>
 
@@ -66,26 +60,18 @@
         async function sendToAI() {
             const input = document.getElementById('user-input');
             const chatBox = document.getElementById('chat-messages');
-            const userMsg = input.value;
-            if(!userMsg) return;
+            if(!input.value) return;
+            chatBox.innerHTML += `<p><b>You:</b> ${input.value}</p>`;
             
-            chatBox.innerHTML += `<p><b>You:</b> ${userMsg}</p>`;
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: input.value })
+            });
+            const data = await response.json();
+            chatBox.innerHTML += `<p><b>Nyxium AI:</b> ${data.reply}</p>`;
             input.value = '';
-            
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userMsg })
-                });
-                const data = await response.json();
-                chatBox.innerHTML += `<p><b>Nyxium AI:</b> ${data.reply}</p>`;
-                chatBox.scrollTop = chatBox.scrollHeight;
-            } catch (err) {
-                chatBox.innerHTML += `<p style="color:red;">Error: Could not reach AI.</p>`;
-            }
         }
     </script>
-
 </body>
 </html>
