@@ -21,6 +21,12 @@ export default async function handler(req, res) {
         const result = await model.generateContent(prompt);
         res.status(200).json({ reply: result.response.text() });
         
+        // Instead of directly setting .innerHTML to data.reply, use marked.parse():
+const htmlReply = marked.parse(data.reply);
+
+// Now display the parsed HTML
+chatBox.innerHTML += `<div><b>Nyxium AI:</b> ${htmlReply}</div>`;
+        
     } catch (error) {
         console.error("DEBUG_ERROR:", error.message);
         res.status(500).json({ error: error.message });
