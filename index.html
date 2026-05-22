@@ -4,42 +4,48 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 flex h-screen font-sans">
 
-    <div class="max-w-2xl w-full mx-4 p-6 bg-white rounded-xl shadow-lg border border-gray-200">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">Nyxium AI</h1>
+    <div class="w-64 bg-gray-900 text-white p-6 flex flex-col">
+        <h2 class="text-2xl font-bold mb-10 text-blue-400">Nyxium OS</h2>
+        <nav class="space-y-4">
+            <button onclick="showView('dashboard')" class="block w-full text-left p-3 hover:bg-gray-800 rounded">Dashboard</button>
+            <button onclick="showView('chat')" class="block w-full text-left p-3 hover:bg-gray-800 rounded">AI Chat</button>
+            <a href="YOUR_DISCORD_INVITE_LINK" target="_blank" class="block w-full text-left p-3 hover:bg-gray-800 rounded text-indigo-400">Invite Bot</a>
+        </nav>
+    </div>
+
+    <div class="flex-1 p-10 overflow-y-auto">
         
-        <div class="text-center mb-6">
-            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" 
-               target="_blank"
-               class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-full font-medium hover:bg-indigo-700 transition">
-               Invite Nyxium AI to Discord
-            </a>
+        <div id="dashboard" class="view">
+            <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome to Nyxium Dashboard</h1>
+            <p class="text-gray-600">Select a tool from the sidebar to get started.</p>
         </div>
-        
-        <div id="chat-messages" class="h-96 overflow-y-auto space-y-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-            </div>
 
-        <div class="flex gap-2">
-            <input id="user-input" 
-                   class="flex-1 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                   placeholder="Ask Nyxium something...">
-            <button onclick="sendToAI()" 
-                    class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
-                Send
-            </button>
+        <div id="chat" class="view hidden">
+            <div class="max-w-2xl bg-white p-6 rounded-xl shadow-lg border">
+                <h1 class="text-2xl font-bold mb-4">AI Chat</h1>
+                <div id="chat-messages" class="h-80 overflow-y-auto space-y-4 mb-4 p-4 bg-gray-50 rounded"></div>
+                <div class="flex gap-2">
+                    <input id="user-input" class="flex-1 border p-2 rounded" placeholder="Message...">
+                    <button onclick="sendToAI()" class="bg-blue-600 text-white px-4 py-2 rounded">Send</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
         async function sendToAI() {
+            // ... (Use your existing sendToAI function here)
             const input = document.getElementById('user-input');
             const chatBox = document.getElementById('chat-messages');
-            if(!input.value) return;
-            
-            chatBox.innerHTML += `<p class="text-right text-gray-700"><b>You:</b> ${input.value}</p>`;
-            
             const userMsg = input.value;
+            chatBox.innerHTML += `<p class="text-right"><b>You:</b> ${userMsg}</p>`;
             input.value = '';
             
             const response = await fetch('/api/chat', {
@@ -48,10 +54,7 @@
                 body: JSON.stringify({ message: userMsg })
             });
             const data = await response.json();
-            
-            const htmlReply = marked.parse(data.reply);
-            chatBox.innerHTML += `<div class="bg-blue-50 p-3 rounded-lg text-gray-800"><b>Nyxium AI:</b> ${htmlReply}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
+            chatBox.innerHTML += `<div class="bg-blue-50 p-2 rounded"><b>AI:</b> ${marked.parse(data.reply)}</div>`;
         }
     </script>
 </body>
