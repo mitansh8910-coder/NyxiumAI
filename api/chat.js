@@ -1,21 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).end();
-    
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        const genAI = new GoogleGenerativeAI(apiKey);
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
-        // Use gemini-1.0-pro instead
-        const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+        // This command asks Google: "What models can I use?"
+        const models = await genAI.listModels();
         
-        const { message } = req.body;
-        const result = await model.generateContent(message);
-        
-        res.status(200).json({ reply: result.response.text() });
+        res.status(200).json({ availableModels: models });
     } catch (error) {
-        console.error("Critical Error:", error);
-        res.status(500).json({ reply: "AI Error: " + error.message });
+        res.status(500).json({ error: error.message });
     }
 }
