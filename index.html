@@ -7,88 +7,69 @@
     <style>
         .view { display: none; }
         .view.active { display: block; }
-        .typing { display: none; font-size: 0.8rem; color: #64748b; margin-top: 5px; }
+        /* Professional scrollbar for the activity feed */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex h-screen font-sans">
 
     <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col">
         <h2 class="text-2xl font-bold mb-10 text-blue-500 flex items-center gap-2">⚡ Nyxium AI</h2>
-        <nav class="space-y-3">
-            <button onclick="showView('dashboard')" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded transition">🏠 Dashboard</button>
+        <nav class="space-y-4">
+            <button onclick="showView('dashboard')" class="flex items-center gap-3 w-full p-3 bg-slate-800 rounded transition font-semibold">🏠 Dashboard</button>
             <button onclick="showView('chat')" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded transition">💬 AI Chat</button>
-            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded text-indigo-400 font-bold">🤖 Invite Bot</a>
+            <a href="YOUR_DISCORD_INVITE_LINK" target="_blank" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded text-indigo-400">🤖 Invite Bot</a>
         </nav>
     </div>
 
     <div class="flex-1 p-10 overflow-y-auto">
         
         <div id="dashboard" class="view active">
-            <div class="flex justify-between items-center mb-8">
+            <div class="flex justify-between items-end mb-8">
                 <div>
-                    <h1 class="text-4xl font-bold">Welcome, Commander 👋</h1>
-                    <p class="text-slate-400">Your Nyxium hub is fully operational.</p>
+                    <h1 class="text-4xl font-bold">Dashboard</h1>
+                    <p class="text-slate-400">Overview of Nyxium AI operations.</p>
                 </div>
-                <div class="bg-emerald-950 border border-emerald-800 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold">● Bot Online</div>
+                <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-lg">
+                    <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>
+                    <span class="text-sm font-medium">System Online</span>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-indigo-950 p-6 rounded-2xl border border-indigo-800 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-white">Add Nyxium to Discord</h3>
-                        <p class="text-indigo-200 mt-2 text-sm">Automate your server, chat with AI, and unlock advanced moderation tools.</p>
-                    </div>
-                    <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="mt-6 bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-2 px-4 rounded-lg text-center transition">Click to Invite</a>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-slate-400 text-sm">Active Servers</h3>
+                    <p class="text-4xl font-bold mt-2">142</p>
                 </div>
                 <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-                    <h3 class="text-slate-400 text-sm">System Uptime</h3>
-                    <p class="text-3xl font-bold mt-1 text-blue-500">99.9%</p>
-                    <div class="mt-4 text-xs text-slate-500">Last updated: Just now</div>
+                    <h3 class="text-slate-400 text-sm">Messages Processed</h3>
+                    <p class="text-4xl font-bold mt-2">89.4k</p>
+                </div>
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-slate-400 text-sm">Avg. Response Time</h3>
+                    <p class="text-4xl font-bold mt-2 text-blue-500">142ms</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-indigo-950 p-8 rounded-3xl border border-indigo-900 flex flex-col justify-center">
+                    <h2 class="text-2xl font-bold text-white mb-2">Grow your server 🚀</h2>
+                    <p class="text-indigo-200 mb-6">Invite Nyxium to your community to start automating tasks instantly.</p>
+                    <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="bg-white text-indigo-900 font-bold py-3 px-6 rounded-xl text-center w-full hover:bg-slate-100 transition">Invite Now</a>
+                </div>
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="font-bold mb-4">Latest Bot Activity</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 text-sm border-b border-slate-800 pb-2"><span class="text-green-500">✔</span> Joined server "Gaming Hub"</div>
+                        <div class="flex items-center gap-4 text-sm border-b border-slate-800 pb-2"><span class="text-blue-500">⚡</span> Processed command !ai</div>
+                        <div class="flex items-center gap-4 text-sm"><span class="text-green-500">✔</span> Joined server "Dev Lounge"</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="chat" class="view">
-            <div class="max-w-2xl bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
-                <h1 class="text-xl font-bold mb-4">💬 Nyxium Console</h1>
-                <div id="chat-messages" class="h-96 overflow-y-auto space-y-4 mb-4 p-4 bg-slate-950 rounded-xl border border-slate-800"></div>
-                <div id="typing" class="typing">Nyxium is thinking...</div>
-                <div class="flex gap-2 mt-2">
-                    <input id="user-input" class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-lg text-white outline-none" placeholder="Enter command...">
-                    <button onclick="sendToAI()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">Send</button>
-                </div>
-            </div>
-        </div>
+        <div id="chat" class="view">...</div>
     </div>
-
-    <script>
-        function showView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-        }
-
-        async function sendToAI() {
-            const input = document.getElementById('user-input');
-            const chatBox = document.getElementById('chat-messages');
-            const typing = document.getElementById('typing');
-            if(!input.value) return;
-            
-            chatBox.innerHTML += `<div class="text-right"><span class="bg-slate-700 p-3 rounded-xl text-sm inline-block">${input.value}</span></div>`;
-            const userMsg = input.value;
-            input.value = '';
-            typing.style.display = 'block';
-            
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMsg })
-            });
-            const data = await response.json();
-            
-            typing.style.display = 'none';
-            chatBox.innerHTML += `<div class="bg-slate-800 p-4 rounded-xl border-l-4 border-blue-500 text-sm">${marked.parse(data.reply)}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
 </body>
 </html>
