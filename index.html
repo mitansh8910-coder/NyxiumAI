@@ -20,6 +20,8 @@
         .main-content { display: flex; flex-direction: column; gap: 20px; }
         .card { background: #13131f; padding: 25px; border-radius: 12px; border: 1px solid #232335; text-align: left; }
         
+        /* Chat Styling */
+        #chat-messages { height: 200px; overflow-y: auto; background: #0b0b12; border: 1px solid #3d1b6e; padding: 10px; margin: 10px 0; border-radius: 8px; text-align: left; }
         .btn { display: inline-block; background: linear-gradient(90deg, #7000ff, #00c8ff); color: white; padding: 12px 30px; font-weight: bold; text-decoration: none; border-radius: 30px; margin-top: 15px; }
     </style>
 </head>
@@ -40,6 +42,13 @@
                 <h3>🎨 Creative Draw</h3>
                 <p>Generate high-definition AI art instantly within your server.</p>
             </div>
+
+            <div class="card">
+                <h3>💬 Nyxium AI Chat</h3>
+                <div id="chat-messages"></div>
+                <input type="text" id="user-input" placeholder="Ask anything..." style="width: 70%; padding: 8px; border-radius: 5px; border: none;">
+                <button onclick="sendToAI()" style="padding: 8px 15px; cursor: pointer; background: #7000ff; color: white; border: none; border-radius: 5px;">Send</button>
+            </div>
         </div>
 
         <div class="analytics-card">
@@ -49,20 +58,13 @@
             <h3>Free Search Limit</h3>
             <p>Usage: <span id="usage">0</span> / 7 Searches</p>
             <div class="progress-bar"><div id="bar" class="progress-fill"></div></div>
-            <a href="https://discord.com/..." class="btn" style="width: 100%; box-sizing: border-box; text-align: center;">Invite Nyxium</a>
+            <a href="#" class="btn" style="width: 100%; box-sizing: border-box; text-align: center;">Invite Nyxium</a>
         </div>
     </div>
 
     <script>
-        // Simple logic to simulate tracking
-        let searches = 0; // In a real app, this would fetch from your bot API
-        function updateUsage(val) {
-            searches = val;
-            document.getElementById('usage').innerText = searches;
-            document.getElementById('bar').style.width = (searches / 7 * 100) + "%";
-        }
-        updateUsage(2); // Example: user has used 2 searches
-    </script>
-
-</body>
-</html>
+        // Chat Logic
+        async function sendToAI() {
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-messages');
+            const user
