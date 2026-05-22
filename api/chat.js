@@ -1,27 +1,30 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    // Only allow POST requests
+    // 1. Only allow POST requests
     if (req.method !== 'POST') {
-        return res.status(405).json({ reply: "Method not allowed" });
+        return res.status(405).json({ reply: "Method Not Allowed" });
     }
 
     try {
+        // 2. Ensure API Key exists
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            return res.status(500).json({ reply: "Server error: API Key missing" });
+            console.error("API Key is missing in Environment Variables");
+            return res.status(500).json({ reply: "Server misconfiguration." });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        
+
+        // 3. Extract and process message
         const { message } = req.body;
         const result = await model.generateContent(message);
         const responseText = result.response.text();
-        
-        res.status(200).json({ reply: responseText });
+
+        return res.status(200).json({ reply: responseText });
     } catch (error) {
-        console.error("AI Error:", error);
-        res.status(500).json({ reply: "AI failed to respond. Check server logs." });
+        console.error("Backend Error:", error);
+        return res.status(500).json({ reply: "AI failed to respond." });
     }
 }
