@@ -1,34 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .view { display: none; }
+        .view.active { display: block; }
+    </style>
 </head>
-<body class="bg-gray-100 flex h-screen font-sans">
+<body class="bg-slate-950 text-slate-100 flex h-screen font-sans">
 
-    <div class="w-64 bg-gray-900 text-white p-6 flex flex-col">
-        <h2 class="text-2xl font-bold mb-10 text-blue-400">Nyxium OS</h2>
+    <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col">
+        <h2 class="text-2xl font-bold mb-10 text-blue-500">Nyxium AI</h2>
         <nav class="space-y-4">
-            <button onclick="showView('dashboard')" class="block w-full text-left p-3 hover:bg-gray-800 rounded">Dashboard</button>
-            <button onclick="showView('chat')" class="block w-full text-left p-3 hover:bg-gray-800 rounded">AI Chat</button>
-            <a href="YOUR_DISCORD_INVITE_LINK" target="_blank" class="block w-full text-left p-3 hover:bg-gray-800 rounded text-indigo-400">Invite Bot</a>
+            <button onclick="showView('dashboard')" class="block w-full text-left p-3 hover:bg-slate-800 rounded transition">Dashboard</button>
+            <button onclick="showView('chat')" class="block w-full text-left p-3 hover:bg-slate-800 rounded transition">AI Chat</button>
+            <a href="YOUR_DISCORD_INVITE_LINK" target="_blank" class="block w-full text-left p-3 hover:bg-slate-800 rounded text-indigo-400">Invite Bot</a>
         </nav>
     </div>
 
     <div class="flex-1 p-10 overflow-y-auto">
         
-        <div id="dashboard" class="view">
-            <h1 class="text-4xl font-bold text-gray-800 mb-6">Welcome to Nyxium Dashboard</h1>
-            <p class="text-gray-600">Select a tool from the sidebar to get started.</p>
+        <div id="dashboard" class="view active">
+            <h1 class="text-4xl font-bold mb-2">Welcome to Nyxium AI</h1>
+            <p class="text-slate-400 mb-8">Your intelligent assistant for automation, code, and chat.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-xl">
+                    <h3 class="text-xl font-semibold mb-2">💡 Intelligent Chat</h3>
+                    <p class="text-slate-400">Powered by Gemini 3.5. Ask anything, from coding help to creative writing.</p>
+                </div>
+                <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-xl">
+                    <h3 class="text-xl font-semibold mb-2">🚀 Discord Integration</h3>
+                    <p class="text-slate-400">Invite Nyxium AI to your server and automate your community interactions.</p>
+                </div>
+            </div>
         </div>
 
-        <div id="chat" class="view hidden">
-            <div class="max-w-2xl bg-white p-6 rounded-xl shadow-lg border">
+        <div id="chat" class="view">
+            <div class="max-w-3xl bg-slate-900 p-6 rounded-xl shadow-lg border border-slate-800">
                 <h1 class="text-2xl font-bold mb-4">AI Chat</h1>
-                <div id="chat-messages" class="h-80 overflow-y-auto space-y-4 mb-4 p-4 bg-gray-50 rounded"></div>
+                <div id="chat-messages" class="h-96 overflow-y-auto space-y-4 mb-4 p-4 bg-slate-950 rounded border border-slate-800"></div>
                 <div class="flex gap-2">
-                    <input id="user-input" class="flex-1 border p-2 rounded" placeholder="Message...">
-                    <button onclick="sendToAI()" class="bg-blue-600 text-white px-4 py-2 rounded">Send</button>
+                    <input id="user-input" class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ask Nyxium something...">
+                    <button onclick="sendToAI()" class="bg-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Send</button>
                 </div>
             </div>
         </div>
@@ -36,16 +52,17 @@
 
     <script>
         function showView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(viewId).classList.remove('hidden');
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
         }
 
         async function sendToAI() {
-            // ... (Use your existing sendToAI function here)
             const input = document.getElementById('user-input');
             const chatBox = document.getElementById('chat-messages');
+            if(!input.value) return;
+            
+            chatBox.innerHTML += `<div class="text-right"><span class="bg-slate-700 p-2 rounded-lg inline-block">${input.value}</span></div>`;
             const userMsg = input.value;
-            chatBox.innerHTML += `<p class="text-right"><b>You:</b> ${userMsg}</p>`;
             input.value = '';
             
             const response = await fetch('/api/chat', {
@@ -54,7 +71,9 @@
                 body: JSON.stringify({ message: userMsg })
             });
             const data = await response.json();
-            chatBox.innerHTML += `<div class="bg-blue-50 p-2 rounded"><b>AI:</b> ${marked.parse(data.reply)}</div>`;
+            
+            chatBox.innerHTML += `<div class="bg-slate-800 p-3 rounded-lg border-l-4 border-blue-500">${marked.parse(data.reply)}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
 </body>
