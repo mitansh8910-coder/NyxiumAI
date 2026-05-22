@@ -7,68 +7,57 @@
     <style>
         .view { display: none; }
         .view.active { display: block; }
-        /* Add a subtle glow effect to the sidebar */
-        .sidebar-item:hover { background: rgba(30, 41, 59, 0.8); border-left: 4px solid #3b82f6; }
+        .typing { display: none; font-size: 0.8rem; color: #64748b; margin-top: 5px; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex h-screen font-sans">
 
     <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col">
-        <h2 class="text-2xl font-bold mb-10 text-blue-500 flex items-center gap-2">
-            ✨ Nyxium AI
-        </h2>
-        <nav class="space-y-4">
-            <button onclick="showView('dashboard')" class="sidebar-item block w-full text-left p-3 rounded transition flex items-center gap-3">
-                🏠 Dashboard
-            </button>
-            <button onclick="showView('chat')" class="sidebar-item block w-full text-left p-3 rounded transition flex items-center gap-3">
-                💬 AI Chat
-            </button>
-            <button onclick="showView('settings')" class="sidebar-item block w-full text-left p-3 rounded transition flex items-center gap-3">
-                ⚙️ Settings
-            </button>
-            <a href="YOUR_DISCORD_INVITE_LINK" target="_blank" class="block w-full text-left p-3 hover:bg-slate-800 rounded text-indigo-400 flex items-center gap-3">
-                🤖 Invite Bot
-            </a>
+        <h2 class="text-2xl font-bold mb-10 text-blue-500 flex items-center gap-2">⚡ Nyxium AI</h2>
+        <nav class="space-y-3">
+            <button onclick="showView('dashboard')" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded transition">🏠 Dashboard</button>
+            <button onclick="showView('chat')" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded transition">💬 AI Chat</button>
+            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded text-indigo-400 font-bold">🤖 Invite Bot</a>
         </nav>
     </div>
 
     <div class="flex-1 p-10 overflow-y-auto">
         
         <div id="dashboard" class="view active">
-            <h1 class="text-4xl font-bold mb-2">Welcome Back! 👋</h1>
-            <p class="text-slate-400 mb-8">Manage your AI, monitor system status, and explore new features.</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl hover:border-blue-500 transition">
-                    <h3 class="text-xl font-semibold mb-2">🧠 Smart Core</h3>
-                    <p class="text-slate-400 text-sm">Powered by Gemini 3.5. Fast, accurate, and ready to assist with any coding or text task.</p>
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-4xl font-bold">Welcome, Commander 👋</h1>
+                    <p class="text-slate-400">Your Nyxium hub is fully operational.</p>
                 </div>
-                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl hover:border-blue-500 transition">
-                    <h3 class="text-xl font-semibold mb-2">🌐 Discord Hub</h3>
-                    <p class="text-slate-400 text-sm">Connect Nyxium AI to your server for automated moderation and chat.</p>
+                <div class="bg-emerald-950 border border-emerald-800 text-emerald-400 px-4 py-2 rounded-full text-sm font-semibold">● Bot Online</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-indigo-950 p-6 rounded-2xl border border-indigo-800 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Add Nyxium to Discord</h3>
+                        <p class="text-indigo-200 mt-2 text-sm">Automate your server, chat with AI, and unlock advanced moderation tools.</p>
+                    </div>
+                    <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="mt-6 bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-2 px-4 rounded-lg text-center transition">Click to Invite</a>
                 </div>
-                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl hover:border-blue-500 transition">
-                    <h3 class="text-xl font-semibold mb-2">📊 Live Analytics</h3>
-                    <p class="text-slate-400 text-sm">View your bot's response time, usage stats, and active command logs in real-time.</p>
+                <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+                    <h3 class="text-slate-400 text-sm">System Uptime</h3>
+                    <p class="text-3xl font-bold mt-1 text-blue-500">99.9%</p>
+                    <div class="mt-4 text-xs text-slate-500">Last updated: Just now</div>
                 </div>
             </div>
         </div>
 
         <div id="chat" class="view">
-            <div class="max-w-3xl bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-800">
-                <h1 class="text-2xl font-bold mb-4 flex items-center gap-2">💬 Nyxium Chat</h1>
+            <div class="max-w-2xl bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+                <h1 class="text-xl font-bold mb-4">💬 Nyxium Console</h1>
                 <div id="chat-messages" class="h-96 overflow-y-auto space-y-4 mb-4 p-4 bg-slate-950 rounded-xl border border-slate-800"></div>
-                <div class="flex gap-2">
-                    <input id="user-input" class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Type your message...">
-                    <button onclick="sendToAI()" class="bg-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Send 🚀</button>
+                <div id="typing" class="typing">Nyxium is thinking...</div>
+                <div class="flex gap-2 mt-2">
+                    <input id="user-input" class="flex-1 bg-slate-800 border border-slate-700 p-3 rounded-lg text-white outline-none" placeholder="Enter command...">
+                    <button onclick="sendToAI()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition">Send</button>
                 </div>
             </div>
-        </div>
-
-        <div id="settings" class="view">
-            <h1 class="text-3xl font-bold">⚙️ Settings</h1>
-            <p class="text-slate-400 mt-4">Personalize your Nyxium experience here (Coming Soon!).</p>
         </div>
     </div>
 
@@ -81,11 +70,13 @@
         async function sendToAI() {
             const input = document.getElementById('user-input');
             const chatBox = document.getElementById('chat-messages');
+            const typing = document.getElementById('typing');
             if(!input.value) return;
             
-            chatBox.innerHTML += `<div class="text-right"><span class="bg-slate-700 p-3 rounded-xl inline-block text-sm">${input.value}</span></div>`;
+            chatBox.innerHTML += `<div class="text-right"><span class="bg-slate-700 p-3 rounded-xl text-sm inline-block">${input.value}</span></div>`;
             const userMsg = input.value;
             input.value = '';
+            typing.style.display = 'block';
             
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -94,6 +85,7 @@
             });
             const data = await response.json();
             
+            typing.style.display = 'none';
             chatBox.innerHTML += `<div class="bg-slate-800 p-4 rounded-xl border-l-4 border-blue-500 text-sm">${marked.parse(data.reply)}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
