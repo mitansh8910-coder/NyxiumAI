@@ -1,31 +1,29 @@
-async function sendToAI() {
-    const input = document.getElementById('user-input');
-    const chatBox = document.getElementById('chat-messages');
-    if(!input.value) return;
-    
-    // Add User Message
-    chatBox.innerHTML += `<div class="flex gap-4 flex-row-reverse"><div class="bg-indigo-600 p-3 rounded-2xl rounded-tr-none text-sm">${input.value}</div></div>`;
-    const userMsg = input.value;
-    input.value = '';
-    
-    try {
-        const res = await fetch('/api/chat', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ message: userMsg }) 
-        });
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-        // Debug: Check if the response was okay
-        if (!res.ok) {
-            const errData = await res.text();
-            throw new Error(`Server returned ${res.status}: ${errData}`);
+export default async function handler(req, res) {
+    // 1. Force JSON response even on errors
+    res.setHeader('Content-Type', 'application/json');
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: "Only POST allowed" });
+    }
+
+    try {
+        const { message } = req.body;
+        const apiKey = process.env.GEMINI_API_KEY;
+
+        if (!apiKey) {
+            return res.status(500).json({ error: "Configuration Error: GEMINI_API_KEY missing in Vercel Settings" });
         }
 
-        const data = await res.json();
-        chatBox.innerHTML += `<div class="flex gap-4"><div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none text-sm">${marked.parse(data.reply)}</div></div>`;
-    } catch (err) {
-        // This will now show the REAL error in your chat window
-        chatBox.innerHTML += `<div class="text-red-400 text-xs p-2">Debug Error: ${err.message}</div>`;
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const result = await model.generateContent(message);
+        return res.status(200).json({ reply: result.response.text() });
+        
+    } catch (error) {
+        // This will now show the REAL error in your chat bubble instead of 'Unexpected token T'
+        return res.status(500).json({ error: "Backend Error: " + error.message });
     }
-    chatBox.scrollTop = chatBox.scrollHeight;
 }
