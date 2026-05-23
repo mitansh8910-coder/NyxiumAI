@@ -25,23 +25,35 @@
     </div>
 
     <div class="flex-1 p-10 overflow-y-auto">
-        <div id="dashboard" class="view active">
-            <h1 class="text-4xl font-bold mb-2">Nyxium AI Core</h1>
-            <p class="text-slate-400 mb-10">Powering your server with advanced AI intelligence.</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                <div class="bg-slate-900 p-8 rounded-3xl border border-blue-900/50">
-                    <div class="text-4xl mb-4">🧠</div>
-                    <h3 class="text-2xl font-bold mb-2">/ask Command</h3>
-                    <p class="text-slate-400">Instant, accurate AI responses using Gemini 1.5 Flash.</p>
-                </div>
-                <div class="bg-slate-900 p-8 rounded-3xl border border-pink-900/50">
-                    <div class="text-4xl mb-4">🎨</div>
-                    <h3 class="text-2xl font-bold mb-2">/draw Command</h3>
-                    <p class="text-slate-400">Generate high-quality AI imagery directly in Discord.</p>
-                </div>
-            </div>
-            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="block w-full text-center bg-indigo-600 hover:bg-indigo-500 p-6 rounded-3xl font-bold text-xl transition shadow-lg">🚀 Add Nyxium to your Server</a>
+       <div id="dashboard" class="view active">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-slate-900 p-8 rounded-3xl border border-blue-900/50 shadow-2xl">
+            <div class="text-4xl mb-4">🧠</div>
+            <h3 class="text-2xl font-bold mb-2">/ask Command</h3>
+            <p class="text-slate-400 mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses. Perfect for answering complex questions, coding assistance, or brainstorming.</p>
+            <button onclick="showView('chat')" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Try Asking AI</button>
         </div>
+        <div class="bg-slate-900 p-8 rounded-3xl border border-pink-900/50 shadow-2xl">
+            <div class="text-4xl mb-4">🎨</div>
+            <h3 class="text-2xl font-bold mb-2">/draw Command</h3>
+            <p class="text-slate-400 mb-6">Turn your imagination into reality. Use /draw to generate high-quality AI imagery directly within your Discord server.</p>
+            <div class="bg-slate-800 p-3 rounded-xl text-center text-sm text-slate-400">Available in Discord</div>
+        </div>
+    </div>
+
+    <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-8">
+        <h2 class="text-2xl font-bold mb-6">Why Nyxium AI?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div><h4 class="font-bold text-blue-500 mb-2">🚀 Blazing Fast</h4><p class="text-slate-400 text-sm">Optimized for low-latency responses.</p></div>
+            <div><h4 class="font-bold text-pink-500 mb-2">🛡️ Reliable</h4><p class="text-slate-400 text-sm">99.9% uptime for consistent performance.</p></div>
+            <div><h4 class="font-bold text-emerald-500 mb-2">💎 Versatile</h4><p class="text-slate-400 text-sm">Combines text and imagery in one package.</p></div>
+        </div>
+    </div>
+
+    <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="block w-full text-center bg-indigo-600 hover:bg-indigo-500 p-6 rounded-3xl font-bold text-xl transition shadow-lg">
+        🚀 Add Nyxium to your Server
+    </a>
+</div>
 
         <div id="chat" class="view">
             <div class="max-w-3xl mx-auto bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl flex flex-col h-[600px]">
