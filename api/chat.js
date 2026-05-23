@@ -23,3 +23,17 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Backend Error: " + error.message });
     }
 }
+async function sendMessage() {
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+    btn.innerText = "Thinking..."; // Provide feedback
+    
+    // ... your fetch code ...
+    
+    btn.disabled = false;
+    btn.innerText = "Send";
+}
+
+document.getElementById('user-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
