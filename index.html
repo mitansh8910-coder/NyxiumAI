@@ -11,6 +11,9 @@
         .view.active { display: block; }
         #chat-messages::-webkit-scrollbar { width: 6px; }
         #chat-messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+          ```html
+<button id="send-btn" onclick="sendMessage()">
+    <span id="btn-text">Send</span>
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex h-screen font-sans">
@@ -87,9 +90,6 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
-   ```html
-<button id="send-btn" onclick="sendMessage()">
-    <span id="btn-text">Send</span>
 </button>
 </body>
 </html>
