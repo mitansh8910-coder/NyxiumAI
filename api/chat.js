@@ -1,29 +1,25 @@
+// Change your api/chat.js to look like this:
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    // 1. Force JSON response even on errors
-    res.setHeader('Content-Type', 'application/json');
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: "Only POST allowed" });
-    }
+    if (req.method !== 'POST') return res.status(405).end();
 
     try {
         const { message } = req.body;
-        const apiKey = process.env.GEMINI_API_KEY;
-
-        if (!apiKey) {
-            return res.status(500).json({ error: "Configuration Error: GEMINI_API_KEY missing in Vercel Settings" });
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        
+        // UPDATE THIS LINE to the new model
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.5-flash", 
+            systemInstruction: "You are Nyxium AI, a helpful assistant for Discord server management."
+        });
 
         const result = await model.generateContent(message);
-        return res.status(200).json({ reply: result.response.text() });
-        
+        const text = result.response.text();
+
+        return res.status(200).json({ reply: text });
     } catch (error) {
-        // This will now show the REAL error in your chat bubble instead of 'Unexpected token T'
+        console.error("API Error:", error);
         return res.status(500).json({ error: "Backend Error: " + error.message });
     }
 }
