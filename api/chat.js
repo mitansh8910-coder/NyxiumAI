@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     // Enforce limit
     if (userSearchCounts[userId].count >= MAX_SEARCHES) {
         return res.status(429).json({ 
-            error: "Daily search limit reached (5 per user). Try again tomorrow." 
+            error: "Daily search limit reached (5 per user).Install Nyxium AI bot in your server for more searches." 
         });
     }
 
