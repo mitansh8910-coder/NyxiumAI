@@ -9,8 +9,11 @@ export default async function handler(req, res) {
         
         const genAI = new GoogleGenerativeAI(apiKey);
         
-        // Use the current stable model
-        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+        // To this (The current stable model):
+const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    systemInstruction: "You are Nyxium AI, a helpful assistant for Discord servers." 
+});
         
         const { message } = req.body;
         if (!message) throw new Error("NO_MESSAGE_PROVIDED");
