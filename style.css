@@ -217,3 +217,29 @@ footer {
     border-top: 1px solid #16161a;
     font-size: 14px;
 }
+/* Modern Chat Bubbles */
+.chat-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.message {
+    padding: 12px 16px;
+    margin: 8px 0;
+    border-radius: 15px;
+    max-width: 80%;
+}
+
+.user-message {
+    background: #007bff;
+    color: white;
+    margin-left: auto;
+}
+
+.ai-message {
+    background: #f1f0f0;
+    color: #333;
+    margin-right: auto;
+}
