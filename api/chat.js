@@ -289,3 +289,39 @@ app.post("/api/chat", async (req, res) => {
     }
   }
 });
+function createShootingStar() {
+  const x = Math.random() * canvas.width;
+  const y = Math.random() * canvas.height / 2;
+  const length = 200;
+  const speed = 8;
+
+  let posX = x, posY = y;
+
+  function draw() {
+    ctx.strokeStyle = "rgba(255,255,255,0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(posX, posY);
+    ctx.lineTo(posX - length, posY + length/2);
+    ctx.stroke();
+  }
+
+  function update() {
+    posX -= speed;
+    posY += speed/2;
+  }
+
+  function animateStar() {
+    update();
+    draw();
+    if (posX > -length && posY < canvas.height + length) {
+      requestAnimationFrame(animateStar);
+    }
+  }
+  animateStar();
+}
+
+// Launch shooting stars randomly
+setInterval(() => {
+  if (Math.random() < 0.3) createShootingStar();
+}, 4000);
