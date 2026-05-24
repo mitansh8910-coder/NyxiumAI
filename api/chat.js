@@ -13,10 +13,7 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
-            {
-              role: "user",
-              parts: [{ text: userMsg }]
-            }
+            { role: "user", parts: [{ text: userMsg }] }
           ]
         })
       }
@@ -24,7 +21,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Debug log (remove later)
+    // Debug log to see what Gemini sends back
     console.log("Gemini raw response:", JSON.stringify(data, null, 2));
 
     const reply =
