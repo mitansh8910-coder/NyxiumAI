@@ -287,9 +287,11 @@ function drawPlanets() {
 
 // Extend animate loop to include planets + rings
 function animate() {
+  // Clear background
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Nebula pulse
   pulse = (pulse + 0.01) % 1;
   const gradient = ctx.createRadialGradient(
     canvas.width/2, canvas.height/2, 0,
@@ -300,8 +302,15 @@ function animate() {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Stars
   stars.forEach(star => { star.update(); star.draw(); });
-  drawPlanets(); // planets + Saturn ring
+
+  // Planets + Saturn ring
+  drawPlanets();
+
+  // Shooting stars run independently via setInterval → no need to call here
+
   requestAnimationFrame(animate);
 }
 animate();
+
