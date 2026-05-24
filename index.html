@@ -65,7 +65,7 @@
   <!-- Main content -->
   <div class="flex-1 p-10 overflow-y-auto">
     <div id="dashboard" class="view active">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div class="bg-slate-900 p-8 rounded-3xl border border-blue-900/50 shadow-2xl">
           <div class="text-4xl mb-4">🧠</div>
           <h3 class="text-2xl font-bold mb-2">/ask Command</h3>
@@ -78,45 +78,41 @@
           <p class="text-slate-400 mb-6">Turn your imagination into reality. Use /draw to generate high-quality AI imagery directly within your Discord server.</p>
           <div class="bg-slate-800 p-3 rounded-xl text-center text-sm text-slate-400">Available in Discord</div>
         </div>
+
+        <!-- New Cosmic Features -->
+        <div class="bg-slate-900 p-8 rounded-3xl border border-indigo-900/50 shadow-2xl">
+          <div class="text-4xl mb-4">🌌</div>
+          <h3 class="text-2xl font-bold mb-2">Galaxy Mode</h3>
+          <p class="text-slate-400 mb-6">Enable immersive starfield animations and cosmic UI themes for your server.</p>
+          <button id="galaxy-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition">Activate Galaxy</button>
+        </div>
+
+        <div class="bg-slate-900 p-8 rounded-3xl border border-emerald-900/50 shadow-2xl">
+          <div class="text-4xl mb-4">🛠️</div>
+          <h3 class="text-2xl font-bold mb-2">Server Tools</h3>
+          <p class="text-slate-400 mb-6">Manage roles, automate moderation, and customize commands with Nyxium AI.</p>
+          <div class="bg-slate-800 p-3 rounded-xl text-center text-sm text-slate-400">Available in Discord</div>
+        </div>
+
+        <div class="bg-slate-900 p-8 rounded-3xl border border-yellow-900/50 shadow-2xl">
+          <div class="text-4xl mb-4">📊</div>
+          <h3 class="text-2xl font-bold mb-2">Analytics</h3>
+          <p class="text-slate-400 mb-6">Track usage, monitor AI queries, and visualize server activity in real time.</p>
+          <button id="stats-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold transition">View Stats</button>
+        </div>
+      </div>
+
+      <!-- Extra section -->
+      <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-8">
+        <h2 class="text-2xl font-bold mb-6">✨ Upcoming Features</h2>
+        <ul class="space-y-4 text-slate-400 text-sm">
+          <li>🚀 AI‑powered event scheduling</li>
+          <li>🎤 Voice command integration</li>
+          <li>🖼️ Advanced image generation with cosmic filters</li>
+          <li>🔒 Enhanced security & moderation tools</li>
+        </ul>
       </div>
     </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-  <!-- Existing cards remain here -->
-
-  <!-- New Cosmic Features -->
-  <div class="bg-slate-900 p-8 rounded-3xl border border-indigo-900/50 shadow-2xl">
-    <div class="text-4xl mb-4">🌌</div>
-    <h3 class="text-2xl font-bold mb-2">Galaxy Mode</h3>
-    <p class="text-slate-400 mb-6">Enable immersive starfield animations and cosmic UI themes for your server.</p>
-    <button class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition">Activate Galaxy</button>
-  </div>
-
-  <div class="bg-slate-900 p-8 rounded-3xl border border-emerald-900/50 shadow-2xl">
-    <div class="text-4xl mb-4">🛠️</div>
-    <h3 class="text-2xl font-bold mb-2">Server Tools</h3>
-    <p class="text-slate-400 mb-6">Manage roles, automate moderation, and customize commands with Nyxium AI.</p>
-    <div class="bg-slate-800 p-3 rounded-xl text-center text-sm text-slate-400">Available in Discord</div>
-  </div>
-
-  <div class="bg-slate-900 p-8 rounded-3xl border border-yellow-900/50 shadow-2xl">
-    <div class="text-4xl mb-4">📊</div>
-    <h3 class="text-2xl font-bold mb-2">Analytics</h3>
-    <p class="text-slate-400 mb-6">Track usage, monitor AI queries, and visualize server activity in real time.</p>
-    <button class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold transition">View Stats</button>
-  </div>
-</div>
-
-<!-- Extra section -->
-<div class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-8">
-  <h2 class="text-2xl font-bold mb-6">✨ Upcoming Features</h2>
-  <ul class="space-y-4 text-slate-400 text-sm">
-    <li>🚀 AI‑powered event scheduling</li>
-    <li>🎤 Voice command integration</li>
-    <li>🖼️ Advanced image generation with cosmic filters</li>
-    <li>🔒 Enhanced security & moderation tools</li>
-  </ul>
-</div>
 
     <div id="chat" class="view">
       <div class="max-w-3xl mx-auto bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl flex flex-col h-[600px]">
@@ -194,13 +190,25 @@
           <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs">✨</div>
           <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
             <strong class="text-purple-400">Nyxium AI Tip:</strong><br>
-            Try adding Nyxium AI bot to your server for drawing nad asking questions too!
+            Invite Nyxium AI bot to your server for more searches and drawing images!
           </div>
         </div>
       `;
 
       chatBox.scrollTop = chatBox.scrollHeight;
     }
+
+    // Galaxy Mode button
+    document.getElementById("galaxy-btn").addEventListener("click", () => {
+      document.body.classList.toggle("galaxy-mode");
+      alert("🌌 Galaxy Mode toggled!");
+    });
+
+    // View Stats button
+    document.getElementById("stats-btn").addEventListener("click", () => {
+      showView("chat"); // Replace with analytics view if you add one
+      alert("📊 Opening Analytics Dashboard...");
+    });
 
     // Starfield animation
     const canvas = document.getElementById("starfield");
@@ -271,14 +279,6 @@
         starCursor.style.transform = "translate(-50%, -50%) scale(1)";
       }, 150);
     }, 1000);
-
-    <button id="galaxy-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition">
-  Activate Galaxy
-</button>
-
-<button id="stats-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold transition">
-  View Stats
-</button>
 
     // Sparkle trail effect with speed-based density
     const trailContainer = document.createElement("div");
