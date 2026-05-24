@@ -13,15 +13,22 @@ export default async function handler(req, res) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
-            { role: "user", parts: [{ text: userMsg }] }
+            {
+              role: "user",
+              parts: [{ text: userMsg }]
+            }
           ]
         })
       }
     );
 
     const data = await response.json();
+
+    // Debug log (remove later)
+    console.log("Gemini raw response:", JSON.stringify(data, null, 2));
+
     const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "Nyxium AI couldn’t generate a response.";
 
     res.status(200).json({ reply });
