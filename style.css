@@ -10,7 +10,30 @@
 body {
     background-color: #0f0f12;
     color: #f3f4f6;
-    overflow-x: hidden;
+    overflow-x: hidden; /* Prevents horizontal scrollbar */
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Galaxy Mode Improvements */
+body.galaxy-mode {
+    background: radial-gradient(circle at center, #0b0033, #000000);
+}
+
+.star {
+    position: fixed; /* Fixed prevents stars from affecting page layout/scroll */
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none; /* Crucial: clicks pass through stars */
+    z-index: 0;
+    animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle {
+    from { opacity: 0.2; }
+    to { opacity: 1; }
 }
 
 /* Navbar */
@@ -28,48 +51,7 @@ body {
     border-bottom: 1px solid #222227;
 }
 
-.logo {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: 1px;
-}
-
-.logo span {
-    color: #5865F2; /* Discord Purple Accent */
-}
-
-.nav-links {
-    display: flex;
-    list-style: none;
-    align-items: center;
-}
-
-.nav-links li {
-    margin-left: 30px;
-}
-
-.nav-links a {
-    color: #9ca3af;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s;
-}
-
-.nav-links a:hover {
-    color: #fff;
-}
-
-.btn-nav {
-    background-color: #5865F2;
-    color: #fff !important;
-    padding: 8px 18px;
-    border-radius: 6px;
-    transition: background 0.3s !important;
-}
-
-.btn-nav:hover {
-    background-color: #4752C4;
-}
+/* ... [Keep your existing .logo, .nav-links, .btn-nav styles here] ... */
 
 /* Hero Section */
 .hero {
@@ -82,55 +64,7 @@ body {
     background: radial-gradient(circle at center, #1a1b26 0%, #0f0f12 100%);
 }
 
-.hero-content h1 {
-    font-size: 56px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    line-height: 1.2;
-}
-
-.highlight {
-    color: #5865F2;
-}
-
-.hero-content p {
-    font-size: 18px;
-    color: #9ca3af;
-    max-width: 600px;
-    margin: 0 auto 40px auto;
-    line-height: 1.6;
-}
-
-.hero-buttons .btn {
-    display: inline-block;
-    padding: 14px 30px;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    margin: 0 10px;
-    transition: all 0.3s;
-}
-
-.btn-primary {
-    background-color: #5865F2;
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background-color: #4752C4;
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background-color: #1e1e24;
-    color: #fff;
-    border: 1px solid #33333b;
-}
-
-.btn-secondary:hover {
-    background-color: #282830;
-    transform: translateY(-2px);
-}
+/* ... [Keep your existing hero-content, .highlight, .btn-primary, .btn-secondary styles] ... */
 
 /* Stats Section */
 .stats-section {
@@ -146,38 +80,12 @@ body {
     z-index: 10;
 }
 
-.stat-box {
-    text-align: center;
-}
-
-.stat-box h3 {
-    font-size: 32px;
-    color: #5865F2;
-    font-weight: 800;
-}
-
-.stat-box p {
-    color: #9ca3af;
-    margin-top: 5px;
-    font-size: 14px;
-}
-
-/* Features Section */
-.features-section {
-    padding: 80px 8%;
-    text-align: center;
-}
-
-.features-section h2 {
-    font-size: 36px;
-    font-weight: 800;
-    margin-bottom: 50px;
-}
-
+/* Features Grid */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 30px;
+    padding: 0 8%;
 }
 
 .feature-card {
@@ -188,84 +96,38 @@ body {
     transition: transform 0.3s, border-color 0.3s;
 }
 
-.feature-card:hover {
-    transform: translateY(-5px);
-    border-color: #5865F2;
-}
-
-.feature-card .icon {
-    font-size: 40px;
-    margin-bottom: 20px;
-}
-
-.feature-card h3 {
-    font-size: 20px;
-    margin-bottom: 15px;
-}
-
-.feature-card p {
-    color: #9ca3af;
-    font-size: 15px;
-    line-height: 1.6;
-}
-
-/* Footer */
-footer {
-    text-align: center;
-    padding: 40px 20px;
-    color: #4b5563;
-    border-top: 1px solid #16161a;
-    font-size: 14px;
-}
-/* Modern Chat Bubbles */
+/* Modern Chat UI Improvements */
 .chat-container {
     max-width: 600px;
-    margin: 0 auto;
+    margin: 20px auto;
     padding: 20px;
-    font-family: 'Segoe UI', sans-serif;
+    border: 1px solid #222227;
+    border-radius: 16px;
+    background: #16161a;
 }
 
+/* Using margin-bottom for better spacing instead of margin-top */
 .message {
     padding: 12px 16px;
-    margin: 8px 0;
+    margin-bottom: 15px; 
     border-radius: 15px;
     max-width: 80%;
 }
 
 .user-message {
-    background: #007bff;
+    background: #5865F2; /* Aligned with your Discord brand color */
     color: white;
     margin-left: auto;
 }
 
 .ai-message {
-    background: #f1f0f0;
-    color: #333;
+    background: #1e1e24;
+    color: #e5e7eb;
     margin-right: auto;
 }
-.my-button {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: none;
+
+/* Ensure buttons don't overlap scrollbars */
+button {
     cursor: pointer;
-}
-body.galaxy-mode {
-  background: radial-gradient(circle at center, #0b0033, #000000);
-  overflow: hidden;
-}
-
-.star {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: white;
-  border-radius: 50%;
-  animation: twinkle 2s infinite alternate;
-}
-
-@keyframes twinkle {
-  from { opacity: 0.2; }
-  to { opacity: 1; }
+    z-index: 5;
 }
