@@ -1,71 +1,3 @@
-// api/chat.js
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Simple in-memory tracker (replace with DB for production)
-const userSearchCounts = {};
-const MAX_SEARCHES = 5;
-
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed 🚫" });
-  }
-
-  const { userId, message } = req.body; // assume you pass userId from frontend
-
-  // Initialize user count if not present
-  if (!userSearchCounts[userId]) {
-    userSearchCounts[userId] = { count: 0, date: new Date().toDateString() };
-  }
-
-  // Reset daily count if date changed
-  if (userSearchCounts[userId].date !== new Date().toDateString()) {
-    userSearchCounts[userId] = { count: 0, date: new Date().toDateString() };
-  }
-
-  // Enforce limit
-  if (userSearchCounts[userId].count >= MAX_SEARCHES) {
-    return res.status(429).json({
-      error:
-        "🌌 Daily limit reached (5 searches). 🚀 Install Nyxium AI bot in your server for unlimited cosmic queries!"
-    });
-  }
-
-  try {
-    // Increment usage
-    userSearchCounts[userId].count++;
-
-    // Gemini call
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3.5-flash",
-      systemInstruction:
-        "You are Nyxium AI, a galactic assistant for Discord — guiding users with intelligence, creativity, and automation."
-    });
-
-    const result = await model.generateContent(message);
-    const text = result.response.text();
-
-    return res.status(200).json({ reply: text });
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return res.status(500).json({
-      error: "💥 Backend Error: " + error.message
-    });
-  }
-}
-// Galaxy Mode button
-document.getElementById("galaxy-btn").addEventListener("click", () => {
-  alert("🌌 Galaxy Mode activated! Starfield animations are now enabled.");
-  // Example: toggle a CSS class or trigger extra effects
-  document.body.classList.toggle("galaxy-mode");
-});
-
-// View Stats button
-document.getElementById("stats-btn").addEventListener("click", () => {
-  alert("📊 Opening Analytics Dashboard...");
-  // Example: show a stats panel or redirect
-  showView("chat"); // or replace with your analytics view
-});
 // Switch views
 function showView(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
@@ -196,99 +128,7 @@ class Star {
 
 const stars = Array.from({ length: 300 }, () => new Star());
 
-function animate() {
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Nebula glow
-  const gradient = ctx.createRadialGradient(
-    canvas.width/2, canvas.height/2, 0,
-    canvas.width/2, canvas.height/2, canvas.width
-  );
-  gradient.addColorStop(0, "rgba(120,0,180,0.3)");
-  gradient.addColorStop(1, "rgba(0,0,0,0.9)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  stars.forEach(star => { star.update(); star.draw(); });
-  requestAnimationFrame(animate);
-}
-animate();
-
-// Star cursor movement + twinkle
-const starCursor = document.getElementById("star-cursor");
-document.addEventListener("mousemove", (e) => {
-  starCursor.style.left = e.pageX + "px";
-  starCursor.style.top = e.pageY + "px";
-});
-
-setInterval(() => {
-  starCursor.style.transform = "translate(-50%, -50%) scale(1.2)";
-  setTimeout(() => {
-    starCursor.style.transform = "translate(-50%, -50%) scale(1)";
-  }, 150);
-}, 1000);
-
-// Sparkle trail effect with speed-based density
-const trailContainer = document.createElement("div");
-document.body.appendChild(trailContainer);
-
-let lastX = 0, lastY = 0, lastTime = Date.now();
-
-function createSparkle(x, y) {
-  const sparkle = document.createElement("div");
-  sparkle.style.position = "fixed";
-  sparkle.style.left = x + "px";
-  sparkle.style.top = y + "px";
-  sparkle.style.width = "6px";
-  sparkle.style.height = "6px";
-  sparkle.style.borderRadius = "50%";
-  sparkle.style.background = "radial-gradient(circle, #fff, #9d4edd)";
-  sparkle.style.boxShadow = "0 0 6px #c77dff, 0 0 12px #9d4edd";
-  sparkle.style.pointerEvents = "none";
-  sparkle.style.zIndex = "9998";
-  trailContainer.appendChild(sparkle);
-
-  sparkle.animate(
-    [
-      { opacity: 1, transform: "scale(1)" },
-      { opacity: 0, transform: "scale(0.5)" }
-    ],
-    { duration: 600, easing: "ease-out" }
-  ).onfinish = () => sparkle.remove();
-}
-
-document.addEventListener("mousemove", (e) => {
-  const now = Date.now();
-  const dx = e.pageX - lastX;
-  const dy = e.pageY - lastY;
-  const dt = now - lastTime;
-
-  const speed = Math.sqrt(dx*dx + dy*dy) / dt;
-  const sparkleCount = Math.min(5, Math.max(1, Math.floor(speed * 3)));
-
-  for (let i = 0; i < sparkleCount; i++) {
-    const offsetX = e.pageX + (Math.random() - 0.5) * 10;
-    const offsetY = e.pageY + (Math.random() - 0.5) * 10;
-    createSparkle(offsetX, offsetY);
-  }
-
-  lastX = e.pageX;
-  lastY = e.pageY;
-  lastTime = now;
-});
-app.post("/api/chat", async (req, res) => {
-  try {
-    const reply = await aiModel(req.body.message);
-    res.json({ reply });
-  } catch (err) {
-    if (err.message.includes("quota")) {
-      res.status(429).json({ error: "Quota exceeded. Please wait or add more credits." });
-    } else {
-      res.status(500).json({ error: "Nyxium AI servers are overloaded please try again. Try again!" });
-    }
-  }
-});
+// Shooting stars
 function createShootingStar() {
   const x = Math.random() * canvas.width;
   const y = Math.random() * canvas.height / 2;
@@ -320,8 +160,64 @@ function createShootingStar() {
   }
   animateStar();
 }
-
-// Launch shooting stars randomly
 setInterval(() => {
   if (Math.random() < 0.3) createShootingStar();
 }, 4000);
+
+// Nebula pulse
+let pulse = 0;
+function animate() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  pulse = (pulse + 0.01) % 1;
+  const gradient = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 0,
+    canvas.width/2, canvas.height/2, canvas.width
+  );
+  gradient.addColorStop(0, `rgba(120,0,180,${0.2 + 0.2*Math.sin(pulse*2*Math.PI)})`);
+  gradient.addColorStop(1, "rgba(0,0,0,0.9)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  stars.forEach(star => { star.update(); star.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Star cursor movement + twinkle
+const starCursor = document.getElementById("star-cursor");
+document.addEventListener("mousemove", (e) => {
+  starCursor.style.left = e.pageX + "px";
+  starCursor.style.top = e.pageY + "px";
+});
+
+setInterval(() => {
+  starCursor.style.transform = "translate(-50%, -50%) scale(1.2)";
+  setTimeout(() => {
+    starCursor.style.transform = "translate(-50%, -50%) scale(1)";
+  }, 150);
+}, 1000);
+
+// Sparkle trail effect with color-shifting sparkles
+const trailContainer = document.createElement("div");
+document.body.appendChild(trailContainer);
+
+let lastX = 0, lastY = 0, lastTime = Date.now();
+const sparkleColors = [
+  "radial-gradient(circle, #fff, #9d4edd)",
+  "radial-gradient(circle, #fff, #4361ee)",
+  "radial-gradient(circle, #fff, #4cc9f0)"
+];
+
+function createSparkle(x, y) {
+  const sparkle = document.createElement("div");
+  sparkle.style.position = "fixed";
+  sparkle.style.left = x + "px";
+  sparkle.style.top = y + "px";
+  sparkle.style.width = "6px";
+  sparkle.style.height = "6px";
+  sparkle.style.borderRadius = "50%";
+  sparkle.style.background = sparkleColors[Math.floor(Math.random()*sparkleColors.length)];
+  sparkle.style.boxShadow = "0 0 6px #c77dff, 0 0 12px #9d4edd";
+  sparkle.style.pointerEvents = "none";
