@@ -251,3 +251,21 @@ footer {
     border: none;
     cursor: pointer;
 }
+body.galaxy-mode {
+  background: radial-gradient(circle at center, #0b0033, #000000);
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
