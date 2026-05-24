@@ -4,12 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nyxium AI Dashboard</title>
+
+  <!-- External CSS -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- External JS libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <style>
     .view { display: none; }
     .view.active { display: block; }
+
     #chat-messages::-webkit-scrollbar { width: 6px; }
     #chat-messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
@@ -27,310 +33,52 @@
       background: black;
     }
 
-    /* Hide default cursor */
-    body {
-      cursor: none;
+    /* Galaxy Mode starfield */
+    body.galaxy-mode {
+      background: radial-gradient(circle at center, #0b0033, #000000);
+      overflow: hidden;
     }
 
-    /* Star cursor element */
-    #star-cursor {
-      position: fixed;
-      width: 16px;
-      height: 16px;
-      background: radial-gradient(circle, #fff 40%, #9d4edd 80%);
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
       border-radius: 50%;
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 10px #c77dff, 0 0 20px #9d4edd;
-      z-index: 9999;
+      animation: twinkle 2s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.2; }
+      to { opacity: 1; }
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex h-screen font-sans">
-
-  <!-- Animated starfield -->
+<body>
+  <!-- Starfield background -->
   <canvas id="starfield"></canvas>
-  <!-- Star cursor -->
-  <div id="star-cursor"></div>
 
-  <!-- Sidebar -->
-  <div class="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col">
-    <h2 class="text-2xl font-bold mb-10 text-blue-500 flex items-center gap-2 galactic-title">⚡ Nyxium AI</h2>
-    <nav class="space-y-4">
-      <button onclick="showView('dashboard')" class="flex items-center gap-3 w-full p-3 bg-slate-800 rounded transition font-semibold">🏠 Dashboard</button>
-      <button onclick="showView('chat')" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded transition">💬 AI Chat</button>
-      <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="flex items-center gap-3 w-full p-3 hover:bg-slate-800 rounded text-indigo-400 font-bold">🤖 Invite Bot</a>
-    </nav>
-  </div>
+  <!-- Dashboard main container -->
+  <div id="dashboard" class="p-6">
+    <h1 class="text-3xl font-bold galactic-title mb-6">Nyxium AI Dashboard</h1>
 
-  <!-- Main content -->
-  <div class="flex-1 p-10 overflow-y-auto">
-    <div id="dashboard" class="view active">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div class="bg-slate-900 p-8 rounded-3xl border border-blue-900/50 shadow-2xl">
-          <div class="text-4xl mb-4">🧠</div>
-          <h3 class="text-2xl font-bold mb-2">/ask Command</h3>
-          <p class="text-slate-400 mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses. Perfect for answering complex questions, coding assistance, or brainstorming.</p>
-          <button onclick="showView('chat')" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Try Asking AI</button>
-        </div>
-        <div class="bg-slate-900 p-8 rounded-3xl border border-pink-900/50 shadow-2xl">
-          <div class="text-4xl mb-4">🎨</div>
-          <h3 class="text-2xl font-bold mb-2">/draw Command</h3>
-          <p class="text-slate-400 mb-6">Turn your imagination into reality. Use /draw to generate high-quality AI imagery directly within your Discord server.</p>
-          <div class="bg-slate-800 p-3 rounded-xl text-center text-sm text-slate-400">Available in Discord</div>
-        </div>
-
-        <!-- New Cosmic Features -->
-        <div class="bg-slate-900 p-8 rounded-3xl border border-indigo-900/50 shadow-2xl">
-          <div class="text-4xl mb-4">🌌</div>
-          <h3 class="text-2xl font-bold mb-2">Galaxy Mode</h3>
-          <p class="text-slate-400 mb-6">Enable immersive starfield animations and cosmic UI themes for your server.</p>
-          <button id="galaxy-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition">Activate Galaxy</button>
-        </div>
-
-        <div class="bg-slate-900 p-8 rounded-3xl border border-emerald-900/50 shadow-2xl">
-          <div class="text-4xl mb-4">🛠️</div>
-          <h3 class="text-2xl font-bold mb-2">Server Tools</h3>
-          <p class="text-slate-400 mb-6">Manage roles, automate moderation, and customize commands with Nyxium AI.</p>
-          <div class="bg-slate-800 p-3 rounded-xl text-center text-sm text-slate-400">Available in Discord</div>
-        </div>
-
-        <div class="bg-slate-900 p-8 rounded-3xl border border-yellow-900/50 shadow-2xl">
-          <div class="text-4xl mb-4">📊</div>
-          <h3 class="text-2xl font-bold mb-2">Analytics</h3>
-          <p class="text-slate-400 mb-6">Track usage, monitor AI queries, and visualize server activity in real time.</p>
-          <button id="stats-btn" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold transition">View Stats</button>
-        </div>
-      </div>
-
-      <!-- Extra section -->
-      <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800 mb-8">
-        <h2 class="text-2xl font-bold mb-6">✨ Upcoming Features</h2>
-        <ul class="space-y-4 text-slate-400 text-sm">
-          <li>🚀 AI‑powered event scheduling</li>
-          <li>🎤 Voice command integration</li>
-          <li>🖼️ Advanced image generation with cosmic filters</li>
-          <li>🔒 Enhanced security & moderation tools</li>
-        </ul>
+    <!-- Views -->
+    <div id="chat" class="view active">
+      <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-slate-900 rounded-lg mb-4"></div>
+      <div class="flex gap-2">
+        <input id="user-input" type="text" placeholder="Type your message..."
+          class="flex-1 p-2 rounded-lg bg-slate-800 text-white">
+        <button onclick="sendToAI()" class="px-4 py-2 bg-indigo-600 rounded-lg text-white">Send</button>
       </div>
     </div>
 
-    <div id="chat" class="view">
-      <div class="max-w-3xl mx-auto bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl flex flex-col h-[600px]">
-        <div class="p-6 border-b border-slate-800"><h1 class="text-xl font-bold">💬 Nyxium Console</h1></div>
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
-        <div class="p-6 border-t border-slate-800 bg-slate-950/50 rounded-b-3xl">
-          <div class="flex gap-4">
-            <input id="user-input" class="flex-1 bg-slate-900 border border-slate-700 p-4 rounded-xl text-white outline-none focus:border-indigo-500" placeholder="Ask Nyxium something...">
-            <button onclick="sendToAI()" class="bg-indigo-600 px-8 py-4 rounded-xl font-bold hover:bg-indigo-500 transition">Send</button>
-          </div>
-        </div>
-      </div>
+    <!-- Buttons -->
+    <div class="mt-6 flex gap-4">
+      <button id="galaxy-btn" class="px-4 py-2 bg-purple-700 rounded-lg text-white">🌌 Galaxy Mode</button>
+      <button id="stats-btn" class="px-4 py-2 bg-blue-700 rounded-lg text-white">📊 View Stats</button>
     </div>
   </div>
-  <!-- JS -->
-  <script>
-    // Switch views
-    function showView(v) {
-      document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
-      document.getElementById(v).classList.add('active');
-    }
-
-    // Chat handler with Nyxium AI identity
-    async function sendToAI() {
-      const input = document.getElementById('user-input');
-      const chatBox = document.getElementById('chat-messages');
-      if(!input.value) return;
-
-      // User message bubble
-      chatBox.innerHTML += `
-        <div class="flex gap-4 flex-row-reverse">
-          <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
-          <div class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">${input.value}</div>
-        </div>
-      `;
-
-      const userMsg = input.value;
-      input.value = '';
-
-      // Typing indicator
-      const typingId = "typing-" + Date.now();
-      chatBox.innerHTML += `
-        <div id="${typingId}" class="flex gap-4">
-          <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
-          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-slate-400 italic">Nyxium AI is thinking...</div>
-        </div>
-      `;
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      // Call backend
-      const res = await fetch('/api/chat', { 
-        method: 'POST', 
-        headers: {'Content-Type': 'application/json'}, 
-        body: JSON.stringify({ message: userMsg }) 
-      });
-      const data = await res.json();
-
-      // Remove typing indicator
-      document.getElementById(typingId)?.remove();
-
-      // AI response bubble
-      chatBox.innerHTML += `
-        <div class="flex gap-4">
-          <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
-          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
-            <strong class="text-blue-400">Nyxium AI:</strong><br>
-            ${marked.parse(data.reply || data.error)}
-          </div>
-        </div>
-      `;
-
-      // Extra tip message
-      chatBox.innerHTML += `
-        <div class="flex gap-4">
-          <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs">✨</div>
-          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
-            <strong class="text-purple-400">Nyxium AI Tip:</strong><br>
-            Invite Nyxium AI bot to your server for more searches and drawing images!
-          </div>
-        </div>
-      `;
-
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // Galaxy Mode button
-    document.getElementById("galaxy-btn").addEventListener("click", () => {
-      document.body.classList.toggle("galaxy-mode");
-      alert("🌌 Galaxy Mode toggled!");
-    });
-
-    // View Stats button
-    document.getElementById("stats-btn").addEventListener("click", () => {
-      showView("chat"); // Replace with analytics view if you add one
-      alert("📊 Opening Analytics Dashboard...");
-    });
-
-    // Starfield animation
-    const canvas = document.getElementById("starfield");
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    window.addEventListener("resize", () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    });
-
-    class Star {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2;
-        this.speed = 0.2 + Math.random() * 0.8;
-        this.opacity = 0.2 + Math.random() * 0.8;
-      }
-      update() {
-        this.y += this.speed;
-        if (this.y > canvas.height) {
-          this.reset();
-          this.y = 0;
-        }
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${this.opacity})`;
-        ctx.fill();
-      }
-    }
-
-    const stars = Array.from({ length: 300 }, () => new Star());
-
-    function animate() {
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Nebula glow
-      const gradient = ctx.createRadialGradient(
-        canvas.width/2, canvas.height/2, 0,
-        canvas.width/2, canvas.height/2, canvas.width
-      );
-      gradient.addColorStop(0, "rgba(120,0,180,0.3)");
-      gradient.addColorStop(1, "rgba(0,0,0,0.9)");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      stars.forEach(star => { star.update(); star.draw(); });
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    // Star cursor movement + twinkle
-    const starCursor = document.getElementById("star-cursor");
-    document.addEventListener("mousemove", (e) => {
-      starCursor.style.left = e.pageX + "px";
-      starCursor.style.top = e.pageY + "px";
-    });
-
-    setInterval(() => {
-      starCursor.style.transform = "translate(-50%, -50%) scale(1.2)";
-      setTimeout(() => {
-        starCursor.style.transform = "translate(-50%, -50%) scale(1)";
-      }, 150);
-    }, 1000);
-
-    // Sparkle trail effect with speed-based density
-    const trailContainer = document.createElement("div");
-    document.body.appendChild(trailContainer);
-
-    let lastX = 0, lastY = 0, lastTime = Date.now();
-
-    function createSparkle(x, y) {
-      const sparkle = document.createElement("div");
-      sparkle.style.position = "fixed";
-      sparkle.style.left = x + "px";
-      sparkle.style.top = y + "px";
-      sparkle.style.width = "6px";
-      sparkle.style.height = "6px";
-      sparkle.style.borderRadius = "50%";
-      sparkle.style.background = "radial-gradient(circle, #fff, #9d4edd)";
-      sparkle.style.boxShadow = "0 0 6px #c77dff, 0 0 12px #9d4edd";
-      sparkle.style.pointerEvents = "none";
-      sparkle.style.zIndex = "9998";
-      trailContainer.appendChild(sparkle);
-
-      sparkle.animate(
-        [
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(0.5)" }
-        ],
-        { duration: 600, easing: "ease-out" }
-      ).onfinish = () => sparkle.remove();
-    }
-
-    document.addEventListener("mousemove", (e) => {
-      const now = Date.now();
-      const dx = e.pageX - lastX;
-      const dy = e.pageY - lastY;
-      const dt = now - lastTime;
-
-      const speed = Math.sqrt(dx*dx + dy*dy) / dt;
-      const sparkleCount = Math.min(5, Math.max(1, Math.floor(speed * 3)));
-
-      for (let i = 0; i < sparkleCount; i++) {
-        const offsetX = e.pageX + (Math.random() - 0.5) * 10;
-        const offsetY = e.pageY + (Math.random() - 0.5) * 10;
-        createSparkle(offsetX, offsetY);
-      }
-
-      lastX = e.pageX;
-      lastY = e.pageY;
-      lastTime = now;
-    });
-  </script>
-  <button id="galaxy-btn">🌌 Galaxy Mode</button>
-  <script src="src/chat.js"></script>   <!-- ✅ Add here -->
+  <!-- ✅ Load your JS file last -->
+  <script src="src/chat.js"></script>
 </body>
 </html>
