@@ -102,17 +102,66 @@
       document.getElementById(v).classList.add('active');
     }
 
-    // Chat handler
+    // Chat handler with Nyxium AI identity
     async function sendToAI() {
       const input = document.getElementById('user-input');
       const chatBox = document.getElementById('chat-messages');
       if(!input.value) return;
-      chatBox.innerHTML += `<div class="flex gap-4 flex-row-reverse"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div><div class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">${input.value}</div></div>`;
+
+      // User message bubble
+      chatBox.innerHTML += `
+        <div class="flex gap-4 flex-row-reverse">
+          <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
+          <div class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">${input.value}</div>
+        </div>
+      `;
+
       const userMsg = input.value;
       input.value = '';
-      const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: userMsg }) });
+
+      // Typing indicator
+      const typingId = "typing-" + Date.now();
+      chatBox.innerHTML += `
+        <div id="${typingId}" class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
+          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-slate-400 italic">Nyxium AI is thinking...</div>
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Call backend
+      const res = await fetch('/api/chat', { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({ message: userMsg }) 
+      });
       const data = await res.json();
-      chatBox.innerHTML += `<div class="flex gap-4"><div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">⚡</div><div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">${marked.parse(data.reply || data.error)}</div></div>`;
+
+      // Remove typing indicator
+      document.getElementById(typingId)?.remove();
+
+      // AI response bubble
+      chatBox.innerHTML += `
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
+          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
+            <strong class="text-blue-400">Nyxium AI:</strong><br>
+            ${marked.parse(data.reply || data.error)}
+          </div>
+        </div>
+      `;
+
+      // Extra tip message
+      chatBox.innerHTML += `
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs">✨</div>
+          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
+            <strong class="text-purple-400">Nyxium AI Tip:</strong><br>
+            Try <code>/draw</code> for cosmic art or <code>/ask</code> for instant answers!
+          </div>
+        </div>
+      `;
+
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -185,38 +234,8 @@
         starCursor.style.transform = "translate(-50%, -50%) scale(1)";
       }, 150);
     }, 1000);
-        // Sparkle trail effect
-    const trailContainer = document.createElement("div");
-    document.body.appendChild(trailContainer);
 
-    function createSparkle(x, y) {
-      const sparkle = document.createElement("div");
-      sparkle.style.position = "fixed";
-      sparkle.style.left = x + "px";
-      sparkle.style.top = y + "px";
-      sparkle.style.width = "6px";
-      sparkle.style.height = "6px";
-      sparkle.style.borderRadius = "50%";
-      sparkle.style.background = "radial-gradient(circle, #fff, #9d4edd)";
-      sparkle.style.boxShadow = "0 0 6px #c77dff, 0 0 12px #9d4edd";
-      sparkle.style.pointerEvents = "none";
-      sparkle.style.zIndex = "9998";
-      trailContainer.appendChild(sparkle);
-
-      // Fade out + remove
-      sparkle.animate(
-        [
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(0.5)" }
-        ],
-        { duration: 600, easing: "ease-out" }
-      ).onfinish = () => sparkle.remove();
-    }
-
-    document.addEventListener("mousemove", (e) => {
-      createSparkle(e.pageX, e.pageY);
-    });
-        // Sparkle trail effect with speed-based density
+    // Sparkle trail effect with speed-based density
     const trailContainer = document.createElement("div");
     document.body.appendChild(trailContainer);
 
@@ -236,7 +255,6 @@
       sparkle.style.zIndex = "9998";
       trailContainer.appendChild(sparkle);
 
-      // Fade out + remove
       sparkle.animate(
         [
           { opacity: 1, transform: "scale(1)" },
@@ -252,10 +270,7 @@
       const dy = e.pageY - lastY;
       const dt = now - lastTime;
 
-      // Calculate speed (pixels per ms)
       const speed = Math.sqrt(dx*dx + dy*dy) / dt;
-
-      // Sparkle density based on speed
       const sparkleCount = Math.min(5, Math.max(1, Math.floor(speed * 3)));
 
       for (let i = 0; i < sparkleCount; i++) {
