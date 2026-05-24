@@ -66,3 +66,214 @@ document.getElementById("stats-btn").addEventListener("click", () => {
   // Example: show a stats panel or redirect
   showView("chat"); // or replace with your analytics view
 });
+// Switch views
+function showView(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.getElementById(v).classList.add('active');
+}
+
+// Chat handler with Nyxium AI identity
+async function sendToAI() {
+  const input = document.getElementById('user-input');
+  const chatBox = document.getElementById('chat-messages');
+  if(!input.value) return;
+
+  // User message bubble
+  chatBox.innerHTML += `
+    <div class="flex gap-4 flex-row-reverse">
+      <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
+      <div class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">${input.value}</div>
+    </div>
+  `;
+
+  const userMsg = input.value;
+  input.value = '';
+
+  // Typing indicator
+  const typingId = "typing-" + Date.now();
+  chatBox.innerHTML += `
+    <div id="${typingId}" class="flex gap-4">
+      <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
+      <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-slate-400 italic">Nyxium AI is thinking...</div>
+    </div>
+  `;
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  // Call backend
+  try {
+    const res = await fetch('/api/chat', { 
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({ message: userMsg }) 
+    });
+    const data = await res.json();
+
+    // Remove typing indicator
+    document.getElementById(typingId)?.remove();
+
+    // AI response bubble
+    chatBox.innerHTML += `
+      <div class="flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
+        <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
+          <strong class="text-blue-400">Nyxium AI:</strong><br>
+          ${marked.parse(data.reply || data.error)}
+        </div>
+      </div>
+    `;
+
+    // Extra tip message
+    chatBox.innerHTML += `
+      <div class="flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs">✨</div>
+        <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
+          <strong class="text-purple-400">Nyxium AI Tip:</strong><br>
+          Try <code>/draw</code> for cosmic art or <code>/ask</code> for instant answers!
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    document.getElementById(typingId)?.remove();
+    chatBox.innerHTML += `
+      <div class="flex gap-4">
+        <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-xs">⚠️</div>
+        <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-red-400">
+          Nyxium AI Error: ${err.message}
+        </div>
+      </div>
+    `;
+  }
+
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Galaxy Mode button
+document.getElementById("galaxy-btn").addEventListener("click", () => {
+  document.body.classList.toggle("galaxy-mode");
+  alert("🌌 Galaxy Mode toggled!");
+});
+
+// View Stats button
+document.getElementById("stats-btn").addEventListener("click", () => {
+  showView("chat"); // Replace with analytics view if you add one
+  alert("📊 Opening Analytics Dashboard...");
+});
+
+// Starfield animation
+const canvas = document.getElementById("starfield");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+class Star {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2;
+    this.speed = 0.2 + Math.random() * 0.8;
+    this.opacity = 0.2 + Math.random() * 0.8;
+  }
+  update() {
+    this.y += this.speed;
+    if (this.y > canvas.height) {
+      this.reset();
+      this.y = 0;
+    }
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${this.opacity})`;
+    ctx.fill();
+  }
+}
+
+const stars = Array.from({ length: 300 }, () => new Star());
+
+function animate() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Nebula glow
+  const gradient = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 0,
+    canvas.width/2, canvas.height/2, canvas.width
+  );
+  gradient.addColorStop(0, "rgba(120,0,180,0.3)");
+  gradient.addColorStop(1, "rgba(0,0,0,0.9)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  stars.forEach(star => { star.update(); star.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Star cursor movement + twinkle
+const starCursor = document.getElementById("star-cursor");
+document.addEventListener("mousemove", (e) => {
+  starCursor.style.left = e.pageX + "px";
+  starCursor.style.top = e.pageY + "px";
+});
+
+setInterval(() => {
+  starCursor.style.transform = "translate(-50%, -50%) scale(1.2)";
+  setTimeout(() => {
+    starCursor.style.transform = "translate(-50%, -50%) scale(1)";
+  }, 150);
+}, 1000);
+
+// Sparkle trail effect with speed-based density
+const trailContainer = document.createElement("div");
+document.body.appendChild(trailContainer);
+
+let lastX = 0, lastY = 0, lastTime = Date.now();
+
+function createSparkle(x, y) {
+  const sparkle = document.createElement("div");
+  sparkle.style.position = "fixed";
+  sparkle.style.left = x + "px";
+  sparkle.style.top = y + "px";
+  sparkle.style.width = "6px";
+  sparkle.style.height = "6px";
+  sparkle.style.borderRadius = "50%";
+  sparkle.style.background = "radial-gradient(circle, #fff, #9d4edd)";
+  sparkle.style.boxShadow = "0 0 6px #c77dff, 0 0 12px #9d4edd";
+  sparkle.style.pointerEvents = "none";
+  sparkle.style.zIndex = "9998";
+  trailContainer.appendChild(sparkle);
+
+  sparkle.animate(
+    [
+      { opacity: 1, transform: "scale(1)" },
+      { opacity: 0, transform: "scale(0.5)" }
+    ],
+    { duration: 600, easing: "ease-out" }
+  ).onfinish = () => sparkle.remove();
+}
+
+document.addEventListener("mousemove", (e) => {
+  const now = Date.now();
+  const dx = e.pageX - lastX;
+  const dy = e.pageY - lastY;
+  const dt = now - lastTime;
+
+  const speed = Math.sqrt(dx*dx + dy*dy) / dt;
+  const sparkleCount = Math.min(5, Math.max(1, Math.floor(speed * 3)));
+
+  for (let i = 0; i < sparkleCount; i++) {
+    const offsetX = e.pageX + (Math.random() - 0.5) * 10;
+    const offsetY = e.pageY + (Math.random() - 0.5) * 10;
+    createSparkle(offsetX, offsetY);
+  }
+
+  lastX = e.pageX;
+  lastY = e.pageY;
+  lastTime = now;
+});
