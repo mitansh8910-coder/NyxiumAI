@@ -185,6 +185,37 @@
         starCursor.style.transform = "translate(-50%, -50%) scale(1)";
       }, 150);
     }, 1000);
+        // Sparkle trail effect
+    const trailContainer = document.createElement("div");
+    document.body.appendChild(trailContainer);
+
+    function createSparkle(x, y) {
+      const sparkle = document.createElement("div");
+      sparkle.style.position = "fixed";
+      sparkle.style.left = x + "px";
+      sparkle.style.top = y + "px";
+      sparkle.style.width = "6px";
+      sparkle.style.height = "6px";
+      sparkle.style.borderRadius = "50%";
+      sparkle.style.background = "radial-gradient(circle, #fff, #9d4edd)";
+      sparkle.style.boxShadow = "0 0 6px #c77dff, 0 0 12px #9d4edd";
+      sparkle.style.pointerEvents = "none";
+      sparkle.style.zIndex = "9998";
+      trailContainer.appendChild(sparkle);
+
+      // Fade out + remove
+      sparkle.animate(
+        [
+          { opacity: 1, transform: "scale(1)" },
+          { opacity: 0, transform: "scale(0.5)" }
+        ],
+        { duration: 600, easing: "ease-out" }
+      ).onfinish = () => sparkle.remove();
+    }
+
+    document.addEventListener("mousemove", (e) => {
+      createSparkle(e.pageX, e.pageY);
+    });
   </script>
 </body>
 </html>
