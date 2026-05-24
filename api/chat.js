@@ -53,3 +53,16 @@ export default async function handler(req, res) {
     });
   }
 }
+// Galaxy Mode button
+document.getElementById("galaxy-btn").addEventListener("click", () => {
+  alert("🌌 Galaxy Mode activated! Starfield animations are now enabled.");
+  // Example: toggle a CSS class or trigger extra effects
+  document.body.classList.toggle("galaxy-mode");
+});
+
+// View Stats button
+document.getElementById("stats-btn").addEventListener("click", () => {
+  alert("📊 Opening Analytics Dashboard...");
+  // Example: show a stats panel or redirect
+  showView("chat"); // or replace with your analytics view
+});
