@@ -68,22 +68,13 @@ async function sendToAI() {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Galaxy Mode button
-document.getElementById("galaxy-btn").addEventListener("click", () => {
-  document.body.classList.toggle("galaxy-mode");
-  alert("🌌 Galaxy Mode toggled!");
-});
-
-// View Stats button
-document.getElementById("stats-btn").addEventListener("click", () => {
-  showView("chat"); // Replace with analytics view if you add one
-  alert("📊 Opening Analytics Dashboard...");
-});
-// Galaxy Mode starfield
+// Galaxy Mode button + starfield
 document.getElementById("galaxy-btn").addEventListener("click", () => {
   document.body.classList.toggle("galaxy-mode");
 
   if (document.body.classList.contains("galaxy-mode")) {
+    alert("🌌 Galaxy Mode ON!");
+
     // Create starfield
     for (let i = 0; i < 150; i++) {
       const star = document.createElement("div");
@@ -94,7 +85,14 @@ document.getElementById("galaxy-btn").addEventListener("click", () => {
       document.body.appendChild(star);
     }
   } else {
+    alert("🌌 Galaxy Mode OFF!");
     // Remove stars when Galaxy Mode is off
     document.querySelectorAll(".star").forEach(star => star.remove());
   }
+});
+
+// View Stats button
+document.getElementById("stats-btn").addEventListener("click", () => {
+  showView("chat"); // Replace with analytics view if you add one
+  alert("📊 Opening Analytics Dashboard...");
 });
