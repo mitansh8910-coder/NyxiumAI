@@ -7,21 +7,19 @@ export default async function handler(req, res) {
     const userMsg = req.body.message;
 
     const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        { role: "user", parts: [{ text: userMsg }] }
-      ]
-    })
-  }
-);
-    
-    const data = await response.json();
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            { role: "user", parts: [{ text: userMsg }] }
+          ]
+        })
+      }
+    );
 
-    // Debug log to see what Gemini sends back
+    const data = await response.json();
     console.log("Gemini raw response:", JSON.stringify(data, null, 2));
 
     const reply =
