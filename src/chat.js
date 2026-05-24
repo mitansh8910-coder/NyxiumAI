@@ -79,3 +79,22 @@ document.getElementById("stats-btn").addEventListener("click", () => {
   showView("chat"); // Replace with analytics view if you add one
   alert("📊 Opening Analytics Dashboard...");
 });
+// Galaxy Mode starfield
+document.getElementById("galaxy-btn").addEventListener("click", () => {
+  document.body.classList.toggle("galaxy-mode");
+
+  if (document.body.classList.contains("galaxy-mode")) {
+    // Create starfield
+    for (let i = 0; i < 150; i++) {
+      const star = document.createElement("div");
+      star.className = "star";
+      star.style.top = Math.random() * window.innerHeight + "px";
+      star.style.left = Math.random() * window.innerWidth + "px";
+      star.style.animationDuration = (Math.random() * 3 + 2) + "s";
+      document.body.appendChild(star);
+    }
+  } else {
+    // Remove stars when Galaxy Mode is off
+    document.querySelectorAll(".star").forEach(star => star.remove());
+  }
+});
