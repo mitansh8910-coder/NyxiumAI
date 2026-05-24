@@ -277,3 +277,15 @@ document.addEventListener("mousemove", (e) => {
   lastY = e.pageY;
   lastTime = now;
 });
+app.post("/api/chat", async (req, res) => {
+  try {
+    const reply = await aiModel(req.body.message);
+    res.json({ reply });
+  } catch (err) {
+    if (err.message.includes("quota")) {
+      res.status(429).json({ error: "Quota exceeded. Please wait or add more credits." });
+    } else {
+      res.status(500).json({ error: "Nyxium AI servers are overloaded please try again. Try again!" });
+    }
+  }
+});
