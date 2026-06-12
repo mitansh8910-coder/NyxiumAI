@@ -28,13 +28,14 @@ body {
     pointer-events: none;
 }
 
-/* Sidebar Styling */
+/* Sidebar Styling - Ensure high z-index for clickability */
 aside {
     background: rgba(15, 17, 26, 0.85);
     backdrop-filter: blur(15px);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
-    z-index: 20;
+    z-index: 50; 
     position: relative;
+    height: 100vh;
 }
 
 /* Glassmorphism Cards */
@@ -98,10 +99,12 @@ code {
 .view { display: none; }
 .view.active { display: block; }
 
-/* Buttons */
+/* Buttons - Ensure high z-index and pointer-events enabled */
 button {
     cursor: pointer;
     transition: transform 0.2s, background 0.2s;
+    position: relative;
+    z-index: 60;
 }
 
 button:active {
