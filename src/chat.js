@@ -4,13 +4,65 @@ function showView(v) {
   document.getElementById(v).classList.add('active');
 }
 
+// --- NEW: Galaxy Canvas Logic ---
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+let isGalaxyActive = false;
+
+function initStars() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = Array.from({ length: 150 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 1.5,
+    speed: Math.random() * 0.5 + 0.1
+  }));
+}
+
+function animateStars() {
+  if (!isGalaxyActive) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'white';
+  stars.forEach(s => {
+    s.y -= s.speed;
+    if (s.y < 0) s.y = canvas.height;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  requestAnimationFrame(animateStars);
+}
+
+// Galaxy Mode button
+document.getElementById("galaxy-btn").addEventListener("click", () => {
+  isGalaxyActive = !isGalaxyActive;
+  document.body.classList.toggle("galaxy-mode");
+  if (isGalaxyActive) {
+    initStars();
+    animateStars();
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+});
+
+// --- NEW: Cursor Star Effect ---
+document.addEventListener('mousemove', (e) => {
+  const star = document.createElement('div');
+  star.className = 'cursor-star';
+  star.style.left = e.pageX + 'px';
+  star.style.top = e.pageY + 'px';
+  document.body.appendChild(star);
+  setTimeout(() => star.remove(), 800);
+});
+
 // Chat handler with Nyxium AI identity
 async function sendToAI() {
   const input = document.getElementById('user-input');
   const chatBox = document.getElementById('chat-messages');
   if (!input.value) return;
 
-  // User message bubble
   chatBox.innerHTML += `
     <div class="flex gap-4 flex-row-reverse">
       <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
@@ -21,7 +73,6 @@ async function sendToAI() {
   const userMsg = input.value;
   input.value = '';
 
-  // Typing indicator
   const typingId = "typing-" + Date.now();
   chatBox.innerHTML += `
     <div id="${typingId}" class="flex gap-4">
@@ -31,7 +82,6 @@ async function sendToAI() {
   `;
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  // Call backend (Vercel function)
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -39,11 +89,8 @@ async function sendToAI() {
       body: JSON.stringify({ message: userMsg })
     });
     const data = await res.json();
-
-    // Remove typing indicator
     document.getElementById(typingId)?.remove();
 
-    // AI response bubble
     chatBox.innerHTML += `
       <div class="flex gap-4">
         <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
@@ -58,41 +105,9 @@ async function sendToAI() {
     chatBox.innerHTML += `
       <div class="flex gap-4">
         <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-xs">⚠️</div>
-        <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-red-400">
-          Nyxium AI Error: ${err.message}
-        </div>
+        <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-red-400">Nyxium AI Error: ${err.message}</div>
       </div>
     `;
   }
-
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-
-// Galaxy Mode button + starfield
-document.getElementById("galaxy-btn").addEventListener("click", () => {
-  document.body.classList.toggle("galaxy-mode");
-
-  if (document.body.classList.contains("galaxy-mode")) {
-    alert("🌌 Galaxy Mode ON!");
-
-    // Create starfield
-    for (let i = 0; i < 150; i++) {
-      const star = document.createElement("div");
-      star.className = "star";
-      star.style.top = Math.random() * window.innerHeight + "px";
-      star.style.left = Math.random() * window.innerWidth + "px";
-      star.style.animationDuration = (Math.random() * 3 + 2) + "s";
-      document.body.appendChild(star);
-    }
-  } else {
-    alert("🌌 Galaxy Mode OFF!");
-    // Remove stars when Galaxy Mode is off
-    document.querySelectorAll(".star").forEach(star => star.remove());
-  }
-});
-
-// View Stats button
-document.getElementById("stats-btn").addEventListener("click", () => {
-  showView("chat"); // Replace with analytics view if you add one
-  alert("📊 Opening Analytics Dashboard...");
-});
