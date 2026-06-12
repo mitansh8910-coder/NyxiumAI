@@ -10,9 +10,10 @@
 body {
     background-color: #0f0f12;
     color: #f3f4f6;
-    overflow-x: hidden; /* Prevents horizontal scrollbar */
+    overflow-x: hidden;
     position: relative;
     min-height: 100vh;
+    transition: background 0.8s ease;
 }
 
 /* Galaxy Mode Improvements */
@@ -21,19 +22,20 @@ body.galaxy-mode {
 }
 
 .star {
-    position: fixed; /* Fixed prevents stars from affecting page layout/scroll */
+    position: fixed;
     width: 2px;
     height: 2px;
     background: white;
     border-radius: 50%;
-    pointer-events: none; /* Crucial: clicks pass through stars */
+    pointer-events: none;
     z-index: 0;
-    animation: twinkle 2s infinite alternate;
+    animation: twinkle 3s infinite alternate;
 }
 
 @keyframes twinkle {
-    from { opacity: 0.2; }
-    to { opacity: 1; }
+    0% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.2; transform: scale(1); }
 }
 
 /* Navbar */
@@ -51,8 +53,6 @@ body.galaxy-mode {
     border-bottom: 1px solid #222227;
 }
 
-/* ... [Keep your existing .logo, .nav-links, .btn-nav styles here] ... */
-
 /* Hero Section */
 .hero {
     height: 100vh;
@@ -64,20 +64,20 @@ body.galaxy-mode {
     background: radial-gradient(circle at center, #1a1b26 0%, #0f0f12 100%);
 }
 
-/* ... [Keep your existing hero-content, .highlight, .btn-primary, .btn-secondary styles] ... */
-
-/* Stats Section */
+/* Stats Section (Floating Effect) */
 .stats-section {
     display: flex;
     justify-content: space-around;
     max-width: 1000px;
     margin: -50px auto 80px auto;
-    background: #16161a;
+    background: rgba(22, 22, 26, 0.9);
     padding: 30px;
     border-radius: 12px;
     border: 1px solid #222227;
     position: relative;
     z-index: 10;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    backdrop-filter: blur(5px);
 }
 
 /* Features Grid */
@@ -89,24 +89,31 @@ body.galaxy-mode {
 }
 
 .feature-card {
-    background-color: #16161a;
+    background: rgba(22, 22, 26, 0.7);
     padding: 40px 30px;
-    border-radius: 12px;
-    border: 1px solid #222227;
-    transition: transform 0.3s, border-color 0.3s;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    border-color: #5865F2;
+    box-shadow: 0 10px 30px rgba(88, 101, 242, 0.2);
 }
 
 /* Modern Chat UI Improvements */
 .chat-container {
     max-width: 600px;
     margin: 20px auto;
-    padding: 20px;
+    padding: 25px;
     border: 1px solid #222227;
-    border-radius: 16px;
-    background: #16161a;
+    border-radius: 20px;
+    background: #0f0f12;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* Using margin-bottom for better spacing instead of margin-top */
 .message {
     padding: 12px 16px;
     margin-bottom: 15px; 
@@ -115,7 +122,7 @@ body.galaxy-mode {
 }
 
 .user-message {
-    background: #5865F2; /* Aligned with your Discord brand color */
+    background: #5865F2;
     color: white;
     margin-left: auto;
 }
@@ -124,10 +131,16 @@ body.galaxy-mode {
     background: #1e1e24;
     color: #e5e7eb;
     margin-right: auto;
+    border-left: 4px solid #5865F2;
 }
 
-/* Ensure buttons don't overlap scrollbars */
+/* Buttons */
 button {
     cursor: pointer;
     z-index: 5;
+    transition: transform 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
 }
