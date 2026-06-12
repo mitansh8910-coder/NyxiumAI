@@ -12,9 +12,10 @@ body {
     color: #f3f4f6;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background 0.8s ease;
 }
 
-/* Starfield Canvas */
+/* Starfield Canvas Background */
 #starfield {
     position: fixed;
     top: 0;
@@ -30,6 +31,7 @@ aside {
     background: rgba(15, 17, 26, 0.85);
     backdrop-filter: blur(15px);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 20;
 }
 
 /* Glassmorphism Cards */
@@ -82,7 +84,10 @@ code {
     font-family: monospace;
 }
 
-/* Buttons */
+/* General Layout Utilities */
+.view { display: none; }
+.view.active { display: block; }
+
 button {
     cursor: pointer;
     transition: transform 0.2s, background 0.2s;
