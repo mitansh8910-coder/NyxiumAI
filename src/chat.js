@@ -2,6 +2,7 @@
 function showView(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
   document.getElementById(v).classList.add('active');
+  if (v === 'chat') showRandomTip();
 }
 
 // --- Galaxy Background Animation ---
@@ -36,11 +37,10 @@ function animateStars() {
     ctx.fill();
   });
   
-  ctx.shadowBlur = 0; // Reset for performance
+  ctx.shadowBlur = 0;
   requestAnimationFrame(animateStars);
 }
 
-// Initialize Background
 window.addEventListener('resize', initStars);
 initStars();
 animateStars();
@@ -52,9 +52,33 @@ document.addEventListener('mousemove', (e) => {
   star.style.left = e.pageX + 'px';
   star.style.top = e.pageY + 'px';
   document.body.appendChild(star);
-  // Remove after animation finishes
   setTimeout(() => star.remove(), 800);
 });
+
+// --- Nyxium AI Tip System ---
+const nyxiumTips = [
+  "Invite Nyxium AI bot to your server for more searches and drawing images!",
+  "Use /draw to generate high-quality AI imagery directly in Discord.",
+  "Check system latency with /ping to ensure top performance.",
+  "Need help? Type /help to see all available terminal operations.",
+  "Nyxium Premium users get priority response speeds—consider upgrading!"
+];
+
+function showRandomTip() {
+  const tipBox = document.getElementById('ai-tip-box');
+  if (tipBox) {
+    const randomTip = nyxiumTips[Math.floor(Math.random() * nyxiumTips.length)];
+    tipBox.innerHTML = `
+      <div class="p-4 bg-indigo-900/30 border border-indigo-500/30 rounded-xl text-sm flex gap-3 items-start mb-6">
+        <span class="text-xl">✨</span>
+        <div>
+          <strong class="text-indigo-300">Nyxium AI Tip:</strong>
+          <p class="text-gray-300 mt-1">${randomTip}</p>
+        </div>
+      </div>
+    `;
+  }
+}
 
 // --- AI Chat Logic ---
 async function sendToAI() {
@@ -62,7 +86,6 @@ async function sendToAI() {
   const chatBox = document.getElementById('chat-messages');
   if (!input.value) return;
 
-  // Add User Message
   chatBox.innerHTML += `
     <div class="flex gap-4 flex-row-reverse mb-4">
       <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
@@ -73,7 +96,6 @@ async function sendToAI() {
   const userMsg = input.value;
   input.value = '';
 
-  // Add Typing Indicator
   const typingId = "typing-" + Date.now();
   chatBox.innerHTML += `
     <div id="${typingId}" class="flex gap-4 mb-4">
@@ -83,7 +105,6 @@ async function sendToAI() {
   `;
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  // Fetch AI Response
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
