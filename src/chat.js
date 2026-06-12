@@ -86,6 +86,7 @@ async function sendToAI() {
   const chatBox = document.getElementById('chat-messages');
   if (!input.value) return;
 
+  // Add User Message
   chatBox.innerHTML += `
     <div class="flex gap-4 flex-row-reverse mb-4">
       <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
@@ -96,6 +97,7 @@ async function sendToAI() {
   const userMsg = input.value;
   input.value = '';
 
+  // Add Typing Indicator
   const typingId = "typing-" + Date.now();
   chatBox.innerHTML += `
     <div id="${typingId}" class="flex gap-4 mb-4">
@@ -105,6 +107,7 @@ async function sendToAI() {
   `;
   chatBox.scrollTop = chatBox.scrollHeight;
 
+  // Fetch AI Response
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
