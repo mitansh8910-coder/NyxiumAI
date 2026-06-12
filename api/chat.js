@@ -16,13 +16,17 @@ export default async function handler(req, res) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-    // Using v1beta endpoint which supports gemini-1.5-flash
+    // Using gemini-2.5-flash which supports system instructions
     const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // Force bullet point format using system instructions
+          system_instruction: {
+            parts: [{ text: "You are a helpful AI assistant. Always provide your responses in a concise bullet-point format." }]
+          },
           contents: [{ role: "user", parts: [{ text: message }] }]
         }),
         signal: controller.signal
