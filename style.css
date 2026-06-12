@@ -4,15 +4,15 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Inter', -apple-system, sans-serif;
-    scroll-behavior: smooth;
 }
 
 body {
-    background: radial-gradient(circle at center, #0b0033, #000000);
+    /* Deep Galactic Background Gradient */
+    background: radial-gradient(circle at 70% 30%, #1e0033 0%, #050010 100%);
     color: #f3f4f6;
     min-height: 100vh;
     overflow-x: hidden;
-    transition: background 0.8s ease;
+    margin: 0;
 }
 
 /* Starfield Canvas Background */
@@ -22,7 +22,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 0;
+    z-index: 0; /* Keeps stars behind all UI components */
     pointer-events: none;
 }
 
@@ -32,6 +32,7 @@ aside {
     backdrop-filter: blur(15px);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     z-index: 20;
+    position: relative;
 }
 
 /* Glassmorphism Cards */
@@ -42,6 +43,8 @@ aside {
     border-radius: 16px;
     padding: 24px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 10;
 }
 
 .glass-card:hover {
@@ -54,8 +57,7 @@ aside {
 #chat-messages {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    scrollbar-width: thin;
-    scrollbar-color: #374151 #111827;
+    border-radius: 12px;
 }
 
 /* Cursor Star Effect */
@@ -84,10 +86,11 @@ code {
     font-family: monospace;
 }
 
-/* General Layout Utilities */
+/* View Control */
 .view { display: none; }
 .view.active { display: block; }
 
+/* General Button Styles */
 button {
     cursor: pointer;
     transition: transform 0.2s, background 0.2s;
