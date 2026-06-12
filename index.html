@@ -1,86 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nyxium AI Dashboard</title>
-    <style>
-        body { 
-            background-color: #0d0216; 
-            color: white; 
-            font-family: sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-        }
-        .dashboard-container { 
-            display: flex; 
-            gap: 20px; 
-            padding: 20px 0; 
-        }
-        .card { 
-            background: #1a1a2e; 
-            padding: 20px; 
-            border-radius: 10px; 
-            width: 300px; 
-        }
-        .footer { 
-            margin-top: 50px; 
-            text-align: center; 
-            border-top: 1px solid #333; 
-            padding-top: 20px; 
-            color: #888; 
-        }
-        .footer a { 
-            color: #bbb; 
-            text-decoration: none; 
-            margin: 0 10px; 
-        }
-        /* New button styles */
-        .btn {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            margin-right: 5px;
-        }
-        .btn-discord { background-color: #7289da; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nyxium AI Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .glass-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 24px; border-radius: 1rem; }
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
 </head>
-<body>
+<body class="flex h-screen overflow-hidden bg-[#0d0216] text-white">
+  
+  <canvas id="starfield" class="absolute inset-0"></canvas>
 
-    <h1>Dashboard</h1>
+  <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-50 bg-[#0d0216]/80 backdrop-blur-md">
+    <h1 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h1>
+    <nav class="space-y-4">
+      <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold transition hover:bg-white/10">🏠 Dashboard</button>
+      <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">💬 AI Chat</button>
+      <button onclick="window.open('https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands', '_blank')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+        <span>🤖</span> Invite Bot
+      </button>
+    </nav>
+  </aside>
 
-    <!-- Dashboard Content -->
-    <div class="dashboard-container">
-        <div class="card">
-            <h3>/ask Command</h3>
-            <p>Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
-            <a href="/ask" class="btn">Try Asking AI</a>
-            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-discord">Invite Bot</a>
+  <main class="flex-1 p-8 overflow-y-auto z-10">
+    
+    <div id="dashboard" class="view active">
+      <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🧠</div>
+          <h3 class="font-bold text-xl mb-2">/ask Command</h3>
+          <p class="text-gray-400 text-sm mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
+          <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition">Try Asking AI</button>
         </div>
-        <div class="card">
-            <h3>Galaxy Mode</h3>
-            <p>Immersive starfield animations and cosmic UI themes.</p>
+
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🌌</div>
+          <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
+          <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes.</p>
+          <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Active</button>
         </div>
-        <div class="card">
-            <h3>Join Our Server</h3>
-            <p>Connect with the Nyxium community and get 24/7 support.</p>
-            <a href="https://discord.gg/PBnxckkCzf" target="_blank" class="btn btn-discord">Join Community</a>
+
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🚀</div>
+          <h3 class="font-bold text-xl mb-2">Join Our Server</h3>
+          <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community and get 24/7 support.</p>
+          <button onclick="window.open('https://discord.gg/PBnxckkCzf', '_blank')" class="w-full py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-500 transition">Join Community</button>
         </div>
+      </div>
+
+      <footer class="mt-20 pt-10 border-t border-white/10 text-center text-gray-500 text-sm">
+        <p class="mb-2">&copy; 2026 Nyxium AI. All rights reserved.</p>
+        <a href="privacy.html" class="hover:text-white">Privacy Policy</a> | 
+        <a href="terms.html" class="hover:text-white">Terms of Service</a>
+      </footer>
     </div>
 
-    <!-- Footer with policy links -->
-    <footer class="footer">
-        <p>&copy; 2026 Nyxium AI. All rights reserved.</p>
-        <div>
-            <a href="privacy.html">Privacy Policy</a> | 
-            <a href="terms.html">Terms of Service</a>
-        </div>
-    </footer>
+    <div id="chat" class="view">
+      </div>
+  </main>
 
+  <script src="src/chat.js"></script>
 </body>
 </html>
