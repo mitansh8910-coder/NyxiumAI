@@ -5,87 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nyxium AI Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .view { display: none; }
-    .view.active { display: block; }
-    body { background: radial-gradient(circle at center, #0b0033, #000000); color: white; }
-    .glass-card { background: rgba(18, 23, 33, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); transition: transform 0.3s; }
-    .glass-card:hover { transform: translateY(-5px); border-color: #5865F2; }
-    #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body class="flex h-screen overflow-hidden">
-
   <canvas id="starfield"></canvas>
 
-  <aside class="w-64 bg-black/40 border-r border-white/10 p-6 flex flex-col z-20">
-    <h2 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h2>
+  <!-- Sidebar -->
+  <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-20">
+    <h1 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h1>
     <nav class="space-y-4">
-      <button onclick="showView('dashboard')" class="block w-full text-left p-2 rounded hover:bg-white/10">🏠 Dashboard</button>
-      <button onclick="showView('chat')" class="block w-full text-left p-2 rounded hover:bg-white/10">💬 AI Chat</button>
-      <div class="pt-4 mt-4 border-t border-white/10 text-xs text-gray-500 uppercase font-bold">Legal</div>
-      <a href="privacy.html" class="block p-2 text-gray-400 hover:text-white">🛡️ Privacy Policy</a>
-      <a href="terms.html" class="block p-2 text-gray-400 hover:text-white">📜 Terms of Service</a>
+      <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold">🏠 Dashboard</button>
+      <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5">💬 AI Chat</button>
+      <button class="w-full text-left p-3 rounded-lg hover:bg-white/5">🤖 Invite Bot</button>
     </nav>
-    <button class="mt-auto w-full py-2 bg-indigo-600 rounded-lg font-bold">🤖 Invite Bot</button>
   </aside>
 
+  <!-- Main Content -->
   <main class="flex-1 p-8 overflow-y-auto z-10">
     <div id="dashboard" class="view active">
-      <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
+      <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        <div class="glass-card p-6 rounded-xl">
-          <h3 class="font-bold text-lg mb-2">/ask Command</h3>
-          <p class="text-sm text-gray-400 mb-4">Leverage Gemini 1.5 Flash for instant AI responses.</p>
-          <button onclick="showView('chat')" class="w-full py-2 bg-blue-600 rounded">Try Asking AI</button>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Card: /ask -->
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🧠</div>
+          <h3 class="font-bold text-xl mb-2">/ask Command</h3>
+          <p class="text-gray-400 text-sm mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
+          <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold">Try Asking AI</button>
         </div>
-        <div class="glass-card p-6 rounded-xl">
-          <h3 class="font-bold text-lg mb-2">/draw Command</h3>
-          <p class="text-sm text-gray-400 mb-4">Turn your imagination into reality using Flux/Imagen.</p>
-          <div class="w-full py-2 bg-gray-800 text-center rounded opacity-50">Available in Discord</div>
-        </div>
-        <div class="glass-card p-6 rounded-xl">
-          <h3 class="font-bold text-lg mb-2">Galaxy Mode</h3>
-          <p class="text-sm text-gray-400 mb-4">Enable immersive starfield animations.</p>
-          <button id="galaxy-btn" class="w-full py-2 bg-purple-700 rounded">Activate Galaxy</button>
-        </div>
-      </div>
 
-      <h2 class="text-xl font-bold mb-4">Available Operations</h2>
-      <div class="glass-card p-6 rounded-xl grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div><code>/ask</code> - Query Engine</div>
-        <div><code>/draw</code> - Render Art</div>
-        <div><code>/edit</code> - Multi-modal AI</div>
-        <div><code>/create_video</code> - Animations</div>
-        <div><code>/ping</code> - Latency Check</div>
-        <div><code>/feedback</code> - Support</div>
-      </div>
-    </div>
+        <!-- Card: /draw -->
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🎨</div>
+          <h3 class="font-bold text-xl mb-2">/draw Command</h3>
+          <p class="text-gray-400 text-sm mb-6">Turn your imagination into reality. Use /draw for high-quality imagery.</p>
+          <button class="w-full py-3 bg-white/5 rounded-xl text-gray-500 cursor-not-allowed">Available in Discord</button>
+        </div>
 
-    <div id="chat" class="view">
-      <h1 class="text-3xl font-bold mb-6">AI Chat</h1>
-      <div id="chat-messages" class="h-96 overflow-y-auto p-4 bg-black/20 rounded-lg mb-4 border border-white/5"></div>
-      <div class="flex gap-2">
-        <input id="user-input" type="text" class="flex-1 p-3 rounded-lg bg-black/40 border border-white/10" placeholder="Type command...">
-        <button onclick="sendToAI()" class="px-6 py-2 bg-indigo-600 rounded-lg">Send</button>
+        <!-- Card: Galaxy Mode -->
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🌌</div>
+          <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
+          <p class="text-gray-400 text-sm mb-6">Enable immersive starfield animations and cosmic UI themes.</p>
+          <button id="galaxy-btn" class="w-full py-3 bg-indigo-600 rounded-xl font-bold">Activate Galaxy</button>
+        </div>
+
+        <!-- Card: Server Tools -->
+        <div class="glass-card">
+          <div class="text-3xl mb-4">🔧</div>
+          <h3 class="font-bold text-xl mb-2">Server Tools</h3>
+          <p class="text-gray-400 text-sm">Manage roles, automate moderation, and customize commands.</p>
+        </div>
+
+        <!-- Card: Analytics -->
+        <div class="glass-card">
+          <div class="text-3xl mb-4">📊</div>
+          <h3 class="font-bold text-xl mb-2">Analytics</h3>
+          <p class="text-gray-400 text-sm">Track usage, monitor AI queries, and visualize activity.</p>
+        </div>
       </div>
     </div>
   </main>
 
-  <script>
-    function showView(id) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-    
-    function sendToAI() {
-      const input = document.getElementById('user-input');
-      if (input.value) {
-        document.getElementById('chat-messages').innerHTML += `<div class="p-3 bg-indigo-600/20 rounded my-2">${input.value}</div>`;
-        input.value = '';
-      }
-    }
-  </script>
+  <script src="src/chat.js"></script>
 </body>
 </html>
