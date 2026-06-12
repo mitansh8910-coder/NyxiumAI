@@ -8,33 +8,30 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="flex h-screen overflow-hidden">
+  
   <canvas id="starfield"></canvas>
 
-  <!-- Sidebar -->
   <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-20">
     <h1 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h1>
     <nav class="space-y-4">
-      <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold">🏠 Dashboard</button>
-      <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5">💬 AI Chat</button>
-      <button class="w-full text-left p-3 rounded-lg hover:bg-white/5">🤖 Invite Bot</button>
+      <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold transition hover:bg-white/10">🏠 Dashboard</button>
+      <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">💬 AI Chat</button>
+      <button class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">🤖 Invite Bot</button>
     </nav>
   </aside>
 
-  <!-- Main Content -->
   <main class="flex-1 p-8 overflow-y-auto z-10">
+    
     <div id="dashboard" class="view active">
       <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
-      
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Card: /ask -->
         <div class="glass-card">
           <div class="text-3xl mb-4">🧠</div>
           <h3 class="font-bold text-xl mb-2">/ask Command</h3>
           <p class="text-gray-400 text-sm mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
-          <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold">Try Asking AI</button>
+          <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition">Try Asking AI</button>
         </div>
 
-        <!-- Card: /draw -->
         <div class="glass-card">
           <div class="text-3xl mb-4">🎨</div>
           <h3 class="font-bold text-xl mb-2">/draw Command</h3>
@@ -42,27 +39,27 @@
           <button class="w-full py-3 bg-white/5 rounded-xl text-gray-500 cursor-not-allowed">Available in Discord</button>
         </div>
 
-        <!-- Card: Galaxy Mode -->
         <div class="glass-card">
           <div class="text-3xl mb-4">🌌</div>
           <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
           <p class="text-gray-400 text-sm mb-6">Enable immersive starfield animations and cosmic UI themes.</p>
-          <button id="galaxy-btn" class="w-full py-3 bg-indigo-600 rounded-xl font-bold">Activate Galaxy</button>
+          <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Activate Galaxy</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="chat" class="view">
+      <h2 class="text-3xl font-bold mb-6">Nyxium Console</h2>
+      
+      <div id="ai-tip-box"></div>
+
+      <div id="chat-messages" class="h-[50vh] overflow-y-auto p-6 mb-4 space-y-4">
         </div>
 
-        <!-- Card: Server Tools -->
-        <div class="glass-card">
-          <div class="text-3xl mb-4">🔧</div>
-          <h3 class="font-bold text-xl mb-2">Server Tools</h3>
-          <p class="text-gray-400 text-sm">Manage roles, automate moderation, and customize commands.</p>
-        </div>
-
-        <!-- Card: Analytics -->
-        <div class="glass-card">
-          <div class="text-3xl mb-4">📊</div>
-          <h3 class="font-bold text-xl mb-2">Analytics</h3>
-          <p class="text-gray-400 text-sm">Track usage, monitor AI queries, and visualize activity.</p>
-        </div>
+      <div class="flex gap-4">
+        <input id="user-input" type="text" placeholder="Ask Nyxium something..." 
+               class="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-indigo-500">
+        <button onclick="sendToAI()" class="px-8 py-4 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Send</button>
       </div>
     </div>
   </main>
