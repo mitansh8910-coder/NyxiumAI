@@ -7,7 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css">
   <style>
-    .glass-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 24px; border-radius: 1rem; }
     .view { display: none; }
     .view.active { display: block; }
   </style>
@@ -33,21 +32,21 @@
       <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <div class="glass-card">
+        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div class="text-3xl mb-4">🧠</div>
           <h3 class="font-bold text-xl mb-2">/ask Command</h3>
           <p class="text-gray-400 text-sm mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
           <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition">Try Asking AI</button>
         </div>
 
-        <div class="glass-card">
+        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div class="text-3xl mb-4">🌌</div>
           <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
           <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes.</p>
           <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Active</button>
         </div>
 
-        <div class="glass-card">
+        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div class="text-3xl mb-4">🚀</div>
           <h3 class="font-bold text-xl mb-2">Join Our Server</h3>
           <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community and get 24/7 support.</p>
@@ -57,13 +56,20 @@
 
       <footer class="mt-20 pt-10 border-t border-white/10 text-center text-gray-500 text-sm">
         <p class="mb-2">&copy; 2026 Nyxium AI. All rights reserved.</p>
-        <a href="privacy.html" class="hover:text-white">Privacy Policy</a> | 
-        <a href="terms.html" class="hover:text-white">Terms of Service</a>
+        <a href="privacy.html" class="hover:text-indigo-400">Privacy Policy</a> | 
+        <a href="terms.html" class="hover:text-indigo-400">Terms of Service</a>
       </footer>
     </div>
 
     <div id="chat" class="view">
+      <h2 class="text-3xl font-bold mb-6">Nyxium Console</h2>
+      <div id="ai-tip-box"></div>
+      <div id="chat-messages" class="h-[50vh] overflow-y-auto p-6 mb-4 space-y-4 bg-white/5 rounded-xl border border-white/10"></div>
+      <div class="flex gap-4">
+        <input id="user-input" type="text" placeholder="Ask Nyxium something..." class="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-indigo-500">
+        <button onclick="sendToAI()" class="px-8 py-4 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Send</button>
       </div>
+    </div>
   </main>
 
   <script src="src/chat.js"></script>
