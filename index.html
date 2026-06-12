@@ -11,12 +11,14 @@
   
   <canvas id="starfield"></canvas>
 
-  <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-20">
+  <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-50">
     <h1 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h1>
     <nav class="space-y-4">
       <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold transition hover:bg-white/10">🏠 Dashboard</button>
       <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">💬 AI Chat</button>
-      <button class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">🤖 Invite Bot</button>
+      <button onclick="window.open('YOUR_DISCORD_INVITE_LINK', '_blank')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+        <span>🤖</span> Invite Bot
+      </button>
     </nav>
   </aside>
 
@@ -25,6 +27,7 @@
     <div id="dashboard" class="view active">
       <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
         <div class="glass-card">
           <div class="text-3xl mb-4">🧠</div>
           <h3 class="font-bold text-xl mb-2">/ask Command</h3>
@@ -33,17 +36,17 @@
         </div>
 
         <div class="glass-card">
-          <div class="text-3xl mb-4">🎨</div>
-          <h3 class="font-bold text-xl mb-2">/draw Command</h3>
-          <p class="text-gray-400 text-sm mb-6">Turn your imagination into reality. Use /draw for high-quality imagery.</p>
-          <button class="w-full py-3 bg-white/5 rounded-xl text-gray-500 cursor-not-allowed">Available in Discord</button>
+          <div class="text-3xl mb-4">🌌</div>
+          <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
+          <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes.</p>
+          <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Active</button>
         </div>
 
         <div class="glass-card">
-          <div class="text-3xl mb-4">🌌</div>
-          <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
-          <p class="text-gray-400 text-sm mb-6">Enable immersive starfield animations and cosmic UI themes.</p>
-          <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Activate Galaxy</button>
+          <div class="text-3xl mb-4">🚀</div>
+          <h3 class="font-bold text-xl mb-2">Join Our Server</h3>
+          <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community and get 24/7 support.</p>
+          <button onclick="window.open('YOUR_DISCORD_INVITE_LINK', '_blank')" class="w-full py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-500 transition">Join Community</button>
         </div>
       </div>
     </div>
