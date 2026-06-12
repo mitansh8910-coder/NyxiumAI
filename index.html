@@ -5,40 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nyxium AI Dashboard</title>
     <style>
-        body { background-color: #0d0216; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
-        .dashboard-container { display: flex; gap: 20px; padding: 20px 0; }
-        .card { background: #1a1a2e; padding: 20px; border-radius: 10px; width: 300px; }
-        .btn { display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #7289da; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .footer { margin-top: 50px; text-align: center; border-top: 1px solid #333; padding-top: 20px; color: #888; }
-        .footer a { color: #bbb; text-decoration: none; margin: 0 10px; }
+        body { 
+            background-color: #0d0216; 
+            color: white; 
+            font-family: sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .dashboard-container { 
+            display: flex; 
+            gap: 20px; 
+            padding: 20px 0; 
+        }
+        .card { 
+            background: #1a1a2e; 
+            padding: 20px; 
+            border-radius: 10px; 
+            width: 300px; 
+        }
+        .footer { 
+            margin-top: 50px; 
+            text-align: center; 
+            border-top: 1px solid #333; 
+            padding-top: 20px; 
+            color: #888; 
+        }
+        .footer a { 
+            color: #bbb; 
+            text-decoration: none; 
+            margin: 0 10px; 
+        }
+        /* New button styles */
+        .btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            margin-right: 5px;
+        }
+        .btn-discord { background-color: #7289da; }
     </style>
 </head>
 <body>
 
     <h1>Dashboard</h1>
 
+    <!-- Dashboard Content -->
     <div class="dashboard-container">
-        <!-- /ask Command Card -->
         <div class="card">
             <h3>/ask Command</h3>
             <p>Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
-            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn">Invite Bot</a>
+            <a href="/ask" class="btn">Try Asking AI</a>
+            <a href="https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands" target="_blank" class="btn btn-discord">Invite Bot</a>
         </div>
-        
-        <!-- Galaxy Mode Card -->
         <div class="card">
             <h3>Galaxy Mode</h3>
             <p>Immersive starfield animations and cosmic UI themes.</p>
         </div>
-
-        <!-- Join Our Server Card -->
         <div class="card">
             <h3>Join Our Server</h3>
             <p>Connect with the Nyxium community and get 24/7 support.</p>
-            <a href="https://discord.gg/PBnxckkCzf" target="_blank" class="btn">Join Community</a>
+            <a href="https://discord.gg/PBnxckkCzf" target="_blank" class="btn btn-discord">Join Community</a>
         </div>
     </div>
 
+    <!-- Footer with policy links -->
     <footer class="footer">
         <p>&copy; 2026 Nyxium AI. All rights reserved.</p>
         <div>
