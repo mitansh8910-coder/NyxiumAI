@@ -1,4 +1,68 @@
-<!-- AI Chat View with New Command Utilities Integration -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nyxium AI Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-[#0d0216] text-white">
+  
+  <canvas id="starfield" class="absolute inset-0"></canvas>
+
+  <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-50 bg-[#0d0216]/80 backdrop-blur-md">
+    <h1 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h1>
+    <nav class="space-y-4">
+      <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold transition hover:bg-white/10">🏠 Dashboard</button>
+      <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">💬 AI Chat</button>
+      <button onclick="window.open('https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands', '_blank')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
+        <span>🤖</span> Invite Bot
+      </button>
+    </nav>
+  </aside>
+
+  <main class="flex-1 p-8 overflow-y-auto z-10">
+    
+    <!-- DASHBOARD VIEW (This matches your beautiful layout in image_bb40e7.png) -->
+    <div id="dashboard" class="view active">
+      <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
+          <div class="text-3xl mb-4">🧠</div>
+          <h3 class="font-bold text-xl mb-2">/ask Command</h3>
+          <p class="text-gray-400 text-sm mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
+          <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition">Try Asking AI</button>
+        </div>
+
+        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
+          <div class="text-3xl mb-4">🌌</div>
+          <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
+          <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes.</p>
+          <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Active</button>
+        </div>
+
+        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
+          <div class="text-3xl mb-4">🚀</div>
+          <h3 class="font-bold text-xl mb-2">Join Our Server</h3>
+          <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community and get 24/7 support.</p>
+          <button onclick="window.open('https://discord.gg/PBnxckkCzf', '_blank')" class="w-full py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-500 transition">Join Community</button>
+        </div>
+      </div>
+
+      <footer class="mt-20 pt-10 border-t border-white/10 text-center text-gray-500 text-sm">
+        <p class="mb-2">&copy; 2026 Nyxium AI. All rights reserved.</p>
+        <a href="privacy.html" class="hover:text-indigo-400">Privacy Policy</a> | 
+        <a href="terms.html" class="hover:text-indigo-400">Terms of Service</a>
+      </footer>
+    </div>
+
+    <!-- AI CHAT VIEW (With the clean commands, alignment, and avatar integrated) -->
     <div id="chat" class="view">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-6">
@@ -11,7 +75,7 @@
           </div>
         </div>
 
-        <!-- NEW: Action Commands Toolbar -->
+        <!-- Action Commands Toolbar -->
         <div class="flex items-center gap-3 bg-white/5 border border-white/10 p-2 rounded-xl self-start md:self-auto">
           <button onclick="executeConsoleCommand('/clear')" class="px-3 py-1.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition flex items-center gap-1.5 border border-red-500/20">
             🗑️ /clear
@@ -30,3 +94,14 @@
         <button onclick="sendToAI()" class="px-8 py-4 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Send</button>
       </div>
     </div>
+  </main>
+
+  <script>
+    function showView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+    }
+  </script>
+  <script src="src/chat.js"></script>
+</body>
+</html>
