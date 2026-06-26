@@ -110,3 +110,44 @@ button {
 button:active {
     transform: scale(0.98);
 }
+
+/* ==========================================================================
+   NYXIUM EMOTIONAL ENGINE SECTOR (NEW ADDITIONS)
+   ========================================================================== */
+
+/* Core Layout Definition for the Avatar Frame */
+.emoji-avatar {
+    font-size: 3.5rem;
+    user-select: none;
+    display: inline-block;
+    /* Spring physics interpolation for frame changes */
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Continuous Idle Rhythm Animation while awaiting prompt delivery */
+.idle-pulse {
+    animation: slowCosmicBreathing 4s infinite ease-in-out;
+}
+
+@keyframes slowCosmicBreathing {
+    0% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.04) translateY(-2px); }
+    100% { transform: scale(1) translateY(0); }
+}
+
+/* Instant physics pop triggered during programmatic transition frame updates */
+.pop-animation {
+    animation: avatarFramePop 0.22s ease-out;
+}
+
+@keyframes avatarFramePop {
+    0% { transform: scale(0.78); }
+    45% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+}
+
+/* Smooth scaling and filter hover pop when cursor targets the avatar frame zone */
+#ai-face:hover {
+    transform: scale(1.1) rotate(4deg);
+    filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.5));
+}
