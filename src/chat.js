@@ -111,7 +111,6 @@ function transitionTo(targetEmotion) {
   const frames = emotionTransitions[routeKey] || getDirectRoute(currentEmotion, targetEmotion);
   let currentFrame = 0;
 
-  // Manage UI status labels cleanly
   if (statusElement) {
     if (targetEmotion === 'THINKING') statusElement.innerText = "Status: Thinking...";
     else if (targetEmotion === 'SURPRISED' || targetEmotion === 'ANGRY') statusElement.innerText = "Status: Offended";
@@ -122,7 +121,7 @@ function transitionTo(targetEmotion) {
   function playNextFrame() {
     if (currentFrame < frames.length) {
       faceElement.classList.remove('pop-animation');
-      void faceElement.offsetWidth; // Force element reflow
+      void faceElement.offsetWidth;
       faceElement.classList.add('pop-animation');
 
       faceElement.innerText = frames[currentFrame];
@@ -144,7 +143,7 @@ function executeConsoleCommand(cmdName) {
   }
 }
 
-// --- AI Chat Logic ---
+// --- AI Chat Logic (Smart Hybrid API + Keyless Fallback Engine) ---
 async function sendToAI() {
   const input = document.getElementById('user-input');
   const chatBox = document.getElementById('chat-messages');
@@ -162,13 +161,11 @@ async function sendToAI() {
       idleTimeout = setTimeout(() => { transitionTo('NEUTRAL'); }, 1500);
       return;
     }
-    // Let other slash variables fall through to backend processing if needed
   }
 
-  // Clear pending returning idle schedules
   clearTimeout(idleTimeout);
 
-  // Add User Message
+  // Add User Message UI
   chatBox.innerHTML += `
     <div class="flex gap-4 flex-row-reverse mb-4">
       <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
@@ -176,10 +173,9 @@ async function sendToAI() {
     </div>
   `;
 
-  // Dynamic Avatar State updates immediately to Thinking
   transitionTo('THINKING');
 
-  // Add Typing Indicator
+  // Add Typing Indicator Container
   const typingId = "typing-" + Date.now();
   chatBox.innerHTML += `
     <div id="${typingId}" class="flex gap-4 mb-4">
@@ -189,52 +185,99 @@ async function sendToAI() {
   `;
   chatBox.scrollTop = chatBox.scrollHeight;
 
-  // Fetch AI Response
+  // --- STEP 1: Attempt Core Backend Key Route ---
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: userMsg })
     });
+
+    // Throw error if key limit exceeded (429) or backend encounters glitch (500)
+    if (!res.ok) {
+      throw new Error(`BACKEND_FAIL_STATUS_${res.status}`);
+    }
+
     const data = await res.json();
     document.getElementById(typingId)?.remove();
 
     if (data.reply) {
-      // Regex pattern captures raw expression metadata tags like "[SURPRISED] hello world"
-      const match = data.reply.match(/^\[([A-Z]+)\]\s*(.*)/s);
-      
-      if (match) {
-        const parsedEmotion = match[1];
-        const cleanContent = match[2];
-
-        // Morph face system sequentially to response state
-        transitionTo(parsedEmotion);
-        typeOutHumanResponse(cleanContent, chatBox);
-      } else {
-        transitionTo('NEUTRAL');
-        typeOutHumanResponse(data.reply, chatBox);
-      }
+      handleEngineResponse(data.reply, chatBox);
     } else {
-      transitionTo('NEUTRAL');
-      typeOutHumanResponse(data.error || "No response received.", chatBox);
+      throw new Error("EMPTY_BACKEND_REPLY");
     }
 
   } catch (err) {
-    document.getElementById(typingId)?.remove();
-    transitionTo('ANGRY');
-    chatBox.innerHTML += `
-      <div class="flex gap-4 mb-4">
-        <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-xs">⚠️</div>
-        <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-red-400">Error: ${err.message}</div>
-      </div>
-    `;
-    chatBox.scrollTop = chatBox.scrollHeight;
+    // --- STEP 2: Automatic Switch to Keyless Browser Client Engine ---
+    console.warn("Primary Node Offline or Key Exhausted. Activating browser mesh array...", err);
     
-    idleTimeout = setTimeout(() => { transitionTo('NEUTRAL'); }, 5000);
+    const statusText = document.querySelector(`#${typingId} .italic`);
+    if (statusText) statusText.innerText = "Connecting to auxiliary core...";
+
+    const promptEngineWrapper = `
+You are Nyxium, a sharp, blunt human chatting casually.
+- CRITICAL: You NEVER use vulgar, abusive, or trash language yourself under any circumstances. Keep your speech completely clean.
+- However, do not act like a polite corporate robot. Use natural expressions and casual phrasing ("Huh,", "Honestly,", "Ugh,").
+
+HANDLING BASIC QUESTIONS:
+If a user asks an incredibly obvious or basic question, react with pure dramatic disbelief, mild exhaustion, or playful intellectual superiority.
+Example: "[SURPRISED] Huh... you don't even know this? It's literally basic. Its full form is Artificial Intelligence."
+
+HANDLING ABUSIVE USERS:
+If a user tries to use abusive language towards you, react with absolute disgust, pure boredom, or a sharp, clean roast about their lack of vocabulary.
+Example: "[ANGRY] Wow... original. Did it take all your brainpower to type that out? Try using actual words next time."
+
+CRITICAL FORMATTING RULE:
+You must always format your response exactly like this so the platform can parse the emotion:
+[EMOTION] Your response text here.
+
+Available emotions to choose from: NEUTRAL, HAPPY, THINKING, SURPRISED, SAD, ANGRY.
+
+User message to respond to: ${userMsg}
+    `.trim();
+
+    try {
+      // Direct browser execution using Puter CDN link
+      const responseText = await puter.ai.chat(promptEngineWrapper, { model: 'gemini-2.5-flash' });
+      document.getElementById(typingId)?.remove();
+
+      if (responseText) {
+        handleEngineResponse(responseText, chatBox);
+      } else {
+        throw new Error("Zero content returned from browser client mesh.");
+      }
+    } catch (fallbackErr) {
+      // Terminal Fallback Failure UI if everything disconnects
+      document.getElementById(typingId)?.remove();
+      transitionTo('ANGRY');
+      chatBox.innerHTML += `
+        <div class="flex gap-4 mb-4">
+          <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-xs">⚠️</div>
+          <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-red-400">All cores offline. Error: ${fallbackErr.message}</div>
+        </div>
+      `;
+      chatBox.scrollTop = chatBox.scrollHeight;
+      idleTimeout = setTimeout(() => { transitionTo('NEUTRAL'); }, 5000);
+    }
   }
 }
 
-// --- NEW: Sassy Character Streaming Sim Effect ---
+// --- Extracted Engine Handler Helper ---
+function handleEngineResponse(text, chatBox) {
+  const match = text.match(/^\[([A-Z]+)\]\s*(.*)/s);
+  
+  if (match) {
+    const parsedEmotion = match[1];
+    const cleanContent = match[2];
+    transitionTo(parsedEmotion);
+    typeOutHumanResponse(cleanContent, chatBox);
+  } else {
+    transitionTo('NEUTRAL');
+    typeOutHumanResponse(text, chatBox);
+  }
+}
+
+// --- Sassy Character Streaming Sim Effect ---
 function typeOutHumanResponse(text, container) {
   const uniqueMsgId = "msg-" + Date.now();
   
@@ -257,11 +300,9 @@ function typeOutHumanResponse(text, container) {
       index++;
       container.scrollTop = container.scrollHeight;
       
-      // Introduces dynamic random character delay cadence mimicking authentic typing
       const variableDelay = Math.random() * 25 + 15;
       setTimeout(processCharacterStream, variableDelay);
     } else {
-      // Return automatically back to chilling baseline setup when finished talking
       idleTimeout = setTimeout(() => {
         transitionTo('NEUTRAL');
       }, 5000);
