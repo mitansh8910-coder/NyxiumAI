@@ -80,7 +80,7 @@ function showRandomTip() {
   }
 }
 
-// --- NEW: Emoji Auto-Transition System Logic ---
+// --- Emoji Auto-Transition System Logic ---
 let currentEmotion = 'NEUTRAL';
 let idleTimeout = null;
 
@@ -134,7 +134,7 @@ function transitionTo(targetEmotion) {
   playNextFrame();
 }
 
-// --- NEW: Command Bar Interceptor ---
+// --- Command Bar Interceptor ---
 function executeConsoleCommand(cmdName) {
   const inputEl = document.getElementById('user-input');
   if (inputEl) {
@@ -152,7 +152,6 @@ async function sendToAI() {
   const userMsg = input.value.trim();
   input.value = '';
 
-  // Intercept explicit client UI local slash actions
   if (userMsg.startsWith('/')) {
     if (userMsg === '/clear') {
       chatBox.innerHTML = '';
@@ -175,7 +174,7 @@ async function sendToAI() {
 
   transitionTo('THINKING');
 
-  // Add Typing Indicator Container
+  // Add Typing Indicator
   const typingId = "typing-" + Date.now();
   chatBox.innerHTML += `
     <div id="${typingId}" class="flex gap-4 mb-4">
@@ -193,7 +192,6 @@ async function sendToAI() {
       body: JSON.stringify({ message: userMsg })
     });
 
-    // Throw error if key limit exceeded (429) or backend encounters glitch (500)
     if (!res.ok) {
       throw new Error(`BACKEND_FAIL_STATUS_${res.status}`);
     }
@@ -217,7 +215,7 @@ async function sendToAI() {
     const promptEngineWrapper = `
 You are Nyxium, a sharp, blunt human chatting casually.
 - CRITICAL: You NEVER use vulgar, abusive, or trash language yourself under any circumstances. Keep your speech completely clean.
-- However, do not act like a polite corporate robot. Use natural expressions and casual phrasing ("Huh,", "Honestly,", "Ugh,").
+- Do not act like a polite corporate robot. Use natural expressions and casual phrasing ("Huh,", "Honestly,", "Ugh,").
 
 HANDLING BASIC QUESTIONS:
 If a user asks an incredibly obvious or basic question, react with pure dramatic disbelief, mild exhaustion, or playful intellectual superiority.
