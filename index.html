@@ -28,30 +28,70 @@
 
   <main class="flex-1 p-8 overflow-y-auto z-10">
     
-    <!-- DASHBOARD VIEW (This matches your beautiful layout in image_bb40e7.png) -->
     <div id="dashboard" class="view active">
-      <h2 class="text-3xl font-bold mb-8">Dashboard</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+      <h2 class="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">⚡ Nyxium System Core</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div class="text-3xl mb-4">🧠</div>
           <h3 class="font-bold text-xl mb-2">/ask Command</h3>
-          <p class="text-gray-400 text-sm mb-6">Leverage Gemini 1.5 Flash to get instant, accurate AI responses.</p>
+          <p class="text-gray-400 text-sm mb-6">Leverage Gemini 2.5 Flash to get instant, accurate AI responses, debug code, and solve problems.</p>
           <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition">Try Asking AI</button>
         </div>
 
         <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div class="text-3xl mb-4">🌌</div>
           <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
-          <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes.</p>
+          <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes active across your session.</p>
           <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Active</button>
         </div>
 
         <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
           <div class="text-3xl mb-4">🚀</div>
           <h3 class="font-bold text-xl mb-2">Join Our Server</h3>
-          <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community and get 24/7 support.</p>
+          <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community, trade tips, and get 24/7 terminal support.</p>
           <button onclick="window.open('https://discord.gg/PBnxckkCzf', '_blank')" class="w-full py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-500 transition">Join Community</button>
+        </div>
+      </div>
+
+      <div class="glass-card bg-white/5 border border-white/10 p-8 rounded-2xl mb-12 max-w-5xl">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+          <div>
+            <h3 class="font-bold text-2xl text-indigo-300">🛰️ Command Directory & Capabilities</h3>
+            <p class="text-gray-400 text-sm mt-1">Official roadmap of active operations deployed to the network.</p>
+          </div>
+          <span class="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> PREMIUM STATUS: ACTIVE
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div class="space-y-2">
+            <h4 class="text-sm font-bold text-purple-400 tracking-wider uppercase">🤖 Core AI Modules</h4>
+            <ul class="space-y-4 text-sm text-gray-300">
+              <li><code>/ask</code> — <strong class="text-white">Reasoning & Logic Array:</strong> Solves advanced equations, analyzes complex documents, and holds fully contextual discussions.</li>
+              <li><code>/draw</code> — <strong class="text-white">Art Rendering Engine:</strong> Connected to Flux & Imagen networks to render high-definition digital layouts.</li>
+              <li><code>/edit</code> — <strong class="text-white">Canvas Manipulation:</strong> Modify image details, repaint boundaries, and cycle through lighting patterns effortlessly.</li>
+            </ul>
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="text-sm font-bold text-purple-400 tracking-wider uppercase">⚙️ Utility Operations</h4>
+            <ul class="space-y-4 text-sm text-gray-300">
+              <li><code>/create_video</code> — <strong class="text-white">Motion Synthesis:</strong> Animates text data or structural assets into short cinematic motion files.</li>
+              <li><code>/ping</code> — <strong class="text-white">Network Diagnostics:</strong> Logs terminal responses and parses raw connection latency.</li>
+              <li><code>/feedback</code> — <strong class="text-white">Developer Pipeline:</strong> Transmits diagnostic reports or framework upgrades straight to the team.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4 text-sm">
+          <span class="font-bold text-indigo-300 block mb-2">💎 Elite Access Node Benefits:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-400">
+            <div class="flex items-start gap-2"><span>⚡</span> <div><strong class="text-gray-300 block">Priority Queue</strong> Bypass wait intervals entirely on full operations.</div></div>
+            <div class="flex items-start gap-2"><span>👁️</span> <div><strong class="text-gray-300 block">Vision Arrays</strong> Drop graphics directly inside code workflows.</div></div>
+            <div class="flex items-start gap-2"><span>🔑</span> <div><strong class="text-gray-300 block">Infinite Keys</strong> No daily request ceiling limitations.</div></div>
+          </div>
         </div>
       </div>
 
@@ -62,7 +102,6 @@
       </footer>
     </div>
 
-    <!-- AI CHAT VIEW (With the clean commands, alignment, and avatar integrated) -->
     <div id="chat" class="view">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-6">
@@ -75,7 +114,6 @@
           </div>
         </div>
 
-        <!-- Action Commands Toolbar -->
         <div class="flex items-center gap-3 bg-white/5 border border-white/10 p-2 rounded-xl self-start md:self-auto">
           <button onclick="executeConsoleCommand('/clear')" class="px-3 py-1.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition flex items-center gap-1.5 border border-red-500/20">
             🗑️ /clear
