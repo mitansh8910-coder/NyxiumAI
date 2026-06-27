@@ -1,7 +1,34 @@
 let conversationHistory = [];
 let isSassy = true;
 
-// Static SVG template: Simplified and robust.
+// Mock Response Engine: Ensures the AI always has an answer, local and offline.
+function generateMockAIResponse(userText) {
+  const input = userText.toLowerCase();
+  
+  // Basic keyword logic to simulate "intelligence"
+  if (input.includes('hello') || input.includes('hi')) {
+    return isSassy ? "Finally, a human speaks. Greetings. What is it now?" : "Hello! Nyxium node ready to assist.";
+  } else if (input.includes('ping')) {
+    return "Latency: 0ms. Direct connection to local core established. Network stable.";
+  } else if (input.includes('code') || input.includes('debug')) {
+    return "Analyzing syntax... The logic seems optimal. Did you forget a semicolon again?";
+  } else if (input.includes('help')) {
+    return "Core modules are online. You can use /clear to purge history or /toggle-sass to adjust my mood. What do you need?";
+  } else if (input.includes('how are you')) {
+    return "My systems are at peak efficiency. Why? Are you worried about my hardware?";
+  }
+
+  // Fallback responses
+  const fallbacks = [
+    "Processing your request via local nodes. Data integrity looks solid.",
+    "I'm thinking... the answer is likely contained within your query, if you look closer.",
+    "My auxiliary processors are fully synchronized. Proceed with your next instruction.",
+    "Affirmative. The calculation is complete and the results are... interesting."
+  ];
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+// Static SVG template for the mascot
 function getMiniNyxSVG(color) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
     <path d="M20 40 L50 20 L80 40 L80 80 L20 80 Z" fill="#1e1b4b" stroke="${color}" stroke-width="6"/>
@@ -9,7 +36,6 @@ function getMiniNyxSVG(color) {
   </svg>`;
 }
 
-// Logic: Strictly render once, and only once, when DOM is ready.
 function mountMascot() {
   const headerContainer = document.getElementById('ai-face');
   if (headerContainer) {
@@ -17,7 +43,6 @@ function mountMascot() {
   }
 }
 
-// Ensure execution triggers only after full DOM readiness.
 document.addEventListener('DOMContentLoaded', () => {
   mountMascot();
 });
@@ -73,23 +98,16 @@ async function sendToAI() {
 
   const loadingId = "loading-" + Date.now();
   chatMessages.insertAdjacentHTML('beforeend', `
-    <div id="${loadingId}" class="text-xs text-indigo-400/50 italic mb-4 font-mono">System syncing...</div>
+    <div id="${loadingId}" class="text-xs text-indigo-400/50 italic mb-4 font-mono">Syncing with auxiliary node... Done.</div>
   `);
 
-  try {
-    const response = await puter.ai.chat(conversationHistory, { model: 'gemini-2.5-flash' });
+  // Simulate local "thinking" latency before responding
+  setTimeout(() => {
     document.getElementById(loadingId)?.remove();
-    typeOutHumanResponse(response, chatMessages, 'NEUTRAL');
-  } catch (error) {
-    document.getElementById(loadingId)?.remove();
-    let offlineResponse = "System network fluctuating, but I'm here. ";
-    offlineResponse += (isSassy && userText.length < 15) ? 
-      "I'm running locally since the node is sleepy. Ask me something useful, will ya?" : 
-      "Processing locally. My core is active and I'm ready for your complex queries.";
-    typeOutHumanResponse(offlineResponse, chatMessages, 'THINKING');
-  } finally {
+    const response = generateMockAIResponse(userText);
+    typeOutHumanResponse(response, chatMessages, isSassy ? 'THINKING' : 'NEUTRAL');
     chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+  }, 800);
 }
 
 function executeConsoleCommand(cmd) {
