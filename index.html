@@ -153,13 +153,10 @@
     <div id="chat" class="view">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div class="flex items-center gap-6">
-          <!-- Visor container with rounded border and subtle dark background blur -->
-          <div class="flex items-center justify-center bg-[#150a25]/90 border border-purple-500/30 w-28 h-28 rounded-2xl p-1 relative overflow-hidden shadow-[0_0_20px_rgba(168,85,247,0.15)]">
-            <!-- Glass scanline overlay -->
+          <!-- Added explicit min-w/min-h to prevent collapsing -->
+          <div class="flex items-center justify-center bg-[#150a25]/90 border border-purple-500/30 w-28 h-28 min-w-[112px] min-h-[112px] rounded-2xl p-1 relative overflow-hidden shadow-[0_0_20px_rgba(168,85,247,0.15)]">
             <div class="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none z-10"></div>
-            <div id="ai-face" class="w-full h-full flex items-center justify-center visor-active">
-              <!-- Inline dynamic vector character will load here -->
-            </div>
+            <div id="ai-face" class="w-full h-full flex items-center justify-center visor-active"></div>
           </div>
           <div>
             <h2 class="text-3xl font-bold tracking-tight">Nyxium Console</h2>
