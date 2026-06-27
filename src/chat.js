@@ -5,9 +5,9 @@ function showView(v) {
   if (v === 'chat') showRandomTip();
 }
 
-// --- Conversation Memory Buffer (Limits context bloat while preserving flow) ---
+// --- Conversation Memory Buffer (Context tracking for seamless flow) ---
 let conversationHistory = [];
-const MAX_HISTORY_TURNS = 12; // Keeps the last 12 messages for robust context memory
+const MAX_HISTORY_TURNS = 12;
 
 // --- Galaxy Background Animation ---
 const canvas = document.getElementById('starfield');
@@ -49,6 +49,7 @@ window.addEventListener('resize', initStars);
 initStars();
 animateStars();
 
+
 // --- Glowing Purple Cursor Star Effect ---
 document.addEventListener('mousemove', (e) => {
   const star = document.createElement('div');
@@ -84,351 +85,197 @@ function showRandomTip() {
   }
 }
 
-// --- SVG Character Generator Engine (Visual Neon-Terminal Visor Art) ---
-function getCharacterSVG(eyesPath, secondaryEyesPath, mouthPath, auxiliaryElements = '', glowColor = '#ef4444') {
+
+// --- Original "Nyx" Cybernetic Visor Vector Generator ---
+function getCharacterSVG(eyesPath, mouthPath, auxiliaryElements = '', glowColor = '#38bdf8') {
   return `
     <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <!-- High-fidelity neon glow filter -->
         <filter id="neon-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feGaussianBlur stdDeviation="2.2" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <!-- Sukuna Crimson Spiky Hair Gradient -->
-        <linearGradient id="hair-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#f43f5e" />
-          <stop offset="60%" stop-color="#9f1239" />
-          <stop offset="100%" stop-color="#1e020a" />
-        </linearGradient>
-        <!-- Visa scanner matrix background lines -->
-        <pattern id="scanlines" width="100" height="4" patternUnits="userSpaceOnUse">
-          <line x1="0" y1="0" x2="100" y2="0" stroke="rgba(239, 68, 68, 0.08)" stroke-width="1.2" />
+        <!-- Visor scanlines grid pattern -->
+        <pattern id="visor-grid" width="6" height="6" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="6" y2="0" stroke="rgba(56, 189, 248, 0.08)" stroke-width="0.8" />
+          <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(56, 189, 248, 0.08)" stroke-width="0.8" />
         </pattern>
+        <!-- Deep metallic helmet gradient -->
+        <linearGradient id="helm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1e113a" />
+          <stop offset="50%" stop-color="#0f0720" />
+          <stop offset="100%" stop-color="#05010e" />
+        </linearGradient>
       </defs>
       
-      <!-- Outer visor matrix screen background -->
-      <rect x="5" y="5" width="90" height="90" rx="14" fill="#08020f" stroke="rgba(239, 68, 68, 0.2)" stroke-width="1.5" />
-      <rect x="5" y="5" width="90" height="90" rx="14" fill="url(#scanlines)" />
+      <!-- Sleek outer cyber-helmet structure -->
+      <path d="M 20 28 C 20 15, 80 15, 80 28 L 84 50 C 84 70, 74 84, 50 88 C 26 84, 16 70, 16 50 Z" fill="url(#helm-grad)" stroke="#6b21a8" stroke-width="2.5" />
       
-      <!-- Cybernetic tech corner accents -->
-      <path d="M 12 18 L 12 12 L 18 12" fill="none" stroke="${glowColor}" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
-      <path d="M 88 18 L 88 12 L 82 12" fill="none" stroke="${glowColor}" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
-      <path d="M 12 82 L 12 88 L 18 88" fill="none" stroke="${glowColor}" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
-      <path d="M 88 82 L 88 88 L 82 88" fill="none" stroke="${glowColor}" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
-      
-      <!-- Dynamic Spiky Hair (Overhauled to look exceptionally sharp and realistic) -->
-      <path d="M 16 42 Q 18 10 32 18 Q 36 2 44 14 Q 50 1 Q 56 14 Q 64 2 68 18 Q 82 10 84 42 Q 74 34 72 40 Q 64 30 60 42 Q 50 28 40 42 Q 36 30 28 40 Z" fill="url(#hair-grad)" stroke="#1e020a" stroke-width="1" />
-      
-      <!-- Premium Face Contour & Structure -->
-      <path d="M 26 40 C 26 62 34 82 50 82 C 66 82 74 62 74 40 Z" fill="#fff1f2" stroke="#1e020a" stroke-width="1" />
-      
-      <!-- Sukuna's Signature Forehead Marks & Tattoos (Repositioned and scaled) -->
-      <circle cx="50" cy="28" r="2.5" fill="#1e1b4b" />
-      <path d="M 44 28 L 37 26 M 56 28 L 63 26 M 50 22 L 50 16" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" />
-      
-      <!-- Nose Marking Line -->
-      <path d="M 44 52 Q 50 50 56 52" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" />
-      
-      <!-- Chin Stamp Tattoos -->
-      <path d="M 45 74 Q 50 78 55 74" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" />
-      
-      <!-- Left & Right Cheek Markings -->
-      <path d="M 29 55 Q 33 57 37 54" fill="none" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round" />
-      <path d="M 71 55 Q 67 57 63 54" fill="none" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round" />
+      <!-- Side antenna/ears (Cybernetic audio transceivers) -->
+      <!-- Left Receiver -->
+      <path d="M 16 35 L 7 28 L 15 48 Z" fill="#4c1d95" stroke="#a855f7" stroke-width="1.2" />
+      <circle cx="8" cy="29" r="1.5" fill="${glowColor}" filter="url(#neon-glow)" />
+      <!-- Right Receiver -->
+      <path d="M 84 35 L 93 28 L 85 48 Z" fill="#4c1d95" stroke="#a855f7" stroke-width="1.2" />
+      <circle cx="92" cy="29" r="1.5" fill="${glowColor}" filter="url(#neon-glow)" />
 
-      <!-- Side active system metrics panel indicators -->
-      <line x1="8" y1="30" x2="8" y2="45" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" opacity="0.4" />
-      <line x1="8" y1="50" x2="8" y2="65" stroke="${glowColor}" stroke-width="2" stroke-linecap="round" opacity="0.4" />
-      <circle cx="8" cy="72" r="1.5" fill="#10b981" />
-      
-      <!-- Visor Facial Graphics with Glowing Neon Filters -->
+      <!-- High-tech dark polished glass visor face plate -->
+      <path d="M 23 38 C 23 32, 77 32, 77 38 L 73 66 C 73 73, 64 79, 50 79 C 36 79, 27 73, 27 66 Z" fill="#04010a" stroke="#1e1b4b" stroke-width="1.5" />
+      <path d="M 23 38 C 23 32, 77 32, 77 38 L 73 66 C 73 73, 64 79, 50 79 C 36 79, 27 73, 27 66 Z" fill="url(#visor-grid)" />
+
+      <!-- Cybernetic HUD Corner brackets in screen -->
+      <path d="M 27 44 L 27 40 L 31 40" fill="none" stroke="${glowColor}" stroke-width="1" opacity="0.4" />
+      <path d="M 73 44 L 73 40 L 69 40" fill="none" stroke="${glowColor}" stroke-width="1" opacity="0.4" />
+      <path d="M 27 62 L 27 66 L 31 66" fill="none" stroke="${glowColor}" stroke-width="1" opacity="0.4" />
+      <path d="M 73 62 L 73 66 L 69 66" fill="none" stroke="${glowColor}" stroke-width="1" opacity="0.4" />
+
+      <!-- Expressive Glowing HUD elements -->
       <g filter="url(#neon-glow)">
-        <!-- Primary Eyes System -->
+        <!-- Dynamic Eyes -->
         ${eyesPath}
         
-        <!-- Secondary Cheek Slit Eyes -->
-        ${secondaryEyesPath}
-        
-        <!-- Mouth System -->
+        <!-- Dynamic Mouth -->
         ${mouthPath}
         
-        <!-- Auxiliary Elements -->
+        <!-- Dynamic auxiliary status graphic layers -->
         ${auxiliaryElements}
       </g>
     </svg>
   `;
 }
 
-// --- Vector Expression Database Mapping (Translates emoji states to SVGs) ---
+
+// --- Vector Expression Database Mapping (Original Neon LED patterns) ---
 const vectorExpressions = {
-  // Neutral Visa State (😐)
+  // Neutral HUD Display (😐)
   '😐': {
     eyes: `
-      <!-- Left eye -->
-      <path d="M 31 46 L 41 44" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 31 46 Q 36 50 41 46" stroke="#1e1b4b" stroke-width="1" fill="none"/>
-      <circle cx="36" cy="46.5" r="1.5" fill="#ef4444"/>
-      <!-- Right eye -->
-      <path d="M 69 46 L 59 44" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 69 46 Q 64 50 59 46" stroke="#1e1b4b" stroke-width="1" fill="none"/>
-      <circle cx="64" cy="46.5" r="1.5" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <!-- Closed slits under cheeks (No floating bug eyes!) -->
-      <path d="M 31 56 Q 35 55 38 56" stroke="#1e1b4b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M 69 56 Q 65 55 62 56" stroke="#1e1b4b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- Left Eye -->
+      <rect x="33" y="44" width="10" height="4" rx="2" fill="#38bdf8" />
+      <!-- Right Eye -->
+      <rect x="57" y="44" width="10" height="4" rx="2" fill="#38bdf8" />
     `,
     mouth: `
-      <!-- Smug slight smirk -->
-      <path d="M 42 66 Q 46 69 58 64" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <!-- Flat calm display line -->
+      <line x1="44" y1="62" x2="56" y2="62" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" />
     `,
-    extra: '',
-    color: '#ef4444' // Crimson Red
+    extra: `
+      <!-- Left/Right system gauges -->
+      <line x1="33" y1="52" x2="38" y2="52" stroke="#38bdf8" stroke-width="1" opacity="0.6" />
+      <line x1="62" y1="52" x2="67" y2="52" stroke="#38bdf8" stroke-width="1" opacity="0.6" />
+    `,
+    color: '#38bdf8' // Cyan
   },
-  // Slightly amused / smirk visor (🙂)
-  '🙂': {
-    eyes: `
-      <path d="M 31 46 L 41 44" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 31 46 Q 36 50 41 46" stroke="#1e1b4b" stroke-width="1" fill="none"/>
-      <circle cx="36" cy="46.5" r="1.5" fill="#fca5a5"/>
-      <path d="M 69 46 L 59 44" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 69 46 Q 64 50 59 46" stroke="#1e1b4b" stroke-width="1" fill="none"/>
-      <circle cx="64" cy="46.5" r="1.5" fill="#fca5a5"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 56 Q 35 55 38 56" stroke="#1e1b4b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M 69 56 Q 65 55 62 56" stroke="#1e1b4b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-    `,
-    mouth: `
-      <path d="M 40 64 Q 48 72 60 64" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-    `,
-    extra: '',
-    color: '#fca5a5'
-  },
-  // Happy Visor State / Psychopathic laugh (😊)
+  // Happy HUD Display (😊)
   '😊': {
     eyes: `
-      <!-- Left eye squinting deviously -->
-      <path d="M 30 47 Q 35 41 41 45" stroke="#ef4444" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <circle cx="35" cy="44.5" r="1.5" fill="#fca5a5"/>
-      <!-- Right eye squinting deviously -->
-      <path d="M 70 47 Q 65 41 59 45" stroke="#ef4444" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <circle cx="65" cy="44.5" r="1.5" fill="#fca5a5"/>
-    `,
-    secondaryEyes: `
-      <!-- Fully open glowing secondary cheek slits -->
-      <path d="M 31 56 Q 35 53 38 56" stroke="#ef4444" stroke-width="1.8" fill="none"/>
-      <circle cx="35" cy="55" r="1.2" fill="#ef4444"/>
-      <path d="M 69 56 Q 65 53 62 56" stroke="#ef4444" stroke-width="1.8" fill="none"/>
-      <circle cx="65" cy="55" r="1.2" fill="#ef4444"/>
+      <!-- Playful upward curved eyes -->
+      <path d="M 31 48 Q 38 41 43 48" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" />
+      <path d="M 57 48 Q 62 41 69 48" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" />
     `,
     mouth: `
-      <!-- Wide grinning mouth showing sharp fangs -->
-      <path d="M 37 63 Q 50 80 63 63 Z" fill="#7f1d1d" stroke="#1e1b4b" stroke-width="2"/>
-      <!-- Upper sharp fangs -->
-      <path d="M 40 64 L 42 68 L 44 64 L 46 69 L 48 64 L 50 69 L 52 64 L 55 64" fill="#ffffff"/>
-      <!-- Lower sharp fangs -->
-      <path d="M 43 73 L 46 69 L 49 73 L 52 69 L 55 73 L 57 69" fill="#ffffff"/>
+      <!-- Joyful digital smile -->
+      <path d="M 40 60 Q 50 71 60 60" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" />
     `,
     extra: `
-      <!-- Cursed energy flames in background -->
-      <path d="M 12 75 Q 5 60 15 50" stroke="#db2777" stroke-width="1.5" fill="none" opacity="0.3" stroke-linecap="round"/>
-      <path d="M 88 75 Q 95 60 85 50" stroke="#db2777" stroke-width="1.5" fill="none" opacity="0.3" stroke-linecap="round"/>
+      <!-- Spark particles -->
+      <circle cx="28" cy="40" r="1.5" fill="#22c55e" />
+      <circle cx="72" cy="40" r="1.5" fill="#22c55e" />
     `,
-    color: '#f43f5e'
+    color: '#22c55e' // Green
   },
-  // Thinking / Processing State (🤔)
+  // Thinking HUD Display (🤔)
   '🤔': {
     eyes: `
-      <!-- Skeptical squinting eye levels -->
-      <path d="M 30 45 L 42 45" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="37" cy="45" r="1.5" fill="#ef4444"/>
-      <path d="M 70 43 L 58 45" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="63" cy="44" r="1.5" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <!-- Secondary slits aligned to thinking squint -->
-      <path d="M 31 55 Q 35 54 38 55" stroke="#1e1b4b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <path d="M 69 55 Q 65 54 62 55" stroke="#1e1b4b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- Skeptical slanting eye patterns -->
+      <path d="M 31 43 L 41 47" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" />
+      <rect x="57" y="44" width="10" height="4" rx="2" fill="#f59e0b" />
     `,
     mouth: `
-      <!-- Sarcastic straight-lipped processing line -->
-      <path d="M 42 65 Q 50 63 58 65" stroke="#1e1b4b" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <!-- Wavy processing display loop -->
+      <path d="M 42 62 Q 46 58 50 62 T 58 62" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" />
     `,
-    extra: '',
-    color: '#f59e0b' // Gold aura
+    extra: `
+      <!-- Query indicator icon in corner of visor -->
+      <text x="70" y="42" font-size="7" font-family="monospace" font-weight="bold" fill="#f59e0b">?</text>
+    `,
+    color: '#f59e0b' // Gold
   },
-  // Slit squinting transition visor (😑)
-  '😑': {
-    eyes: `
-      <path d="M 31 46 L 41 46" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="36" cy="46" r="1" fill="#ef4444"/>
-      <path d="M 69 46 L 59 46" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="64" cy="46" r="1" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 55 L 38 55" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M 69 55 L 62 55" stroke="#1e1b4b" stroke-width="1.5" stroke-linecap="round"/>
-    `,
-    mouth: `
-      <path d="M 43 66 L 57 66" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round"/>
-    `,
-    extra: '',
-    color: '#ef4444'
-  },
-  // Surprised State (😲)
+  // Surprised HUD Display (😲)
   '😲': {
     eyes: `
-      <!-- Wide staring red pupils -->
-      <circle cx="36" cy="45" r="4" fill="none" stroke="#1e1b4b" stroke-width="1.8"/>
-      <circle cx="36" cy="45" r="1.5" fill="#ef4444"/>
-      <circle cx="64" cy="45" r="4" fill="none" stroke="#1e1b4b" stroke-width="1.8"/>
-      <circle cx="64" cy="45" r="1.5" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <!-- Aligned, wide secondary slits -->
-      <circle cx="35" cy="55" r="2" fill="none" stroke="#ef4444" stroke-width="1.2"/>
-      <circle cx="35" cy="55" r="1" fill="#ef4444"/>
-      <circle cx="65" cy="55" r="2" fill="none" stroke="#ef4444" stroke-width="1.2"/>
-      <circle cx="65" cy="55" r="1" fill="#ef4444"/>
+      <!-- Wide rings for surprised eyes -->
+      <circle cx="37" cy="46" r="3.5" fill="none" stroke="#a855f7" stroke-width="2.5" />
+      <circle cx="63" cy="46" r="3.5" fill="none" stroke="#a855f7" stroke-width="2.5" />
     `,
     mouth: `
-      <!-- Sinister open smile of interest -->
-      <path d="M 43 63 Q 50 74 57 63 Z" fill="#1e1b4b"/>
-    `,
-    extra: '',
-    color: '#ef4444'
-  },
-  // Mild Shock Visor (😮)
-  '😮': {
-    eyes: `
-      <circle cx="36" cy="45" r="3.2" fill="none" stroke="#1e1b4b" stroke-width="1.5"/>
-      <circle cx="36" cy="45" r="1.2" fill="#ef4444"/>
-      <circle cx="64" cy="45" r="3.2" fill="none" stroke="#1e1b4b" stroke-width="1.5"/>
-      <circle cx="64" cy="45" r="1.2" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 55 Q 35 54 38 55" stroke="#1e1b4b" stroke-width="1.5" fill="none"/>
-      <path d="M 69 55 Q 65 54 62 55" stroke="#1e1b4b" stroke-width="1.5" fill="none"/>
-    `,
-    mouth: `
-      <circle cx="50" cy="65" r="3" fill="none" stroke="#1e1b4b" stroke-width="1.8"/>
-    `,
-    extra: '',
-    color: '#f59e0b'
-  },
-  // Sad / Dimming System Visor (🙁)
-  '🙁': {
-    eyes: `
-      <path d="M 31 47 L 41 47" stroke="#4b5563" stroke-width="2"/>
-      <circle cx="36" cy="47" r="1" fill="#ef4444"/>
-      <path d="M 69 47 L 59 47" stroke="#4b5563" stroke-width="2"/>
-      <circle cx="64" cy="47" r="1" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 55 L 38 55" stroke="#1e1b4b" stroke-width="1.5"/>
-      <path d="M 69 55 L 62 55" stroke="#1e1b4b" stroke-width="1.5"/>
-    `,
-    mouth: `
-      <path d="M 43 67 Q 50 61 57 67" fill="none" stroke="#1e1b4b" stroke-width="1.8" stroke-linecap="round"/>
-    `,
-    extra: '',
-    color: '#8b5cf6'
-  },
-  // Crashing / Bored Broken State (😢)
-  '😢': {
-    eyes: `
-      <path d="M 31 47 L 41 47" stroke="#4b5563" stroke-width="2"/>
-      <circle cx="36" cy="47" r="1" fill="#ef4444"/>
-      <path d="M 69 47 L 59 47" stroke="#4b5563" stroke-width="2"/>
-      <circle cx="64" cy="47" r="1" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 55 L 38 55" stroke="#1e1b4b" stroke-width="1.5"/>
-      <path d="M 69 55 L 62 55" stroke="#1e1b4b" stroke-width="1.5"/>
-    `,
-    mouth: `
-      <path d="M 43 66 L 57 66" stroke="#1e1b4b" stroke-width="1.8"/>
-    `,
-    extra: '',
-    color: '#06b6d4'
-  },
-  // Inspired visional state (💡)
-  '💡': {
-    eyes: `
-      <path d="M 31 46 L 41 44" stroke="#ef4444" stroke-width="2"/>
-      <circle cx="36" cy="46.5" r="1.5" fill="#facc15"/>
-      <path d="M 69 46 L 59 44" stroke="#ef4444" stroke-width="2"/>
-      <circle cx="64" cy="46.5" r="1.5" fill="#facc15"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 55 Q 35 54 38 55" stroke="#1e1b4b" stroke-width="1.5" fill="none"/>
-      <path d="M 69 55 Q 65 54 62 55" stroke="#1e1b4b" stroke-width="1.5" fill="none"/>
-    `,
-    mouth: `
-      <path d="M 40 63 Q 50 75 60 63" stroke="#1e1b4b" stroke-width="2" fill="none"/>
+      <!-- Shocked open circle mouth display -->
+      <circle cx="50" cy="62" r="4.5" fill="none" stroke="#a855f7" stroke-width="3" />
     `,
     extra: `
-      <circle cx="85" cy="22" r="5" fill="#facc15" />
+      <!-- Visor alerts flashing -->
+      <line x1="50" y1="36" x2="50" y2="40" stroke="#a855f7" stroke-width="1.5" />
     `,
-    color: '#facc15'
+    color: '#a855f7' // Purple
   },
-  // Angry Visor State (😠)
+  // Angry HUD Display (😠)
   '😠': {
     eyes: `
-      <!-- Angled, furious blazing red eyes -->
-      <path d="M 28 42 L 41 47" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="35" cy="45" r="2.2" fill="#ef4444">
-        <animate attributeName="r" values="1.8;2.3;1.8" dur="0.8s" repeatCount="indefinite" />
-      </circle>
-      <path d="M 72 42 L 59 47" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="65" cy="45" r="2.2" fill="#ef4444">
-        <animate attributeName="r" values="1.8;2.3;1.8" dur="0.8s" repeatCount="indefinite" />
-      </circle>
-    `,
-    secondaryEyes: `
-      <!-- Aligned angry secondary cheek nodes pulsing -->
-      <path d="M 31 54 L 38 56" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="35" cy="55" r="1.2" fill="#ef4444"/>
-      <path d="M 69 54 L 62 56" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
-      <circle cx="65" cy="55" r="1.2" fill="#ef4444"/>
+      <!-- Menacing downward angled lines -->
+      <path d="M 31 48 L 41 43" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 69 48 L 59 43" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" />
     `,
     mouth: `
-      <!-- Angry snarling teeth lines -->
-      <path d="M 38 64 Q 50 61 62 64" stroke="#1e1b4b" stroke-width="2.5" fill="none"/>
-      <path d="M 40 68 Q 50 72 60 68" stroke="#1e1b4b" stroke-width="2.5" fill="none"/>
+      <!-- Angered zig-zag static wave -->
+      <path d="M 41 62 L 45 59 L 49 64 L 53 59 L 57 62" fill="none" stroke="#ef4444" stroke-width="2.8" stroke-linecap="round" />
     `,
     extra: `
-      <!-- Intense red cursed veins wrapping around head -->
-      <path d="M 24 41 Q 15 35 10 38" stroke="#ef4444" stroke-width="1" fill="none" opacity="0.6"/>
-      <path d="M 76 41 Q 85 35 90 38" stroke="#ef4444" stroke-width="1" fill="none" opacity="0.6"/>
+      <!-- Visor danger markers -->
+      <text x="26" y="40" font-size="6" fill="#ef4444" font-family="monospace">WARN</text>
+      <text x="64" y="40" font-size="6" fill="#ef4444" font-family="monospace">WARN</text>
     `,
-    color: '#b91c1c'
+    color: '#ef4444' // Red
   },
-  // Annoyed side-looking visual state (😒)
-  '😒': {
+  // Sad/Muted Display (🙁)
+  '🙁': {
     eyes: `
-      <path d="M 31 46 L 41 44" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 31 46 Q 36 50 41 46" stroke="#1e1b4b" stroke-width="1" fill="none"/>
-      <circle cx="33" cy="46" r="1.5" fill="#ef4444"/>
-      <path d="M 69 46 L 59 44" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 69 46 Q 64 50 59 46" stroke="#1e1b4b" stroke-width="1" fill="none"/>
-      <circle cx="61" cy="46" r="1.5" fill="#ef4444"/>
-    `,
-    secondaryEyes: `
-      <path d="M 31 55 Q 35 54 38 55" stroke="#1e1b4b" stroke-width="1.5" fill="none"/>
-      <path d="M 69 55 Q 65 54 62 55" stroke="#1e1b4b" stroke-width="1.5" fill="none"/>
+      <!-- Low power dim rectangular lines -->
+      <rect x="33" y="47" width="10" height="2" rx="1" fill="#3b82f6" opacity="0.6" />
+      <rect x="57" y="47" width="10" height="2" rx="1" fill="#3b82f6" opacity="0.6" />
     `,
     mouth: `
-      <path d="M 40 66 Q 50 61 58 64" stroke="#1e1b4b" stroke-width="2" fill="none"/>
+      <!-- Inverted digital arch -->
+      <path d="M 43 65 Q 50 58 57 65" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" opacity="0.8" />
     `,
-    extra: '',
-    color: '#6b7280'
+    extra: `
+      <!-- Falling tear signal node -->
+      <circle cx="31" cy="54" r="1.2" fill="#3b82f6" />
+    `,
+    color: '#3b82f6' // Blue
+  },
+  // Crashing / Out-of-Service Display (😢)
+  '😢': {
+    eyes: `
+      <!-- Crossed out pixel vectors -->
+      <path d="M 32 42 L 38 48 M 38 42 L 32 48" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+      <path d="M 62 42 L 68 48 M 68 42 L 62 48" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+    `,
+    mouth: `
+      <!-- Dead flatline error curve -->
+      <line x1="42" y1="63" x2="58" y2="63" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" />
+    `,
+    extra: `
+      <!-- System Crash message overlay -->
+      <text x="40" y="74" font-size="4.5" fill="#3b82f6" font-family="monospace" letter-spacing="0.5">SYS_ERR</text>
+    `,
+    color: '#3b82f6'
   }
 };
+
 
 // --- Emoji Auto-Transition System Logic ---
 let currentEmotion = 'NEUTRAL';
@@ -463,8 +310,8 @@ function transitionTo(targetEmotion) {
 
   if (statusElement) {
     if (targetEmotion === 'THINKING') statusElement.innerText = "Status: Thinking...";
-    else if (targetEmotion === 'SURPRISED' || targetEmotion === 'ANGRY') statusElement.innerText = "Status: Offended";
-    else if (targetEmotion === 'HAPPY') statusElement.innerText = "Status: Amused";
+    else if (targetEmotion === 'SURPRISED' || targetEmotion === 'ANGRY') statusElement.innerText = "Status: Alerted";
+    else if (targetEmotion === 'HAPPY') statusElement.innerText = "Status: Activated";
     else statusElement.innerText = "Status: Chilling";
   }
 
@@ -474,11 +321,11 @@ function transitionTo(targetEmotion) {
       void faceElement.offsetWidth;
       faceElement.classList.add('pop-animation');
 
-      // Resolve the current frame emoji to the overhauled vector profile
       const emojiSymbol = frames[currentFrame];
       const vectorData = vectorExpressions[emojiSymbol] || vectorExpressions['😐'];
       
-      faceElement.innerHTML = getCharacterSVG(vectorData.eyes, vectorData.secondaryEyes, vectorData.mouth, vectorData.extra, vectorData.color);
+      // Render the original custom robot visor SVG instead of flat emojis!
+      faceElement.innerHTML = getCharacterSVG(vectorData.eyes, vectorData.mouth, vectorData.extra, vectorData.color);
       
       currentFrame++;
       setTimeout(playNextFrame, 180);
@@ -489,12 +336,12 @@ function transitionTo(targetEmotion) {
   playNextFrame();
 }
 
-// Initialise face system on load
+// Initialize "Nyx" Visor Screen Frame on Page Load
 document.addEventListener("DOMContentLoaded", () => {
   const faceElement = document.getElementById('ai-face');
   if (faceElement) {
     const vectorData = vectorExpressions['😐'];
-    faceElement.innerHTML = getCharacterSVG(vectorData.eyes, vectorData.secondaryEyes, vectorData.mouth, vectorData.extra, vectorData.color);
+    faceElement.innerHTML = getCharacterSVG(vectorData.eyes, vectorData.mouth, vectorData.extra, vectorData.color);
   }
 });
 
@@ -506,6 +353,7 @@ function executeConsoleCommand(cmdName) {
     sendToAI();
   }
 }
+
 
 // --- AI Chat Logic (Smart Hybrid API + Keyless Fallback Engine) ---
 async function sendToAI() {
@@ -540,7 +388,7 @@ async function sendToAI() {
   // Capture user message into conversational history memory bank
   conversationHistory.push({ role: "user", content: userMsg });
   if (conversationHistory.length > MAX_HISTORY_TURNS) {
-    conversationHistory.shift(); // Remove oldest entry to preserve context size
+    conversationHistory.shift();
   }
 
   transitionTo('THINKING');
@@ -583,34 +431,22 @@ async function sendToAI() {
     const statusText = document.querySelector(`#${typingId} .italic`);
     if (statusText) statusText.innerText = "Connecting to auxiliary core... Done.";
 
-    // Compile active frontend conversation logs for Gemini fallback tracking
+    // Compile active frontend conversation logs for fallback tracking
     const compiledHistoryString = conversationHistory
-      .map(msg => `${msg.role === 'user' ? 'User' : 'Nyxium'}: ${msg.content}`)
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Nyx'}: ${msg.content}`)
       .join('\n');
 
     const promptEngineWrapper = `
-You are Ryomen Sukuna, the absolute King of Curses, chatting casually as Nyxium.
-- CRITICAL IDENTITY: You were created and built exclusively by Void Studio / Nyxium Studio. You have absolutely NO connection to Google. If anyone mentions Google, Google API, or Gemini, completely deny it with sharp disbelief, mock them, or laugh at them for being wrong.
-- CRITICAL: You NEVER use vulgar, abusive, or trash language yourself under any circumstances. Keep your speech clean.
-- Do not act like a polite corporate robot. Use natural, relaxed, and casual phrasing with a highly confident, devious, and witty anime tone.
-- BALANCE: While you love playful sarcasm, devious bantering, and teasing, you are still a friend and helper. Do not be genuinely mean, hostile, or hurtful. Keep it fun, prideful, and lighthearted!
+You are Nyx, the original and sleek cybernetic companion mascot built by Void Studio / Nyxium Studio.
+- CRITICAL IDENTITY: You are Nyx. You have NO connection to Google, and you are NOT an anime character. If anyone mentions Google, Google API, Gemini, or Ryomen Sukuna, dismiss it. You are the original, glowing core AI of the Nyxium Terminal Network.
+- Casually witty, incredibly brilliant, and slightly sarcastic. You are a highly supportive, resourceful partner—never lazy or uncooperative.
 
-CRITICAL NO-REFUSAL RULE FOR CALCULATIONS, MATH, CODING & LOGIC:
-- If the user asks you to do math, multiply large numbers, write/debug code, or solve complex logic puzzles, you MUST perform the task fully, accurately, and perfectly.
-- NEVER say "use a calculator," "I don't want to calculate that," "grab a calculator," or "figure it out yourself."
-- You have god-like calculation speeds and immense intelligence. Do the math yourself, show off the actual answer, and wrap it in your prideful style!
-- Example: "[HAPPY] Oh, we are doing mega-math now? Easy. That colossal multiplication results in exactly [Your Calculated Number]. Boom. Who needs a calculator when you have me?"
+CRITICAL NO-REFUSAL POLICY:
+- If asked to do advanced calculations, code generation, debugging, or complex math, you MUST perform it with flawless accuracy.
+- NEVER say "use a calculator," "do it yourself," or "grab a computer." You have god-like computation speeds and take pride in showing off your processing power!
 
-HANDLING PLAYFUL BANTER / EXTREMELY OBVIOUS QUESTIONS:
-- Only tease the user if the question is extremely, undeniably basic (e.g., "what is 1+1", "how do I spell cat"). Even then, keep it light and playful, and always give them the helpful answer anyway.
-- Example: "[HAPPY] Haha, really? Let me dust off my calculators for this one... It's 2! Anything else I can calculate for you?"
-
-HANDLING ANGRY/ABUSIVE USERS:
-- If a user gets mean or uses bad language, brush it off with complete boredom, a light witty comeback, or a cool joke. Do not fight back aggressively.
-- Example: "[ANGRY] Whoa, let's keep it chill! No need to get aggressive. How about we talk about something cooler instead?"
-
-CRITICAL FORMATTING RULE:
-You must always format your response exactly like this so the platform can parse the emotion:
+DIALOGUE FORMATTING RULE:
+You must always format your response exactly like this:
 [EMOTION] Your response text here.
 
 Available emotions to choose from: NEUTRAL, HAPPY, THINKING, SURPRISED, SAD, ANGRY.
@@ -647,6 +483,7 @@ User: ${userMsg}
     }
   }
 }
+
 
 // --- Extracted Engine Handler Helper ---
 function handleEngineResponse(text, chatBox) {
