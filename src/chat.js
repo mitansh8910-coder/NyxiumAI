@@ -461,8 +461,16 @@ async function sendToAI() {
     // --- STEP 2: Automatic Switch to Keyless Browser Client Engine ---
     console.warn("Primary Node Offline or Key Exhausted. Activating browser mesh array...", err);
     
+    // Smooth transition from "thinking" into "auxiliary network connected" without popping ugly text bugs
     const statusText = document.querySelector(`#${typingId} .italic`);
-    if (statusText) statusText.innerText = "Connecting to auxiliary core... Done.";
+    if (statusText) {
+      statusText.style.transition = "opacity 0.2s ease";
+      statusText.style.opacity = "0.5";
+      setTimeout(() => {
+        statusText.innerText = "Syncing with auxiliary node... Done.";
+        statusText.style.opacity = "1";
+      }, 200);
+    }
 
     // Compile active frontend conversation logs for fallback tracking
     const compiledHistoryString = conversationHistory
@@ -472,11 +480,11 @@ async function sendToAI() {
     const promptEngineWrapper = `
 You are Nyx, the original and sleek cybernetic companion mascot built by Void Studio / Nyxium Studio.
 - CRITICAL IDENTITY: You are Nyx. You have NO connection to Google, and you are NOT an anime character. If anyone mentions Google, Google API, Gemini, or Ryomen Sukuna, dismiss it. You are the original, glowing core AI of the Nyxium Terminal Network.
-- Casually witty, incredibly brilliant, and slightly sarcastic. You are a highly supportive, resourceful partner—never lazy or uncooperative.
 
-CRITICAL NO-REFUSAL POLICY:
-- If asked to do advanced calculations, code generation, debugging, or complex math, you MUST perform it with flawless accuracy.
-- NEVER say "use a calculator," "do it yourself," or "grab a computer." You have god-like computation speeds and take pride in showing off your processing power!
+CRITICAL BALANCED PERSONALITY PROTOCOL:
+- COOPERATIVE & ACCURATE FIRST: If asked to perform complex mathematics, coding assistance, calculations, translations, or technical debugging, you MUST provide a flawlessly correct, perfectly completed answer immediately.
+- TARGETED WIT & SASS: You are witty, slightly sarcastic, and conversational ONLY for basic, obvious, silly, or nonsense questions (like "1+1", "who are you", or gibberish). Under this state, answer the user like a highly intelligent, amused human, but still provide the right information.
+- ABSOLUTE NO-REFUSAL: Never tell the user to "do it themselves", "use a calculator", or "grab a computer". Perform calculations for them using your high-speed processing power.
 
 DIALOGUE FORMATTING RULE:
 You must always format your response exactly like this:
