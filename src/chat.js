@@ -49,7 +49,6 @@ window.addEventListener('resize', initStars);
 initStars();
 animateStars();
 
-
 // --- Glowing Purple Cursor Star Effect ---
 document.addEventListener('mousemove', (e) => {
   const star = document.createElement('div');
@@ -84,7 +83,6 @@ function showRandomTip() {
     `;
   }
 }
-
 
 // --- Original "Nyx" Cybernetic Visor Vector Generator ---
 function getCharacterSVG(eyesPath, mouthPath, auxiliaryElements = '', glowColor = '#38bdf8') {
@@ -148,6 +146,39 @@ function getCharacterSVG(eyesPath, mouthPath, auxiliaryElements = '', glowColor 
   `;
 }
 
+// --- Mini Nyx Helmet Vector for Message Bubbles (Replaces the generic robot emoji) ---
+function getMiniNyxSVG(glowColor = '#38bdf8') {
+  return `
+    <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="mini-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <path d="M 20 28 C 20 15, 80 15, 80 28 L 84 50 C 84 70, 74 84, 50 88 C 26 84, 16 70, 16 50 Z" fill="#0f0720" stroke="#6b21a8" stroke-width="4" />
+      <path d="M 23 38 C 23 32, 77 32, 77 38 L 73 66 C 73 73, 64 79, 50 79 C 36 79, 27 73, 27 66 Z" fill="#04010a" stroke="#1e1b4b" stroke-width="2" />
+      <g filter="url(#mini-glow)">
+        <rect x="33" y="44" width="10" height="4" rx="2" fill="${glowColor}" />
+        <rect x="57" y="44" width="10" height="4" rx="2" fill="${glowColor}" />
+        <line x1="44" y1="62" x2="56" y2="62" stroke="${glowColor}" stroke-width="3.5" stroke-linecap="round" />
+      </g>
+    </svg>
+  `;
+}
+
+// --- Sleek Custom Profile Vector for the User (Replaces generic silhouette emoji) ---
+function getUserSVG() {
+  return `
+    <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="text-indigo-200">
+      <circle cx="50" cy="36" r="18" fill="currentColor" />
+      <path d="M 22 80 C 22 62, 78 62, 78 80 C 78 84, 22 84, 22 80 Z" fill="currentColor" />
+    </svg>
+  `;
+}
 
 // --- Vector Expression Database Mapping (Original Neon LED patterns) ---
 const vectorExpressions = {
@@ -276,7 +307,6 @@ const vectorExpressions = {
   }
 };
 
-
 // --- Emoji Auto-Transition System Logic ---
 let currentEmotion = 'NEUTRAL';
 let idleTimeout = null;
@@ -324,7 +354,7 @@ function transitionTo(targetEmotion) {
       const emojiSymbol = frames[currentFrame];
       const vectorData = vectorExpressions[emojiSymbol] || vectorExpressions['😐'];
       
-      // Render the original custom robot visor SVG instead of flat emojis!
+      // Render the custom robot visor SVG
       faceElement.innerHTML = getCharacterSVG(vectorData.eyes, vectorData.mouth, vectorData.extra, vectorData.color);
       
       currentFrame++;
@@ -354,7 +384,6 @@ function executeConsoleCommand(cmdName) {
   }
 }
 
-
 // --- AI Chat Logic (Smart Hybrid API + Keyless Fallback Engine) ---
 async function sendToAI() {
   const input = document.getElementById('user-input');
@@ -377,10 +406,12 @@ async function sendToAI() {
 
   clearTimeout(idleTimeout);
 
-  // Add User Message UI
+  // Add User Message UI with customized User profile icon
   chatBox.innerHTML += `
     <div class="flex gap-4 flex-row-reverse mb-4">
-      <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">👤</div>
+      <div class="w-8 h-8 rounded-full bg-[#1b152e] border border-indigo-500/20 flex items-center justify-center p-1 overflow-hidden">
+        ${getUserSVG()}
+      </div>
       <div class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">${userMsg}</div>
     </div>
   `;
@@ -393,11 +424,13 @@ async function sendToAI() {
 
   transitionTo('THINKING');
 
-  // Add Typing Indicator
+  // Add Typing Indicator using mini glowing vector Nyx helmet
   const typingId = "typing-" + Date.now();
   chatBox.innerHTML += `
     <div id="${typingId}" class="flex gap-4 mb-4">
-      <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
+      <div class="w-8 h-8 rounded-full bg-[#0d071a] border border-yellow-500/30 flex items-center justify-center p-0.5 overflow-hidden">
+        ${getMiniNyxSVG('#f59e0b')}
+      </div>
       <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-slate-400 italic">Nyxium AI is thinking...</div>
     </div>
   `;
@@ -484,7 +517,6 @@ User: ${userMsg}
   }
 }
 
-
 // --- Extracted Engine Handler Helper ---
 function handleEngineResponse(text, chatBox) {
   const match = text.match(/^\[([A-Z]+)\]\s*(.*)/s);
@@ -503,16 +535,26 @@ function handleEngineResponse(text, chatBox) {
   }
 
   transitionTo(parsedEmotion);
-  typeOutHumanResponse(parsedContent, chatBox);
+  typeOutHumanResponse(parsedContent, chatBox, parsedEmotion);
 }
 
 // --- Sassy Character Streaming Sim Effect ---
-function typeOutHumanResponse(text, container) {
+function typeOutHumanResponse(text, container, emotion = 'NEUTRAL') {
   const uniqueMsgId = "msg-" + Date.now();
   
+  // Choose mini visor glow color matching the active emotion
+  let avatarColor = '#38bdf8'; // Cyan
+  if (emotion === 'HAPPY') avatarColor = '#22c55e'; // Green
+  else if (emotion === 'THINKING') avatarColor = '#f59e0b'; // Gold
+  else if (emotion === 'SURPRISED') avatarColor = '#a855f7'; // Purple
+  else if (emotion === 'ANGRY') avatarColor = '#ef4444'; // Red
+  else if (emotion === 'SAD') avatarColor = '#3b82f6'; // Blue
+
   container.innerHTML += `
     <div class="flex gap-4 mb-4">
-      <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">🤖</div>
+      <div class="w-8 h-8 rounded-full bg-[#0d071a] border border-indigo-500/30 flex items-center justify-center p-0.5 overflow-hidden">
+        ${getMiniNyxSVG(avatarColor)}
+      </div>
       <div class="bg-slate-800 p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm">
         <strong class="text-blue-400">Nyxium AI:</strong><br>
         <span id="${uniqueMsgId}"></span>
