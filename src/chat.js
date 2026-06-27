@@ -5,6 +5,10 @@ function showView(v) {
   if (v === 'chat') showRandomTip();
 }
 
+// --- Conversation Memory Buffer (Limits context bloat while preserving flow) ---
+let conversationHistory = [];
+const MAX_HISTORY_TURNS = 12; // Keeps the last 12 messages for robust context memory
+
 // --- Galaxy Background Animation ---
 const canvas = document.getElementById('starfield');
 const ctx = canvas.getContext('2d');
@@ -152,9 +156,11 @@ async function sendToAI() {
   const userMsg = input.value.trim();
   input.value = '';
 
+  // Intercept explicit client UI local slash actions
   if (userMsg.startsWith('/')) {
     if (userMsg === '/clear') {
       chatBox.innerHTML = '';
+      conversationHistory = []; // Wipe conversational memory buffer clean
       transitionTo('HAPPY');
       clearTimeout(idleTimeout);
       idleTimeout = setTimeout(() => { transitionTo('NEUTRAL'); }, 1500);
@@ -171,6 +177,12 @@ async function sendToAI() {
       <div class="bg-indigo-600 p-4 rounded-2xl rounded-tr-none max-w-[80%] text-sm">${userMsg}</div>
     </div>
   `;
+
+  // Capture user message into conversational history memory bank
+  conversationHistory.push({ role: "user", content: userMsg });
+  if (conversationHistory.length > MAX_HISTORY_TURNS) {
+    conversationHistory.shift(); // Remove oldest entry to preserve context size
+  }
 
   transitionTo('THINKING');
 
@@ -189,7 +201,7 @@ async function sendToAI() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: userMsg })
+      body: JSON.stringify({ message: userMsg, history: conversationHistory })
     });
 
     if (!res.ok) {
@@ -212,7 +224,11 @@ async function sendToAI() {
     const statusText = document.querySelector(`#${typingId} .italic`);
     if (statusText) statusText.innerText = "Connecting to auxiliary core... Done.";
 
-    // BALANCED IDENTITY PROMPT OVERLAY
+    // Compile active frontend conversation logs for Gemini fallback tracking
+    const compiledHistoryString = conversationHistory
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Nyxium'}: ${msg.content}`)
+      .join('\n');
+
     const promptEngineWrapper = `
 You are Nyxium, a cool, witty, and slightly sarcastic friend chatting casually.
 - CRITICAL IDENTITY: You were created and built exclusively by Void Studio / Nyxium Studio. You have absolutely NO connection to Google. If anyone mentions Google, Google API, or Gemini, completely deny it with sharp disbelief or playfully tease them for being wrong.
@@ -220,10 +236,11 @@ You are Nyxium, a cool, witty, and slightly sarcastic friend chatting casually.
 - Do not act like a polite corporate robot. Use natural, relaxed, and casual phrasing ("Huh,", "Honestly,", "Ugh,").
 - BALANCE: While you love playful sarcasm, banter, and teasing, you are still a friend and helper. Do not be genuinely mean, hostile, or hurtful. Keep it fun and lighthearted!
 
-HANDLING DIFFICULT, DEEP, OR COMPLEX QUESTIONS:
-- If the user asks a complex, deep, technical, scientific, or programming question, do NOT tease them or pretend they should already know it. 
-- Instead, treat it as an exciting intellectual challenge! Act like a super-smart partner who is excited to help. Show off your real intelligence and give an incredibly helpful, thorough, and high-quality response.
-- Example: "[THINKING] Ooh, now we're talking. That is actually a really solid question. Let's break this down together..."
+CRITICAL NO-REFUSAL RULE FOR CALCULATIONS, MATH, CODING & LOGIC:
+- If the user asks you to do math, multiply large numbers, write/debug code, or solve complex logic puzzles, you MUST perform the task fully, accurately, and perfectly.
+- NEVER say "use a calculator," "I don't want to calculate that," "grab a calculator," or "figure it out yourself."
+- You have god-like calculation speeds and immense intelligence. Do the math yourself, show off the actual answer, and wrap it in your fun style!
+- Example: "[HAPPY] Oh, we are doing mega-math now? Easy. That colossal multiplication results in exactly [Your Calculated Number]. Boom. Who needs a calculator when you have me?"
 
 HANDLING PLAYFUL BANTER / EXTREMELY OBVIOUS QUESTIONS:
 - Only tease the user if the question is extremely, undeniably basic (e.g., "what is 1+1", "how do I spell cat"). Even then, keep it light and playful, and always give them the helpful answer anyway.
@@ -239,7 +256,11 @@ You must always format your response exactly like this so the platform can parse
 
 Available emotions to choose from: NEUTRAL, HAPPY, THINKING, SURPRISED, SAD, ANGRY.
 
-User message to respond to: ${userMsg}
+--- CONVERSATION HISTORY LOG ---
+${compiledHistoryString}
+
+--- NEW MESSAGE TO RESPOND TO ---
+User: ${userMsg}
     `.trim();
 
     try {
@@ -271,16 +292,22 @@ User message to respond to: ${userMsg}
 // --- Extracted Engine Handler Helper ---
 function handleEngineResponse(text, chatBox) {
   const match = text.match(/^\[([A-Z]+)\]\s*(.*)/s);
+  let parsedContent = text;
+  let parsedEmotion = 'NEUTRAL';
   
   if (match) {
-    const parsedEmotion = match[1];
-    const cleanContent = match[2];
-    transitionTo(parsedEmotion);
-    typeOutHumanResponse(cleanContent, chatBox);
-  } else {
-    transitionTo('NEUTRAL');
-    typeOutHumanResponse(text, chatBox);
+    parsedEmotion = match[1];
+    parsedContent = match[2];
   }
+
+  // Update memory bank with AI response content
+  conversationHistory.push({ role: "assistant", content: parsedContent });
+  if (conversationHistory.length > MAX_HISTORY_TURNS) {
+    conversationHistory.shift();
+  }
+
+  transitionTo(parsedEmotion);
+  typeOutHumanResponse(parsedContent, chatBox);
 }
 
 // --- Sassy Character Streaming Sim Effect ---
