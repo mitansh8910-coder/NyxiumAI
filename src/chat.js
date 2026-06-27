@@ -1,48 +1,37 @@
 let conversationHistory = [];
 let isSassy = true;
 
-// The definitive, robust SVG generator. Includes proper namespaces and sizing.
+// Static SVG template: Simplified and robust.
 function getMiniNyxSVG(color) {
-  return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
-      <defs>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      <path d="M20 40 L50 20 L80 40 L80 80 L20 80 Z" fill="#1e1b4b" stroke="${color}" stroke-width="4" filter="url(#glow)"/>
-      <rect x="35" y="45" width="30" height="15" fill="${color}" rx="2"/>
-    </svg>
-  `;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+    <path d="M20 40 L50 20 L80 40 L80 80 L20 80 Z" fill="#1e1b4b" stroke="${color}" stroke-width="6"/>
+    <rect x="35" y="45" width="30" height="15" fill="${color}" rx="2"/>
+  </svg>`;
 }
 
-// Fixed rendering function that guarantees the mascot is injected only after the container is ready.
-function renderMascot() {
-  const container = document.getElementById('ai-face');
-  if (container) {
-    container.innerHTML = getMiniNyxSVG('#38bdf8');
+// Logic: Strictly render once, and only once, when DOM is ready.
+function mountMascot() {
+  const headerContainer = document.getElementById('ai-face');
+  if (headerContainer) {
+    headerContainer.innerHTML = getMiniNyxSVG('#38bdf8');
   }
 }
 
-// Initializing the mascot on load
-document.addEventListener('DOMContentLoaded', renderMascot);
-// Failsafe: Re-attempt render every 2s in case of DOM re-rendering
-setInterval(renderMascot, 2000);
+// Ensure execution triggers only after full DOM readiness.
+document.addEventListener('DOMContentLoaded', () => {
+  mountMascot();
+});
 
 function typeOutHumanResponse(text, container, emotion = 'NEUTRAL') {
   const uniqueMsgId = "msg-" + Date.now();
-  let avatarColor = '#38bdf8'; 
+  let avatarColor = '#38bdf8';
   if (emotion === 'HAPPY') avatarColor = '#22c55e';
   else if (emotion === 'THINKING') avatarColor = '#f59e0b';
   else if (emotion === 'ANGRY') avatarColor = '#ef4444';
   
-  // Clean, static structure with inline SVG
   const messageHTML = `
     <div class="flex gap-4 mb-4">
-      <div class="w-10 h-10 rounded-full bg-[#0d071a] border border-indigo-500/30 flex items-center justify-center p-1.5 overflow-hidden">
+      <div class="w-10 h-10 min-w-[40px] rounded-full bg-[#0d071a] border border-indigo-500/30 flex items-center justify-center p-1.5 overflow-hidden">
         ${getMiniNyxSVG(avatarColor)}
       </div>
       <div class="bg-[#0f0720]/80 border border-indigo-500/30 backdrop-blur-xl p-4 rounded-2xl rounded-tl-none max-w-[80%] text-sm shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
@@ -84,7 +73,7 @@ async function sendToAI() {
 
   const loadingId = "loading-" + Date.now();
   chatMessages.insertAdjacentHTML('beforeend', `
-    <div id="${loadingId}" class="text-xs text-indigo-400/50 italic mb-4">Syncing with auxiliary node...</div>
+    <div id="${loadingId}" class="text-xs text-indigo-400/50 italic mb-4 font-mono">System syncing...</div>
   `);
 
   try {
