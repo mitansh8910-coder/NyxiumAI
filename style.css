@@ -2683,3 +2683,14 @@ textarea:focus-visible {
         transition-duration: 0.001ms !important;
     }
 }
+/* =========================================================
+   HIDE CHAT HISTORY BUTTON BELOW AI CHAT
+   ========================================================= */
+
+/* Hide only the Chat History button/view control below AI Chat */
+.chat-history-button,
+#chat-history-button,
+button[data-action="chat-history"],
+button[data-view="chat-history"] {
+    display: none !important;
+}
