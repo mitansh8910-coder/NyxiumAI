@@ -1,6 +1,7 @@
 /* =========================================================
    NYXIUM AI — CHAT ENGINE
    Puter AI + Authentication + Chat History
+   User Puter Avatar Support
    ========================================================= */
 
 (() => {
@@ -8,7 +9,7 @@
 
     /* =====================================================
        CONFIG
-    ===================================================== */
+       ===================================================== */
 
     const CONFIG = {
         BOT_NAME: "Nyxium AI",
@@ -33,13 +34,14 @@
 
     /* =====================================================
        STATE
-    ===================================================== */
+       ===================================================== */
 
     let chats = [];
     let activeChatId = null;
 
     let isGenerating = false;
     let sassEnabled = false;
+
     let puterUser = null;
 
     let initialized = false;
@@ -47,23 +49,27 @@
 
     /* =====================================================
        DOM HELPERS
-    ===================================================== */
+       ===================================================== */
 
-    const $ = (selector) =>
+    const $ = selector =>
         document.querySelector(selector);
 
-    const $$ = (selector) =>
+    const $$ = selector =>
         [...document.querySelectorAll(selector)];
 
 
     /* =====================================================
        STORAGE
-    ===================================================== */
+       ===================================================== */
 
     function loadChats() {
+
         try {
+
             const saved =
-                localStorage.getItem(CONFIG.STORAGE_CHATS);
+                localStorage.getItem(
+                    CONFIG.STORAGE_CHATS
+                );
 
             chats = saved
                 ? JSON.parse(saved)
@@ -74,6 +80,7 @@
             }
 
         } catch (error) {
+
             console.error(
                 "Nyxium: failed to load chats",
                 error
@@ -82,41 +89,57 @@
             chats = [];
         }
 
+
         activeChatId =
-            localStorage.getItem(CONFIG.STORAGE_ACTIVE);
+            localStorage.getItem(
+                CONFIG.STORAGE_ACTIVE
+            );
+
 
         if (
             activeChatId &&
-            !chats.some(c => c.id === activeChatId)
+            !chats.some(
+                chat =>
+                    chat.id === activeChatId
+            )
         ) {
             activeChatId = null;
         }
 
+
         sassEnabled =
-            localStorage.getItem(CONFIG.STORAGE_SASS)
-            === "true";
+            localStorage.getItem(
+                CONFIG.STORAGE_SASS
+            ) === "true";
     }
 
 
     function saveChats() {
+
         try {
+
             localStorage.setItem(
                 CONFIG.STORAGE_CHATS,
                 JSON.stringify(chats)
             );
 
+
             if (activeChatId) {
+
                 localStorage.setItem(
                     CONFIG.STORAGE_ACTIVE,
                     activeChatId
                 );
+
             } else {
+
                 localStorage.removeItem(
                     CONFIG.STORAGE_ACTIVE
                 );
             }
 
         } catch (error) {
+
             console.error(
                 "Nyxium: failed to save chats",
                 error
@@ -142,12 +165,17 @@
                     .toString(36)
                     .slice(2, 8),
 
-            title: "New conversation",
+            title:
+                "New conversation",
 
-            createdAt: now,
-            updatedAt: now,
+            createdAt:
+                now,
 
-            messages: []
+            updatedAt:
+                now,
+
+            messages:
+                []
         };
     }
 
@@ -155,22 +183,28 @@
     function getActiveChat() {
 
         return chats.find(
-            chat => chat.id === activeChatId
+            chat =>
+                chat.id === activeChatId
         );
     }
 
 
     function ensureChat() {
 
-        let chat = getActiveChat();
+        let chat =
+            getActiveChat();
 
         if (!chat) {
 
-            chat = createChat();
+            chat =
+                createChat();
 
-            chats.unshift(chat);
+            chats.unshift(
+                chat
+            );
 
-            activeChatId = chat.id;
+            activeChatId =
+                chat.id;
 
             saveChats();
         }
@@ -180,17 +214,19 @@
 
 
     /* =====================================================
-       AUTHENTICATION
+       PUTER AUTHENTICATION
        ===================================================== */
 
     async function checkPuterLogin() {
 
         if (
-            typeof window.puter === "undefined" ||
+            typeof window.puter ===
+                "undefined" ||
             !puter.auth
         ) {
             return false;
         }
+
 
         try {
 
@@ -198,22 +234,14 @@
                 typeof puter.auth.isSignedIn ===
                 "function"
             ) {
+
                 const signedIn =
                     await puter.auth.isSignedIn();
 
+
                 if (signedIn) {
 
-                    try {
-
-                        if (
-                            typeof puter.auth.getUser ===
-                            "function"
-                        ) {
-                            puterUser =
-                                await puter.auth.getUser();
-                        }
-
-                    } catch (_) {}
+                    await loadPuterUser();
 
                     return true;
                 }
@@ -227,14 +255,72 @@
             );
         }
 
+
+        puterUser = null;
+
         return false;
+    }
+
+
+    /* =====================================================
+       LOAD PUTER USER
+       ===================================================== */
+
+    async function loadPuterUser() {
+
+        if (
+            typeof window.puter ===
+                "undefined" ||
+            !puter.auth
+        ) {
+            return null;
+        }
+
+
+        try {
+
+            if (
+                typeof puter.auth.getUser ===
+                "function"
+            ) {
+
+                const user =
+                    await puter.auth.getUser();
+
+                if (user) {
+
+                    puterUser =
+                        user;
+
+                    console.log(
+                        "Nyxium: Puter user loaded",
+                        user
+                    );
+
+                    updateAuthUI();
+
+                    refreshUserAvatars();
+                }
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Nyxium: couldn't load Puter user",
+                error
+            );
+        }
+
+
+        return puterUser;
     }
 
 
     async function requestPuterLogin() {
 
         if (
-            typeof window.puter === "undefined" ||
+            typeof window.puter ===
+                "undefined" ||
             !puter.auth
         ) {
 
@@ -245,18 +331,17 @@
             return false;
         }
 
+
         try {
 
-            setAIStatus("Authentication required…");
+            setAIStatus(
+                "Authentication required…"
+            );
+
 
             /*
-             * IMPORTANT:
-             *
-             * We do NOT call login automatically on
-             * page load.
-             *
-             * This function only runs after the user
-             * explicitly chooses Sign In / uses AI.
+             * Login is ONLY triggered after the
+             * user explicitly requests it.
              */
 
             if (
@@ -284,9 +369,12 @@
             const loggedIn =
                 await checkPuterLogin();
 
+
             if (loggedIn) {
 
                 updateAuthUI();
+
+                refreshUserAvatars();
 
                 showToast(
                     "Signed in successfully."
@@ -294,6 +382,7 @@
 
                 return true;
             }
+
 
             showToast(
                 "Sign-in was not completed."
@@ -308,7 +397,9 @@
                 error
             );
 
-            setAIStatus("Ready when you are");
+            setAIStatus(
+                "Ready when you are"
+            );
 
             showToast(
                 "Sign-in cancelled or failed."
@@ -324,16 +415,21 @@
         try {
 
             if (
-                puter?.auth &&
+                window.puter &&
+                puter.auth &&
                 typeof puter.auth.signOut ===
                 "function"
             ) {
+
                 await puter.auth.signOut();
             }
+
 
             puterUser = null;
 
             updateAuthUI();
+
+            refreshUserAvatars();
 
             showToast(
                 "Signed out."
@@ -354,18 +450,251 @@
 
 
     /* =====================================================
+       USER DISPLAY NAME
+       ===================================================== */
+
+    function getUserDisplayName() {
+
+        if (!puterUser) {
+            return "Signed in";
+        }
+
+
+        return (
+            puterUser.username ||
+            puterUser.name ||
+            puterUser.full_name ||
+            puterUser.email ||
+            "Signed in"
+        );
+    }
+
+
+    /* =====================================================
+       USER AVATAR RESOLVER
+       ===================================================== */
+
+    function getPuterAvatar() {
+
+        if (!puterUser) {
+            return null;
+        }
+
+
+        /*
+         * Different Puter versions / user objects may expose
+         * profile images under different property names.
+         */
+
+        const possibleAvatars = [
+
+            puterUser.avatar,
+
+            puterUser.avatar_url,
+
+            puterUser.avatarUrl,
+
+            puterUser.profile_picture,
+
+            puterUser.profilePicture,
+
+            puterUser.profile_image,
+
+            puterUser.profileImage,
+
+            puterUser.picture,
+
+            puterUser.photoURL,
+
+            puterUser.photoUrl,
+
+            puterUser.image,
+
+            puterUser.image_url,
+
+            puterUser.imageUrl
+        ];
+
+
+        for (
+            const avatar of possibleAvatars
+        ) {
+
+            if (
+                typeof avatar === "string" &&
+                avatar.trim()
+            ) {
+
+                return avatar.trim();
+            }
+        }
+
+
+        return null;
+    }
+
+
+    /* =====================================================
+       USER FALLBACK AVATAR
+       ===================================================== */
+
+    function createUserFallbackAvatar(
+        avatar
+    ) {
+
+        avatar.innerHTML = "";
+
+        avatar.classList.add(
+            "user-avatar-fallback"
+        );
+
+
+        const name =
+            getUserDisplayName();
+
+
+        const firstLetter =
+            name
+                .trim()
+                .charAt(0)
+                .toUpperCase() ||
+            "U";
+
+
+        const span =
+            document.createElement(
+                "span"
+            );
+
+        span.textContent =
+            firstLetter;
+
+
+        avatar.appendChild(
+            span
+        );
+    }
+
+
+    /* =====================================================
+       USER AVATAR ELEMENT
+       ===================================================== */
+
+    function createUserAvatar(
+        avatar
+    ) {
+
+        avatar.innerHTML = "";
+
+        avatar.classList.remove(
+            "user-avatar-fallback"
+        );
+
+
+        const avatarURL =
+            getPuterAvatar();
+
+
+        if (!avatarURL) {
+
+            createUserFallbackAvatar(
+                avatar
+            );
+
+            return;
+        }
+
+
+        const img =
+            document.createElement(
+                "img"
+            );
+
+
+        img.src =
+            avatarURL;
+
+        img.alt =
+            getUserDisplayName();
+
+        img.loading =
+            "eager";
+
+        img.referrerPolicy =
+            "no-referrer";
+
+
+        img.style.width =
+            "100%";
+
+        img.style.height =
+            "100%";
+
+        img.style.objectFit =
+            "cover";
+
+        img.style.borderRadius =
+            "inherit";
+
+
+        img.onerror =
+            () => {
+
+                createUserFallbackAvatar(
+                    avatar
+                );
+            };
+
+
+        avatar.appendChild(
+            img
+        );
+    }
+
+
+    /* =====================================================
+       REFRESH ALL USER AVATARS
+       ===================================================== */
+
+    function refreshUserAvatars() {
+
+        $$(".message-row.user .message-avatar")
+            .forEach(
+                avatar => {
+
+                    createUserAvatar(
+                        avatar
+                    );
+                }
+            );
+
+
+        /*
+         * Also update any user profile/avatar elements
+         * that your HTML may already contain.
+         */
+
+        $$(".user-avatar")
+            .forEach(
+                avatar => {
+
+                    createUserAvatar(
+                        avatar
+                    );
+                }
+            );
+    }
+
+
+    /* =====================================================
        AUTH UI
-    ===================================================== */
+       ===================================================== */
 
     function updateAuthUI() {
 
         let authButton =
             $("#nyxium-auth-button");
 
-        /*
-         * If the current HTML does not contain the button,
-         * create it automatically.
-         */
 
         if (!authButton) {
 
@@ -374,10 +703,13 @@
                     "#sidebar .sidebar-top"
                 );
 
+
             if (sidebar) {
 
                 authButton =
-                    document.createElement("button");
+                    document.createElement(
+                        "button"
+                    );
 
                 authButton.id =
                     "nyxium-auth-button";
@@ -385,70 +717,134 @@
                 authButton.className =
                     "new-chat-button nyxium-auth-button";
 
-                authButton.type = "button";
+                authButton.type =
+                    "button";
+
 
                 authButton.addEventListener(
                     "click",
                     handleAuthButton
                 );
 
+
                 const newChat =
                     $("#new-chat-btn");
 
+
                 if (newChat) {
-                    newChat.after(authButton);
+
+                    newChat.after(
+                        authButton
+                    );
+
                 } else {
-                    sidebar.prepend(authButton);
+
+                    sidebar.prepend(
+                        authButton
+                    );
                 }
             }
         }
 
+
         if (!authButton) {
             return;
         }
+
 
         if (puterUser) {
 
             const username =
                 getUserDisplayName();
 
-            authButton.innerHTML =
-                `
-                <span>●</span>
-                <span>
-                    ${escapeHTML(username)}
-                </span>
-                `;
+
+            const avatarURL =
+                getPuterAvatar();
+
+
+            authButton.innerHTML = "";
+
+
+            const avatar =
+                document.createElement(
+                    "span"
+                );
+
+            avatar.className =
+                "auth-user-avatar";
+
+
+            if (avatarURL) {
+
+                const img =
+                    document.createElement(
+                        "img"
+                    );
+
+                img.src =
+                    avatarURL;
+
+                img.alt =
+                    username;
+
+                img.referrerPolicy =
+                    "no-referrer";
+
+
+                img.onerror =
+                    () => {
+
+                        avatar.textContent =
+                            username
+                                .charAt(0)
+                                .toUpperCase();
+                    };
+
+
+                avatar.appendChild(
+                    img
+                );
+
+            } else {
+
+                avatar.textContent =
+                    username
+                        .charAt(0)
+                        .toUpperCase();
+            }
+
+
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.textContent =
+                username;
+
+
+            authButton.appendChild(
+                avatar
+            );
+
+            authButton.appendChild(
+                name
+            );
+
 
             authButton.title =
                 "Click to sign out";
 
         } else {
 
-            authButton.innerHTML =
-                `
+            authButton.innerHTML = `
                 <span>⇥</span>
                 <span>Sign in</span>
-                `;
+            `;
 
             authButton.title =
                 "Sign in to use Nyxium AI";
         }
-    }
-
-
-    function getUserDisplayName() {
-
-        if (!puterUser) {
-            return "Signed in";
-        }
-
-        return (
-            puterUser.username ||
-            puterUser.name ||
-            puterUser.email ||
-            "Signed in"
-        );
     }
 
 
@@ -461,7 +857,9 @@
                     "Sign out of Nyxium AI?"
                 );
 
+
             if (confirmed) {
+
                 await signOutPuter();
             }
 
@@ -474,12 +872,13 @@
 
     /* =====================================================
        AUTH GATE
-    ===================================================== */
+       ===================================================== */
 
     async function requireAuthentication() {
 
         const alreadyLoggedIn =
             await checkPuterLogin();
+
 
         if (alreadyLoggedIn) {
 
@@ -489,17 +888,13 @@
         }
 
 
-        /*
-         * User explicitly requested AI.
-         * NOW authentication can be requested.
-         */
-
         const proceed =
             window.confirm(
                 "Sign in to Nyxium AI to start chatting.\n\n" +
                 "Puter will handle authentication. " +
                 "You won't be asked again while your login session remains active."
             );
+
 
         if (!proceed) {
 
@@ -510,13 +905,14 @@
             return false;
         }
 
+
         return await requestPuterLogin();
     }
 
 
     /* =====================================================
        INITIALIZATION
-    ===================================================== */
+       ===================================================== */
 
     async function initialize() {
 
@@ -524,7 +920,9 @@
             return;
         }
 
+
         initialized = true;
+
 
         loadChats();
 
@@ -540,22 +938,18 @@
 
         updateSassUI();
 
-        /*
-         * IMPORTANT:
-         *
-         * Check existing session silently.
-         *
-         * This DOES NOT open the login window.
-         */
 
         try {
 
             const loggedIn =
                 await checkPuterLogin();
 
+
             if (loggedIn) {
 
                 updateAuthUI();
+
+                refreshUserAvatars();
 
                 setAIStatus(
                     "Ready when you are"
@@ -583,17 +977,13 @@
 
         if (!activeChatId) {
 
-            /*
-             * Don't immediately create a saved chat.
-             * The welcome screen stays clean.
-             */
-
             renderMessages([]);
 
         } else {
 
             const chat =
                 getActiveChat();
+
 
             renderMessages(
                 chat?.messages || []
@@ -603,6 +993,7 @@
 
         updateRecentChatsUI();
 
+
         console.log(
             "✦ Nyxium AI initialized"
         );
@@ -610,33 +1001,39 @@
 
 
     /* =====================================================
-       AVATAR
-    ===================================================== */
+       AI AVATAR
+       ===================================================== */
 
     function setupAvatar() {
 
         const avatars =
             $$(".ai-face");
 
+
         avatars.forEach(
             avatar => {
 
                 avatar.innerHTML = "";
 
+
                 const img =
-                    document.createElement("img");
+                    document.createElement(
+                        "img"
+                    );
+
 
                 img.src =
                     CONFIG.AVATAR_URL;
 
                 img.alt =
-                    "Nyxium AI";
+                    CONFIG.BOT_NAME;
 
                 img.loading =
                     "eager";
 
                 img.referrerPolicy =
                     "no-referrer";
+
 
                 img.style.width =
                     "100%";
@@ -650,7 +1047,10 @@
                 img.style.borderRadius =
                     "inherit";
 
-                avatar.appendChild(img);
+
+                avatar.appendChild(
+                    img
+                );
             }
         );
     }
@@ -658,16 +1058,18 @@
 
     /* =====================================================
        INPUT
-    ===================================================== */
+       ===================================================== */
 
     function setupInput() {
 
         const input =
             $("#user-input");
 
+
         if (!input) {
             return;
         }
+
 
         input.addEventListener(
             "input",
@@ -691,7 +1093,9 @@
 
                     event.preventDefault();
 
+
                     if (!isGenerating) {
+
                         sendToAI();
                     }
                 }
@@ -705,12 +1109,15 @@
         const input =
             $("#user-input");
 
+
         if (!input) {
             return;
         }
 
+
         input.style.height =
             "auto";
+
 
         input.style.height =
             Math.min(
@@ -728,9 +1135,11 @@
         const counter =
             $("#character-count");
 
+
         if (!input || !counter) {
             return;
         }
+
 
         counter.textContent =
             `${input.value.length} / ${CONFIG.MAX_INPUT}`;
@@ -747,30 +1156,35 @@
             return;
         }
 
+
         const input =
             $("#user-input");
+
 
         if (!input) {
             return;
         }
 
-        let text =
+
+        const text =
             input.value.trim();
+
 
         if (!text) {
             return;
         }
 
 
-        /*
-         * Commands can work without AI authentication.
-         */
+        /* Commands don't require login. */
 
         if (
             text.startsWith("/")
         ) {
 
-            await handleCommand(text);
+            await handleCommand(
+                text
+            );
+
 
             input.value = "";
 
@@ -782,12 +1196,11 @@
         }
 
 
-        /*
-         * AI requires authentication.
-         */
+        /* AI requires authentication. */
 
         const authenticated =
             await requireAuthentication();
+
 
         if (!authenticated) {
             return;
@@ -795,18 +1208,22 @@
 
 
         /*
-         * Bot invite request.
+         * Discord bot invite request.
          */
 
-        if (isInviteRequest(text)) {
+        if (
+            isInviteRequest(text)
+        ) {
 
             const invite =
                 generateBotInvite();
+
 
             addMessage(
                 "assistant",
                 `Here is the official **Nyxium AI Discord bot invite**:\n\n${invite}\n\nYou can use that link to add Nyxium AI to a server where you have permission to add bots.`
             );
+
 
             input.value = "";
 
@@ -831,12 +1248,12 @@
                 chat.messages.length - 1
             ];
 
+
         if (
             lastMessage &&
             lastMessage.role === "user" &&
             lastMessage.content === text
         ) {
-
             return;
         }
 
@@ -854,7 +1271,10 @@
         );
 
 
-        setGenerating(true);
+        setGenerating(
+            true
+        );
+
 
         setAIStatus(
             "Nyxium is thinking…"
@@ -869,10 +1289,12 @@
                     chat
                 );
 
+
             addMessage(
                 "assistant",
                 response
             );
+
 
             setAIStatus(
                 "Ready when you are"
@@ -885,13 +1307,14 @@
                 error
             );
 
-            const errorMessage =
-                formatAIError(error);
 
             addMessage(
                 "assistant",
-                errorMessage
+                formatAIError(
+                    error
+                )
             );
+
 
             setAIStatus(
                 "Something went wrong"
@@ -899,7 +1322,9 @@
 
         } finally {
 
-            setGenerating(false);
+            setGenerating(
+                false
+            );
 
             updateRecentChatsUI();
 
@@ -910,7 +1335,7 @@
 
     /* =====================================================
        PUTER AI
-    ===================================================== */
+       ===================================================== */
 
     async function generateAIResponse(
         userText,
@@ -918,7 +1343,8 @@
     ) {
 
         if (
-            typeof window.puter === "undefined" ||
+            typeof window.puter ===
+                "undefined" ||
             !puter.ai
         ) {
 
@@ -949,25 +1375,18 @@
                 );
 
 
-        /*
-         * Put the system instructions into the
-         * first user-visible request instead of
-         * depending on a particular Puter API
-         * version's system-role support.
-         */
-
         const messages = [
             {
-                role: "system",
-                content: systemPrompt
+                role:
+                    "system",
+
+                content:
+                    systemPrompt
             },
+
             ...history
         ];
 
-
-        /*
-         * Try modern Puter AI API first.
-         */
 
         try {
 
@@ -978,9 +1397,11 @@
                         model:
                             CONFIG.PUTER_MODEL,
 
-                        stream: false
+                        stream:
+                            false
                     }
                 );
+
 
             return extractPuterText(
                 result
@@ -993,10 +1414,6 @@
                 firstError
             );
 
-
-            /*
-             * Compatibility fallback.
-             */
 
             const prompt =
                 systemPrompt +
@@ -1017,9 +1434,11 @@
                         model:
                             CONFIG.PUTER_MODEL,
 
-                        stream: false
+                        stream:
+                            false
                     }
                 );
+
 
             return extractPuterText(
                 fallback
@@ -1046,14 +1465,14 @@ Your personality:
 - Slightly futuristic
 - Natural rather than robotic
 
-You should answer naturally and directly.
+Answer naturally and directly.
 
 Do not unnecessarily repeat the user's question.
 
 Use Markdown when it improves readability.
 
 For programming:
-- Explain the solution clearly.
+- Explain solutions clearly.
 - Use proper fenced code blocks.
 - Preserve indentation.
 - Mention important bugs or compatibility issues.
@@ -1064,7 +1483,7 @@ For school questions:
 - Don't make answers unnecessarily complicated.
 
 For summaries:
-- Extract the important information.
+- Extract important information.
 - Use concise headings and bullet points when useful.
 
 For translations:
@@ -1085,11 +1504,13 @@ Never claim to have performed an action that you did not actually perform.
         if (sassEnabled) {
 
             prompt += `
-            
+
 Nyxium personality mode is enabled.
 
-You may occasionally use light humor, playful wording,
-or witty comments, but remain genuinely helpful.
+You may occasionally use light humor,
+playful wording, or witty comments,
+but remain genuinely helpful.
+
 Do not overdo it.
             `;
         }
@@ -1099,16 +1520,27 @@ Do not overdo it.
     }
 
 
-    function extractPuterText(result) {
+    /* =====================================================
+       PUTER RESPONSE EXTRACTION
+       ===================================================== */
+
+    function extractPuterText(
+        result
+    ) {
 
         if (!result) {
+
             throw new Error(
                 "Empty AI response."
             );
         }
 
 
-        if (typeof result === "string") {
+        if (
+            typeof result ===
+            "string"
+        ) {
+
             return result.trim();
         }
 
@@ -1118,6 +1550,7 @@ Do not overdo it.
             typeof result.message.content ===
             "string"
         ) {
+
             return result.message.content.trim();
         }
 
@@ -1145,6 +1578,7 @@ Do not overdo it.
             typeof result.content ===
             "string"
         ) {
+
             return result.content.trim();
         }
 
@@ -1153,6 +1587,7 @@ Do not overdo it.
             typeof result.text ===
             "string"
         ) {
+
             return result.text.trim();
         }
 
@@ -1165,18 +1600,22 @@ Do not overdo it.
             const choice =
                 result.choices[0];
 
+
             if (
                 choice.message &&
                 typeof choice.message.content ===
                 "string"
             ) {
+
                 return choice.message.content.trim();
             }
+
 
             if (
                 typeof choice.text ===
                 "string"
             ) {
+
                 return choice.text.trim();
             }
         }
@@ -1202,6 +1641,7 @@ Do not overdo it.
 
 
         chat.messages.push({
+
             id:
                 "msg_" +
                 Date.now() +
@@ -1250,9 +1690,11 @@ Do not overdo it.
 
         saveChats();
 
+
         renderMessages(
             chat.messages
         );
+
 
         updateRecentChatsUI();
     }
@@ -1264,12 +1706,17 @@ Do not overdo it.
 
         const clean =
             text
-                .replace(/\s+/g, " ")
+                .replace(
+                    /\s+/g,
+                    " "
+                )
                 .trim();
+
 
         if (!clean) {
             return "New conversation";
         }
+
 
         return clean.length > 42
             ? clean.slice(0, 42) + "…"
@@ -1287,6 +1734,7 @@ Do not overdo it.
 
         const container =
             $("#chat-messages");
+
 
         if (!container) {
             return;
@@ -1330,18 +1778,28 @@ Do not overdo it.
     ) {
 
         const row =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         row.className =
             `message-row ${message.role}`;
 
 
         const avatar =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         avatar.className =
             "message-avatar";
 
+
+        /*
+         * ASSISTANT AVATAR
+         */
 
         if (
             message.role ===
@@ -1349,7 +1807,10 @@ Do not overdo it.
         ) {
 
             const img =
-                document.createElement("img");
+                document.createElement(
+                    "img"
+                );
+
 
             img.src =
                 CONFIG.AVATAR_URL;
@@ -1360,6 +1821,10 @@ Do not overdo it.
             img.referrerPolicy =
                 "no-referrer";
 
+            img.loading =
+                "eager";
+
+
             img.style.width =
                 "100%";
 
@@ -1369,24 +1834,42 @@ Do not overdo it.
             img.style.objectFit =
                 "cover";
 
-            avatar.appendChild(img);
+            img.style.borderRadius =
+                "inherit";
+
+
+            avatar.appendChild(
+                img
+            );
+
+
+        /*
+         * USER AVATAR
+         */
 
         } else {
 
-            avatar.textContent =
-                "U";
+            createUserAvatar(
+                avatar
+            );
         }
 
 
         const body =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         body.className =
             "message-body";
 
 
         const content =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         content.className =
             "message-content";
@@ -1398,11 +1881,16 @@ Do not overdo it.
             );
 
 
-        body.appendChild(content);
+        body.appendChild(
+            content
+        );
 
 
         const actions =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         actions.className =
             "message-actions";
@@ -1457,20 +1945,34 @@ Do not overdo it.
         }
 
 
-        body.appendChild(actions);
+        body.appendChild(
+            actions
+        );
 
-        row.appendChild(avatar);
 
-        row.appendChild(body);
+        row.appendChild(
+            avatar
+        );
+
+
+        row.appendChild(
+            body
+        );
+
 
         return row;
     }
 
 
+    /* =====================================================
+       WELCOME SCREEN
+       ===================================================== */
+
     function renderWelcomeScreen() {
 
         const container =
             $("#chat-messages");
+
 
         if (!container) {
             return;
@@ -1478,10 +1980,14 @@ Do not overdo it.
 
 
         const welcome =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         welcome.id =
             "welcome-screen";
+
 
         welcome.className =
             "welcome-screen";
@@ -1512,9 +2018,12 @@ Do not overdo it.
                     data-prompt="Explain quantum computing in simple words."
                 >
                     <span class="starter-icon">⚛</span>
+
                     <span>
                         <strong>Explain something</strong>
-                        <small>Make a difficult topic simple</small>
+                        <small>
+                            Make a difficult topic simple
+                        </small>
                     </span>
                 </button>
 
@@ -1523,10 +2032,15 @@ Do not overdo it.
                     type="button"
                     data-prompt="Help me build a clean and modern website."
                 >
-                    <span class="starter-icon">&lt;/&gt;</span>
+                    <span class="starter-icon">
+                        &lt;/&gt;
+                    </span>
+
                     <span>
                         <strong>Build something</strong>
-                        <small>Code, websites and projects</small>
+                        <small>
+                            Code, websites and projects
+                        </small>
                     </span>
                 </button>
 
@@ -1535,10 +2049,15 @@ Do not overdo it.
                     type="button"
                     data-prompt="Summarize the following text: "
                 >
-                    <span class="starter-icon">▤</span>
+                    <span class="starter-icon">
+                        ▤
+                    </span>
+
                     <span>
                         <strong>Summarize</strong>
-                        <small>Turn long text into useful notes</small>
+                        <small>
+                            Turn long text into useful notes
+                        </small>
                     </span>
                 </button>
 
@@ -1547,10 +2066,15 @@ Do not overdo it.
                     type="button"
                     data-prompt="Give me creative ideas for: "
                 >
-                    <span class="starter-icon">✧</span>
+                    <span class="starter-icon">
+                        ✧
+                    </span>
+
                     <span>
                         <strong>Brainstorm</strong>
-                        <small>Ideas, stories and projects</small>
+                        <small>
+                            Ideas, stories and projects
+                        </small>
                     </span>
                 </button>
 
@@ -1559,6 +2083,7 @@ Do not overdo it.
 
 
         container.innerHTML = "";
+
 
         container.appendChild(
             welcome
@@ -1608,8 +2133,12 @@ Do not overdo it.
         try {
 
             marked.setOptions({
-                breaks: true,
-                gfm: true
+
+                breaks:
+                    true,
+
+                gfm:
+                    true
             });
 
 
@@ -1624,6 +2153,7 @@ Do not overdo it.
                 error
             );
 
+
             return escapeHTML(
                 text
             ).replace(
@@ -1633,6 +2163,10 @@ Do not overdo it.
         }
     }
 
+
+    /* =====================================================
+       CODE HIGHLIGHTING
+       ===================================================== */
 
     function highlightCode() {
 
@@ -1671,6 +2205,7 @@ Do not overdo it.
         const pre =
             codeBlock.parentElement;
 
+
         if (!pre) {
             return;
         }
@@ -1678,31 +2213,43 @@ Do not overdo it.
 
         if (
             pre.parentElement?.classList
-                .contains("code-wrapper")
+                .contains(
+                    "code-wrapper"
+                )
         ) {
             return;
         }
 
 
         const wrapper =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         wrapper.className =
             "code-wrapper";
 
 
         const header =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
+
 
         header.className =
             "code-header";
 
 
         const language =
-            document.createElement("span");
+            document.createElement(
+                "span"
+            );
+
 
         language.className =
             "code-language";
+
 
         language.textContent =
             detectCodeLanguage(
@@ -1711,13 +2258,18 @@ Do not overdo it.
 
 
         const copy =
-            document.createElement("button");
+            document.createElement(
+                "button"
+            );
+
 
         copy.className =
             "copy-code-button";
 
+
         copy.type =
             "button";
+
 
         copy.textContent =
             "Copy";
@@ -1731,13 +2283,17 @@ Do not overdo it.
                     codeBlock.innerText
                 );
 
+
                 copy.textContent =
                     "Copied!";
 
+
                 setTimeout(
                     () => {
+
                         copy.textContent =
                             "Copy";
+
                     },
                     1200
                 );
@@ -1749,6 +2305,7 @@ Do not overdo it.
             language
         );
 
+
         header.appendChild(
             copy
         );
@@ -1759,9 +2316,11 @@ Do not overdo it.
             pre
         );
 
+
         wrapper.appendChild(
             header
         );
+
 
         wrapper.appendChild(
             pre
@@ -1777,6 +2336,7 @@ Do not overdo it.
             code.className
                 .split(/\s+/);
 
+
         const languageClass =
             classes.find(
                 c =>
@@ -1785,12 +2345,12 @@ Do not overdo it.
                     )
             );
 
+
         return languageClass
-            ? languageClass
-                .replace(
-                    "language-",
-                    ""
-                )
+            ? languageClass.replace(
+                "language-",
+                ""
+            )
             : "code";
     }
 
@@ -1807,6 +2367,7 @@ Do not overdo it.
             const input =
                 $("#user-input");
 
+
             if (!input) {
                 return;
             }
@@ -1815,7 +2376,9 @@ Do not overdo it.
             input.value =
                 prompt || "";
 
+
             input.focus();
+
 
             autoResizeInput();
 
@@ -1875,9 +2438,7 @@ Do not overdo it.
 
             useQuickPrompt(
                 "Summarize this clearly:\n\n" +
-                command.slice(
-                    11
-                )
+                command.slice(11)
             );
 
             return;
@@ -1892,9 +2453,7 @@ Do not overdo it.
 
             useQuickPrompt(
                 "Translate this naturally:\n\n" +
-                command.slice(
-                    11
-                )
+                command.slice(11)
             );
 
             return;
@@ -1909,9 +2468,7 @@ Do not overdo it.
 
             useQuickPrompt(
                 "Help me with this code:\n\n" +
-                command.slice(
-                    6
-                )
+                command.slice(6)
             );
 
             return;
@@ -1959,12 +2516,15 @@ You can also simply ask Nyxium AI normally.
             sassEnabled =
                 !sassEnabled;
 
+
             localStorage.setItem(
                 CONFIG.STORAGE_SASS,
                 String(sassEnabled)
             );
 
+
             updateSassUI();
+
 
             showToast(
                 sassEnabled
@@ -1978,6 +2538,7 @@ You can also simply ask Nyxium AI normally.
 
         const icon =
             $("#sass-icon");
+
 
         if (icon) {
 
@@ -1999,13 +2560,11 @@ You can also simply ask Nyxium AI normally.
             const chat =
                 createChat();
 
+
             chats.unshift(
                 chat
             );
 
-            /*
-             * Limit stored chats.
-             */
 
             chats =
                 chats.slice(
@@ -2017,7 +2576,9 @@ You can also simply ask Nyxium AI normally.
             activeChatId =
                 chat.id;
 
+
             saveChats();
+
 
             renderMessages([]);
 
@@ -2025,12 +2586,15 @@ You can also simply ask Nyxium AI normally.
 
             renderChatHistory();
 
+
             setAIStatus(
                 "Ready when you are"
             );
 
+
             const input =
                 $("#user-input");
+
 
             if (input) {
 
@@ -2046,6 +2610,7 @@ You can also simply ask Nyxium AI normally.
 
             closeMobileSidebar();
 
+
             showToast(
                 "New conversation started."
             );
@@ -2053,7 +2618,7 @@ You can also simply ask Nyxium AI normally.
 
 
     /* =====================================================
-       CLEAR
+       CLEAR CONVERSATION
        ===================================================== */
 
     window.clearConversation =
@@ -2061,6 +2626,7 @@ You can also simply ask Nyxium AI normally.
 
             const chat =
                 getActiveChat();
+
 
             if (!chat) {
 
@@ -2075,15 +2641,19 @@ You can also simply ask Nyxium AI normally.
                     "Clear this conversation?"
                 );
 
+
             if (!confirmed) {
                 return;
             }
 
 
-            chat.messages = [];
+            chat.messages =
+                [];
+
 
             chat.title =
                 "New conversation";
+
 
             chat.updatedAt =
                 Date.now();
@@ -2091,13 +2661,16 @@ You can also simply ask Nyxium AI normally.
 
             saveChats();
 
+
             renderMessages([]);
 
             updateRecentChatsUI();
 
+
             setAIStatus(
                 "Ready when you are"
             );
+
 
             showToast(
                 "Conversation cleared."
@@ -2115,8 +2688,19 @@ You can also simply ask Nyxium AI normally.
             return;
         }
 
+
+        const authenticated =
+            await requireAuthentication();
+
+
+        if (!authenticated) {
+            return;
+        }
+
+
         const chat =
             getActiveChat();
+
 
         if (!chat) {
             return;
@@ -2171,14 +2755,19 @@ You can also simply ask Nyxium AI normally.
             1
         );
 
+
         saveChats();
+
 
         renderMessages(
             chat.messages
         );
 
 
-        setGenerating(true);
+        setGenerating(
+            true
+        );
+
 
         setAIStatus(
             "Nyxium is regenerating…"
@@ -2193,10 +2782,12 @@ You can also simply ask Nyxium AI normally.
                     chat
                 );
 
+
             addMessage(
                 "assistant",
                 response
             );
+
 
             setAIStatus(
                 "Ready when you are"
@@ -2204,16 +2795,23 @@ You can also simply ask Nyxium AI normally.
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
+
 
             addMessage(
                 "assistant",
-                formatAIError(error)
+                formatAIError(
+                    error
+                )
             );
 
         } finally {
 
-            setGenerating(false);
+            setGenerating(
+                false
+            );
         }
     }
 
@@ -2223,11 +2821,6 @@ You can also simply ask Nyxium AI normally.
        ===================================================== */
 
     function renderChatHistory() {
-
-        /*
-         * The existing HTML may not contain a recent-chat
-         * container. Create one inside the sidebar.
-         */
 
         let history =
             $("#recent-chats");
@@ -2240,16 +2833,21 @@ You can also simply ask Nyxium AI normally.
                     "#sidebar .sidebar-top"
                 );
 
+
             if (!sidebarTop) {
                 return;
             }
 
 
             history =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             history.id =
                 "recent-chats";
+
 
             history.className =
                 "recent-chats";
@@ -2260,9 +2858,15 @@ You can also simply ask Nyxium AI normally.
                     ".sidebar-nav"
                 );
 
+
             if (nav) {
-                nav.after(history);
+
+                nav.after(
+                    history
+                );
+
             } else {
+
                 sidebarTop.appendChild(
                     history
                 );
@@ -2280,17 +2884,23 @@ You can also simply ask Nyxium AI normally.
         if (chats.length === 0) {
 
             const empty =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             empty.className =
                 "recent-empty";
 
+
             empty.textContent =
                 "No conversations yet.";
+
 
             history.appendChild(
                 empty
             );
+
 
             return;
         }
@@ -2313,10 +2923,14 @@ You can also simply ask Nyxium AI normally.
             chat => {
 
                 const button =
-                    document.createElement("button");
+                    document.createElement(
+                        "button"
+                    );
+
 
                 button.type =
                     "button";
+
 
                 button.className =
                     "recent-chat-item" +
@@ -2372,6 +2986,7 @@ You can also simply ask Nyxium AI normally.
                     item.id === chatId
             );
 
+
         if (!chat) {
             return;
         }
@@ -2380,17 +2995,22 @@ You can also simply ask Nyxium AI normally.
         activeChatId =
             chatId;
 
+
         saveChats();
+
 
         renderMessages(
             chat.messages
         );
 
+
         renderChatHistory();
+
 
         setAIStatus(
             "Ready when you are"
         );
+
 
         closeMobileSidebar();
     }
@@ -2448,6 +3068,7 @@ You can also simply ask Nyxium AI normally.
             const overlay =
                 $("#sidebar-overlay");
 
+
             if (!sidebar) {
                 return;
             }
@@ -2456,6 +3077,7 @@ You can also simply ask Nyxium AI normally.
             sidebar.classList.toggle(
                 "mobile-open"
             );
+
 
             if (overlay) {
 
@@ -2471,12 +3093,15 @@ You can also simply ask Nyxium AI normally.
         const sidebar =
             $("#sidebar");
 
+
         const overlay =
             $("#sidebar-overlay");
+
 
         sidebar?.classList.remove(
             "mobile-open"
         );
+
 
         overlay?.classList.remove(
             "active"
@@ -2503,7 +3128,9 @@ You can also simply ask Nyxium AI normally.
         const status =
             $("#ai-status");
 
+
         if (status) {
+
             status.textContent =
                 text;
         }
@@ -2525,6 +3152,7 @@ You can also simply ask Nyxium AI normally.
         const sendButton =
             $("#send-button");
 
+
         const input =
             $("#user-input");
 
@@ -2534,6 +3162,7 @@ You can also simply ask Nyxium AI normally.
             sendButton.disabled =
                 value;
 
+
             sendButton.innerHTML =
                 value
                     ? "<span>•••</span>"
@@ -2542,8 +3171,8 @@ You can also simply ask Nyxium AI normally.
 
 
         /*
-         * We intentionally DO NOT disable the textarea
-         * completely, but prevent another send.
+         * The textarea stays usable.
+         * Sending is prevented while generation is active.
          */
 
         if (input) {
@@ -2565,6 +3194,7 @@ You can also simply ask Nyxium AI normally.
         const area =
             $("#chat-scroll-area");
 
+
         if (!area) {
             return;
         }
@@ -2581,16 +3211,10 @@ You can also simply ask Nyxium AI normally.
 
 
     /* =====================================================
-       INVITE LINK
+       DISCORD INVITE
        ===================================================== */
 
     function generateBotInvite() {
-
-        /*
-         * Standard Discord OAuth2 bot authorization URL.
-         *
-         * This uses the bot ID supplied for Nyxium.
-         */
 
         return (
             "https://discord.com/oauth2/authorize" +
@@ -2618,16 +3242,27 @@ You can also simply ask Nyxium AI normally.
 
 
         const keywords = [
+
             "invite nyxium",
+
             "invite nyxium ai",
+
             "nyxium invite",
+
             "nyxium bot invite",
+
             "invite link",
+
             "bot invite",
+
             "discord bot link",
+
             "add nyxium",
+
             "add nyxium ai",
+
             "add the bot",
+
             "invite the bot"
         ];
 
@@ -2655,9 +3290,11 @@ You can also simply ask Nyxium AI normally.
                 text
             );
 
+
             showToast(
                 "Copied to clipboard."
             );
+
 
             return true;
 
@@ -2668,27 +3305,37 @@ You can also simply ask Nyxium AI normally.
                 error
             );
 
+
             const textarea =
-                document.createElement("textarea");
+                document.createElement(
+                    "textarea"
+                );
+
 
             textarea.value =
                 text;
+
 
             document.body.appendChild(
                 textarea
             );
 
+
             textarea.select();
+
 
             document.execCommand(
                 "copy"
             );
 
+
             textarea.remove();
+
 
             showToast(
                 "Copied."
             );
+
 
             return true;
         }
@@ -2778,16 +3425,21 @@ You can also simply ask Nyxium AI normally.
             const container =
                 $("#toast-container");
 
+
             if (!container) {
                 return;
             }
 
 
             const toast =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             toast.className =
                 "nyxium-toast";
+
 
             toast.textContent =
                 message;
@@ -2804,8 +3456,10 @@ You can also simply ask Nyxium AI normally.
                     toast.style.opacity =
                         "0";
 
+
                     toast.style.transform =
                         "translateY(8px)";
+
 
                     setTimeout(
                         () =>
@@ -2834,6 +3488,9 @@ You can also simply ask Nyxium AI normally.
 
     window.signOutPuter =
         signOutPuter;
+
+    window.loadPuterUser =
+        loadPuterUser;
 
 
     /* =====================================================
