@@ -2,214 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
-
+  <title>Nyxium AI</title>
   <meta
     name="description"
-    content="Nyxium AI — an intelligent cybernetic AI terminal for chat, coding, media, utilities and more."
+    content="Nyxium AI — an intelligent AI workspace for chat, coding, analysis and creative tasks."
   >
 
-  <meta name="theme-color" content="#08030f">
-
-  <title>Nyxium AI — Cybernetic Intelligence</title>
-
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Puter AI -->
   <script src="https://js.puter.com/v2/"></script>
 
-  <!-- Main stylesheet -->
+  <!-- Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Code highlighting -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css"
+  >
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/lib/highlight.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
-
-  <style>
-    /* =========================================================
-       CRITICAL BOOT STYLES
-       These keep the interface visible even if another script
-       encounters an error during startup.
-       ========================================================= */
-
-    html,
-    body {
-      margin: 0;
-      width: 100%;
-      min-height: 100%;
-      background: #08030f;
-    }
-
-    .view {
-      display: none;
-    }
-
-    .view.active {
-      display: block;
-    }
-
-    .mobile-only {
-      display: none;
-    }
-
-    @media (max-width: 900px) {
-      .mobile-only {
-        display: flex;
-      }
-    }
-
-    /* Nyx visor breathing */
-    @keyframes visor-glow {
-      0%,
-      100% {
-        transform: scale(1);
-        filter:
-          drop-shadow(0 0 8px rgba(168, 85, 247, 0.35));
-      }
-
-      50% {
-        transform: scale(1.025);
-        filter:
-          drop-shadow(0 0 18px rgba(168, 85, 247, 0.7));
-      }
-    }
-
-    .visor-active {
-      animation: visor-glow 3s ease-in-out infinite;
-    }
-
-    /* Loading dots */
-    @keyframes loadingDot {
-      0%,
-      80%,
-      100% {
-        opacity: 0.25;
-        transform: translateY(0);
-      }
-
-      40% {
-        opacity: 1;
-        transform: translateY(-3px);
-      }
-    }
-
-    .loading-dot {
-      animation: loadingDot 1.2s infinite;
-    }
-
-    .loading-dot:nth-child(2) {
-      animation-delay: 0.15s;
-    }
-
-    .loading-dot:nth-child(3) {
-      animation-delay: 0.3s;
-    }
-  </style>
 </head>
 
-<body
-  class="min-h-screen overflow-hidden bg-[#08030f] text-white"
-  data-theme="nyxium"
->
+<body>
 
   <!-- =========================================================
        BACKGROUND
-       ========================================================= -->
+  ========================================================== -->
 
   <canvas id="starfield"></canvas>
 
-  <div class="nyx-ambient nyx-ambient-one"></div>
-  <div class="nyx-ambient nyx-ambient-two"></div>
-  <div class="nyx-grid"></div>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="ambient ambient-three"></div>
 
 
   <!-- =========================================================
-       MOBILE HEADER
-       ========================================================= -->
+       APPLICATION
+  ========================================================== -->
 
-  <header
-    id="mobile-header"
-    class="mobile-only fixed top-0 left-0 right-0 h-16 z-[100] items-center justify-between px-4 border-b border-white/10 bg-[#0b0613]/90 backdrop-blur-xl"
-  >
-
-    <button
-      id="mobile-menu-btn"
-      type="button"
-      class="nyx-icon-btn"
-      aria-label="Open navigation"
-    >
-      ☰
-    </button>
-
-    <div class="flex items-center gap-2">
-      <div class="nyx-logo-small">⚡</div>
-      <span class="font-bold">Nyxium AI</span>
-    </div>
-
-    <button
-      type="button"
-      class="nyx-icon-btn"
-      onclick="showView('chat')"
-      aria-label="Open chat"
-    >
-      ✦
-    </button>
-
-  </header>
-
-
-  <!-- =========================================================
-       APP SHELL
-       ========================================================= -->
-
-  <div id="app-shell" class="relative z-10 flex h-screen w-full">
-
+  <div id="app-shell">
 
     <!-- =======================================================
          SIDEBAR
-         ======================================================= -->
+    ======================================================== -->
 
-    <aside
-      id="sidebar"
-      class="nyx-sidebar w-[270px] shrink-0 flex flex-col"
-    >
+    <aside id="sidebar">
 
-      <!-- Brand -->
+      <div class="sidebar-top">
 
-      <div class="px-5 pt-6 pb-5">
+        <!-- BRAND -->
 
-        <div class="flex items-center justify-between">
+        <div class="brand">
+          <div class="brand-logo">
+            ✦
+          </div>
+
+          <div class="brand-text">
+            <div class="brand-name">Nyxium AI</div>
+            <div class="brand-status">
+              <span class="status-dot"></span>
+              Online
+            </div>
+          </div>
+        </div>
+
+
+        <!-- NEW CHAT -->
+
+        <button
+          id="new-chat-btn"
+          class="new-chat-button"
+          onclick="startNewChat()"
+        >
+          <span>＋</span>
+          <span>New chat</span>
+        </button>
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="sidebar-nav">
 
           <button
-            type="button"
-            onclick="showView('dashboard')"
-            class="flex items-center gap-3 text-left"
+            class="nav-item active"
+            data-view="chat"
+            onclick="showView('chat')"
           >
-
-            <div class="nyx-logo">
-              ⚡
-            </div>
-
-            <div>
-              <div class="font-bold text-lg leading-none">
-                Nyxium
-              </div>
-
-              <div class="text-[10px] uppercase tracking-[0.25em] text-purple-400 mt-1">
-                AI Terminal
-              </div>
-            </div>
-
+            <span class="nav-icon">◈</span>
+            <span>AI Chat</span>
           </button>
 
           <button
-            id="sidebar-close-btn"
-            type="button"
-            class="nyx-icon-btn mobile-only"
-            aria-label="Close navigation"
+            class="nav-item"
+            data-view="dashboard"
+            onclick="showView('dashboard')"
           >
-            ×
+            <span class="nav-icon">⌂</span>
+            <span>Dashboard</span>
+          </button>
+
+          <button
+            class="nav-item"
+            data-view="tools"
+            onclick="showView('tools')"
+          >
+            <span class="nav-icon">✦</span>
+            <span>AI Tools</span>
+          </button>
+
+        </nav>
+
+
+        <!-- QUICK ACTIONS -->
+
+        <div class="sidebar-section">
+
+          <div class="sidebar-label">
+            QUICK ACTIONS
+          </div>
+
+          <button
+            class="quick-action"
+            onclick="useQuickPrompt('Explain this concept simply: ')"
+          >
+            <span>🧠</span>
+            Explain
+          </button>
+
+          <button
+            class="quick-action"
+            onclick="useQuickPrompt('Help me write code for: ')"
+          >
+            <span>⌘</span>
+            Code
+          </button>
+
+          <button
+            class="quick-action"
+            onclick="useQuickPrompt('Summarize this: ')"
+          >
+            <span>▤</span>
+            Summarize
+          </button>
+
+          <button
+            class="quick-action"
+            onclick="useQuickPrompt('Translate this to English: ')"
+          >
+            <span>文</span>
+            Translate
           </button>
 
         </div>
@@ -217,513 +161,112 @@
       </div>
 
 
-      <!-- Navigation -->
+      <!-- SIDEBAR BOTTOM -->
 
-      <nav class="px-3 space-y-1">
+      <div class="sidebar-bottom">
 
-        <div class="nyx-nav-label">
-          Workspace
-        </div>
+        <div class="system-card">
 
-        <button
-          type="button"
-          class="nyx-nav-item active"
-          data-view="dashboard"
-          onclick="showView('dashboard')"
-        >
-          <span class="nyx-nav-icon">⌂</span>
-          <span>Dashboard</span>
-        </button>
+          <div class="system-card-header">
+            <span class="system-icon">⚡</span>
 
-        <button
-          type="button"
-          class="nyx-nav-item"
-          data-view="chat"
-          onclick="showView('chat')"
-        >
-          <span class="nyx-nav-icon">◈</span>
-          <span>AI Chat</span>
-          <span class="nyx-nav-badge">AI</span>
-        </button>
-
-        <button
-          type="button"
-          class="nyx-nav-item"
-          data-view="tools"
-          onclick="showView('tools')"
-        >
-          <span class="nyx-nav-icon">⌘</span>
-          <span>AI Tools</span>
-        </button>
-
-        <button
-          type="button"
-          class="nyx-nav-item"
-          data-view="commands"
-          onclick="showView('commands')"
-        >
-          <span class="nyx-nav-icon">▣</span>
-          <span>Commands</span>
-        </button>
-
-
-        <div class="nyx-nav-label mt-6">
-          Network
-        </div>
-
-        <button
-          type="button"
-          class="nyx-nav-item"
-          onclick="openInvite()"
-        >
-          <span class="nyx-nav-icon">🤖</span>
-          <span>Invite Bot</span>
-          <span class="text-xs opacity-40">↗</span>
-        </button>
-
-        <button
-          type="button"
-          class="nyx-nav-item"
-          onclick="openDiscord()"
-        >
-          <span class="nyx-nav-icon">◉</span>
-          <span>Community</span>
-          <span class="text-xs opacity-40">↗</span>
-        </button>
-
-      </nav>
-
-
-      <!-- Sidebar status -->
-
-      <div class="mt-auto p-4">
-
-        <div class="nyx-sidebar-status">
-
-          <div class="flex items-center gap-3">
-
-            <div class="nyx-status-orb"></div>
-
-            <div class="min-w-0">
-
-              <div class="text-xs font-semibold">
-                Nyx Core
+            <div>
+              <div class="system-title">
+                Nyxium Core
               </div>
 
-              <div
-                id="sidebar-status"
-                class="text-[10px] text-green-400 truncate"
-              >
-                SYSTEM ONLINE
+              <div class="system-subtitle">
+                System operational
               </div>
-
             </div>
 
-          </div>
-
-          <div class="mt-3 flex items-center justify-between text-[10px] text-gray-500">
-            <span>v2.0</span>
-            <span id="latency-display">-- ms</span>
+            <span class="system-live"></span>
           </div>
 
         </div>
 
-        <div class="text-center text-[10px] text-gray-600 mt-4">
-          © 2026 Nyxium AI
-        </div>
+
+        <button
+          class="discord-button"
+          onclick="window.open('https://discord.gg/PBnxckkCzf','_blank')"
+        >
+          <span>◉</span>
+          Join Nyxium Discord
+        </button>
 
       </div>
 
     </aside>
 
 
+
     <!-- =======================================================
-         MAIN CONTENT
-         ======================================================= -->
+         MAIN APPLICATION
+    ======================================================== -->
 
-    <main
-      id="main-content"
-      class="flex-1 min-w-0 h-screen overflow-y-auto"
-    >
-
-      <!-- =====================================================
-           DASHBOARD
-           ===================================================== -->
-
-      <section
-        id="dashboard"
-        class="view active min-h-full p-5 md:p-8 lg:p-10"
-      >
-
-        <!-- Header -->
-
-        <div class="nyx-page-header">
-
-          <div>
-
-            <div class="nyx-eyebrow">
-              <span class="nyx-live-dot"></span>
-              NYXIUM NETWORK ONLINE
-            </div>
-
-            <h1 class="nyx-title">
-              Welcome to the
-              <span>Nyxium Core.</span>
-            </h1>
-
-            <p class="nyx-subtitle">
-              Your cybernetic AI workspace for conversation, coding,
-              creativity, media and intelligent utilities.
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            onclick="showView('chat')"
-            class="nyx-primary-btn"
-          >
-            <span>Open AI Console</span>
-            <span>→</span>
-          </button>
-
-        </div>
-
-
-        <!-- Quick Stats -->
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-
-          <div class="nyx-stat-card">
-            <span class="nyx-stat-icon">🧠</span>
-            <div>
-              <div class="nyx-stat-value">AI</div>
-              <div class="nyx-stat-label">Intelligence Core</div>
-            </div>
-          </div>
-
-          <div class="nyx-stat-card">
-            <span class="nyx-stat-icon">⚡</span>
-            <div>
-              <div
-                id="dashboard-latency"
-                class="nyx-stat-value"
-              >
-                -- ms
-              </div>
-              <div class="nyx-stat-label">Response Node</div>
-            </div>
-          </div>
-
-          <div class="nyx-stat-card">
-            <span class="nyx-stat-icon">🌌</span>
-            <div>
-              <div class="nyx-stat-value">ACTIVE</div>
-              <div class="nyx-stat-label">Galaxy Mode</div>
-            </div>
-          </div>
-
-          <div class="nyx-stat-card">
-            <span class="nyx-stat-icon">🔐</span>
-            <div>
-              <div class="nyx-stat-value">READY</div>
-              <div class="nyx-stat-label">Secure Session</div>
-            </div>
-          </div>
-
-        </div>
-
-
-        <!-- Main dashboard cards -->
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
-
-          <!-- AI -->
-
-          <article class="nyx-feature-card lg:col-span-2">
-
-            <div class="nyx-feature-glow"></div>
-
-            <div class="relative z-10">
-
-              <div class="flex items-start justify-between">
-
-                <div class="nyx-feature-icon">
-                  🧠
-                </div>
-
-                <span class="nyx-pill purple">
-                  CORE AI
-                </span>
-
-              </div>
-
-              <h2 class="text-2xl font-bold mt-6">
-                Talk to Nyx
-              </h2>
-
-              <p class="text-gray-400 mt-2 max-w-xl">
-                Ask questions, debug code, explain concepts, brainstorm
-                ideas, calculate problems or simply talk with Nyx.
-              </p>
-
-              <div class="flex flex-wrap gap-2 mt-5">
-
-                <span class="nyx-chip">Reasoning</span>
-                <span class="nyx-chip">Coding</span>
-                <span class="nyx-chip">Math</span>
-                <span class="nyx-chip">Creative</span>
-                <span class="nyx-chip">Conversation</span>
-
-              </div>
-
-              <button
-                type="button"
-                onclick="showView('chat')"
-                class="nyx-feature-btn mt-7"
-              >
-                Start conversation
-                <span>→</span>
-              </button>
-
-            </div>
-
-          </article>
-
-
-          <!-- Nyx avatar -->
-
-          <article class="nyx-avatar-card">
-
-            <div class="nyx-avatar-grid"></div>
-
-            <div class="relative z-10 flex flex-col items-center">
-
-              <div
-                id="dashboard-ai-face"
-                class="w-40 h-40 visor-active"
-              ></div>
-
-              <div class="text-center mt-2">
-
-                <div class="font-bold">
-                  NYX
-                </div>
-
-                <div
-                  id="dashboard-ai-status"
-                  class="text-xs text-green-400 mt-1"
-                >
-                  SYSTEM READY
-                </div>
-
-              </div>
-
-            </div>
-
-          </article>
-
-        </div>
-
-
-        <!-- Tool cards -->
-
-        <div class="flex items-center justify-between mb-4">
-
-          <div>
-
-            <h2 class="text-xl font-bold">
-              Quick Operations
-            </h2>
-
-            <p class="text-sm text-gray-500">
-              Launch a Nyxium module.
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            onclick="showView('tools')"
-            class="text-sm text-purple-400 hover:text-purple-300"
-          >
-            View all →
-          </button>
-
-        </div>
-
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-
-          <button
-            type="button"
-            onclick="openTool('ask')"
-            class="nyx-operation-card text-left"
-          >
-            <span>💬</span>
-            <strong>Ask Nyx</strong>
-            <small>AI conversation</small>
-          </button>
-
-          <button
-            type="button"
-            onclick="openTool('code')"
-            class="nyx-operation-card text-left"
-          >
-            <span>💻</span>
-            <strong>Code Assistant</strong>
-            <small>Debug & generate</small>
-          </button>
-
-          <button
-            type="button"
-            onclick="openTool('image')"
-            class="nyx-operation-card text-left"
-          >
-            <span>🎨</span>
-            <strong>Image Studio</strong>
-            <small>Create visual prompts</small>
-          </button>
-
-          <button
-            type="button"
-            onclick="openTool('utilities')"
-            class="nyx-operation-card text-left"
-          >
-            <span>⚙️</span>
-            <strong>Utilities</strong>
-            <small>Commands & tools</small>
-          </button>
-
-        </div>
-
-
-        <!-- System panel -->
-
-        <div class="nyx-system-panel mt-8">
-
-          <div class="flex items-center justify-between mb-5">
-
-            <div>
-              <h2 class="font-bold text-lg">
-                System Telemetry
-              </h2>
-
-              <p class="text-xs text-gray-500">
-                Live client-side diagnostics
-              </p>
-            </div>
-
-            <span class="nyx-pill green">
-              ● OPERATIONAL
-            </span>
-
-          </div>
-
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
-
-            <div>
-              <div class="text-xs text-gray-500 mb-1">
-                Frontend
-              </div>
-              <div class="font-semibold text-green-400">
-                ONLINE
-              </div>
-            </div>
-
-            <div>
-              <div class="text-xs text-gray-500 mb-1">
-                AI Gateway
-              </div>
-              <div
-                id="gateway-status"
-                class="font-semibold text-yellow-400"
-              >
-                CHECKING
-              </div>
-            </div>
-
-            <div>
-              <div class="text-xs text-gray-500 mb-1">
-                Session
-              </div>
-              <div class="font-semibold">
-                ACTIVE
-              </div>
-            </div>
-
-            <div>
-              <div class="text-xs text-gray-500 mb-1">
-                Galaxy Engine
-              </div>
-              <div class="font-semibold text-purple-400">
-                RUNNING
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <footer class="nyx-footer">
-          <span>© 2026 Nyxium AI</span>
-          <span>•</span>
-          <a href="privacy.html">Privacy</a>
-          <span>•</span>
-          <a href="terms.html">Terms</a>
-          <span>•</span>
-          <a href="https://discord.gg/PBnxckkCzf" target="_blank">
-            Discord
-          </a>
-        </footer>
-
-      </section>
+    <main id="main-content">
 
 
       <!-- =====================================================
-           AI CHAT
-           ===================================================== -->
+           CHAT VIEW
+      ====================================================== -->
 
       <section
         id="chat"
-        class="view min-h-full p-5 md:p-8 lg:p-10"
+        class="view active"
       >
 
-        <!-- Chat header -->
+        <!-- CHAT HEADER -->
 
-        <div class="nyx-chat-header">
+        <header class="chat-header">
 
-          <div class="flex items-center gap-4 min-w-0">
+          <div class="chat-header-left">
 
-            <div class="nyx-chat-avatar">
+            <button
+              id="mobile-menu-btn"
+              class="mobile-menu-button"
+              onclick="toggleSidebar()"
+              aria-label="Open menu"
+            >
+              ☰
+            </button>
+
+
+            <!-- AVATAR -->
+
+            <div class="ai-avatar-container">
 
               <div
                 id="ai-face"
-                class="w-full h-full visor-active"
+                class="ai-face"
               ></div>
+
+              <span
+                id="avatar-status-dot"
+                class="avatar-status-dot"
+              ></span>
 
             </div>
 
-            <div class="min-w-0">
 
-              <div class="flex items-center gap-2">
+            <!-- TITLE -->
 
-                <h1 class="text-2xl md:text-3xl font-bold">
-                  Nyx Console
+            <div class="chat-title-area">
+
+              <div class="chat-title-row">
+
+                <h1>
+                  Nyxium AI
                 </h1>
 
-                <span class="nyx-pill purple">
+                <span class="model-badge">
                   AI
                 </span>
 
               </div>
 
-              <p
-                id="ai-status"
-                class="text-sm text-gray-400 mt-1"
-              >
-                Status: Chilling
+              <p id="ai-status">
+                Ready when you are
               </p>
 
             </div>
@@ -731,106 +274,228 @@
           </div>
 
 
-          <!-- Chat controls -->
+          <!-- CHAT HEADER ACTIONS -->
 
-          <div class="flex flex-wrap gap-2">
+          <div class="chat-header-actions">
 
             <button
-              type="button"
-              id="stop-generation-btn"
-              class="nyx-control-btn danger hidden"
-              onclick="stopGeneration()"
+              class="header-icon-button"
+              onclick="toggleSass()"
+              title="Toggle personality"
             >
-              ■ Stop
+              <span id="sass-icon">✦</span>
             </button>
 
             <button
-              type="button"
-              class="nyx-control-btn"
-              onclick="executeConsoleCommand('/clear')"
+              class="header-icon-button"
+              onclick="clearConversation()"
+              title="Clear conversation"
             >
-              🗑 Clear
-            </button>
-
-            <button
-              type="button"
-              class="nyx-control-btn"
-              onclick="executeConsoleCommand('/toggle-sass')"
-            >
-              🎭 Sass
+              ⌫
             </button>
 
           </div>
 
-        </div>
+        </header>
 
 
-        <!-- Tip -->
 
-        <div id="ai-tip-box"></div>
-
-
-        <!-- Chat body -->
+        <!-- ===================================================
+             CHAT CONTENT
+        ==================================================== -->
 
         <div
-          id="chat-shell"
-          class="nyx-chat-shell"
+          id="chat-scroll-area"
+          class="chat-scroll-area"
         >
 
           <div
             id="chat-messages"
-            class="nyx-chat-messages"
-            aria-live="polite"
+            class="chat-messages"
           >
 
-            <!-- Empty state -->
+            <!-- WELCOME SCREEN -->
 
             <div
-              id="chat-empty-state"
-              class="nyx-chat-empty"
+              id="welcome-screen"
+              class="welcome-screen"
             >
 
-              <div class="nyx-empty-orb">
-                ⚡
+              <div class="welcome-orb">
+
+                <div class="welcome-orb-inner">
+                  ✦
+                </div>
+
               </div>
 
+
               <h2>
-                What are we building today?
+                What can I help you with?
               </h2>
 
               <p>
-                Ask Nyx anything. Code, mathematics, ideas,
-                explanations, debugging or casual conversation.
+                Ask Nyxium AI anything — from coding and schoolwork
+                to explanations, writing, analysis and creative ideas.
               </p>
 
-              <div class="nyx-suggestion-grid">
+
+              <!-- STARTER PROMPTS -->
+
+              <div class="starter-grid">
 
                 <button
-                  type="button"
-                  onclick="useSuggestion('Explain quantum computing like I am in class 9.')"
+                  class="starter-card"
+                  onclick="useQuickPrompt('Explain quantum computing in simple words.')"
                 >
-                  🧪 Explain something
+                  <span class="starter-icon">⚛</span>
+
+                  <span>
+                    <strong>Explain something</strong>
+                    <small>Make a difficult topic simple</small>
+                  </span>
+                </button>
+
+
+                <button
+                  class="starter-card"
+                  onclick="useQuickPrompt('Help me write a clean and modern website.')"
+                >
+                  <span class="starter-icon">⌘</span>
+
+                  <span>
+                    <strong>Build something</strong>
+                    <small>Code, websites and projects</small>
+                  </span>
+                </button>
+
+
+                <button
+                  class="starter-card"
+                  onclick="useQuickPrompt('Give me a detailed summary of: ')"
+                >
+                  <span class="starter-icon">▤</span>
+
+                  <span>
+                    <strong>Summarize</strong>
+                    <small>Turn long text into useful notes</small>
+                  </span>
+                </button>
+
+
+                <button
+                  class="starter-card"
+                  onclick="useQuickPrompt('Give me some creative ideas for: ')"
+                >
+                  <span class="starter-icon">✧</span>
+
+                  <span>
+                    <strong>Brainstorm</strong>
+                    <small>Ideas, stories and projects</small>
+                  </span>
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- ===================================================
+             INPUT AREA
+        ==================================================== -->
+
+        <div class="composer-wrapper">
+
+          <div id="ai-tip-box"></div>
+
+
+          <!-- COMMAND SUGGESTIONS -->
+
+          <div
+            id="command-suggestions"
+            class="command-suggestions"
+          >
+
+            <button onclick="useQuickPrompt('/clear')">
+              /clear
+            </button>
+
+            <button onclick="useQuickPrompt('/toggle-sass')">
+              /toggle-sass
+            </button>
+
+            <button onclick="useQuickPrompt('/help')">
+              /help
+            </button>
+
+          </div>
+
+
+          <!-- COMPOSER -->
+
+          <div
+            id="composer"
+            class="composer"
+          >
+
+            <textarea
+              id="user-input"
+              rows="1"
+              maxlength="12000"
+              placeholder="Message Nyxium AI..."
+              autocomplete="off"
+              spellcheck="true"
+            ></textarea>
+
+
+            <div class="composer-bottom">
+
+              <div class="composer-tools">
+
+                <button
+                  class="composer-tool"
+                  onclick="useQuickPrompt('Analyze this: ')"
+                  title="Analyze"
+                >
+                  ✦
                 </button>
 
                 <button
-                  type="button"
-                  onclick="useSuggestion('Help me debug my JavaScript code.')"
+                  class="composer-tool"
+                  onclick="useQuickPrompt('Write code for: ')"
+                  title="Code"
                 >
-                  💻 Debug code
+                  &lt;/&gt;
                 </button>
 
-                <button
-                  type="button"
-                  onclick="useSuggestion('Give me an interesting scientific fact.')"
+                <span class="composer-hint">
+                  Enter to send · Shift + Enter for new line
+                </span>
+
+              </div>
+
+
+              <div class="composer-right">
+
+                <span
+                  id="character-count"
+                  class="character-count"
                 >
-                  🌌 Give me a fact
-                </button>
+                  0 / 12000
+                </span>
 
                 <button
-                  type="button"
-                  onclick="useSuggestion('Give me an idea for a futuristic game.')"
+                  id="send-button"
+                  class="send-button"
+                  onclick="sendToAI()"
+                  aria-label="Send message"
                 >
-                  🎮 Brainstorm
+                  <span>↑</span>
                 </button>
 
               </div>
@@ -840,81 +505,193 @@
           </div>
 
 
-          <!-- Composer -->
+          <div class="composer-disclaimer">
+            Nyxium AI can make mistakes. Verify important information.
+          </div>
 
-          <div class="nyx-composer-wrapper">
+        </div>
 
-            <div
-              id="attachment-preview"
-              class="hidden"
-            ></div>
-
-
-            <div class="nyx-composer">
-
-              <button
-                type="button"
-                id="attach-btn"
-                class="nyx-composer-icon"
-                title="Attach file"
-              >
-                +
-              </button>
-
-              <input
-                type="file"
-                id="file-input"
-                class="hidden"
-                multiple
-              >
+      </section>
 
 
-              <textarea
-                id="user-input"
-                rows="1"
-                maxlength="12000"
-                autocomplete="off"
-                placeholder="Message Nyx..."
-              ></textarea>
+
+      <!-- =====================================================
+           DASHBOARD
+      ====================================================== -->
+
+      <section
+        id="dashboard"
+        class="view"
+      >
+
+        <div class="page-container">
+
+          <div class="page-heading">
+
+            <div>
+              <span class="eyebrow">
+                NYXIUM SYSTEM
+              </span>
+
+              <h2>
+                Your AI workspace
+              </h2>
+
+              <p>
+                Everything you need to interact with Nyxium AI.
+              </p>
+            </div>
+
+            <button
+              class="primary-button"
+              onclick="showView('chat')"
+            >
+              Open AI Chat
+            </button>
+
+          </div>
 
 
-              <div class="flex items-center gap-2">
+          <!-- STATS -->
 
-                <button
-                  type="button"
-                  id="voice-btn"
-                  class="nyx-composer-icon"
-                  title="Voice input"
-                >
-                  🎙
-                </button>
+          <div class="stats-grid">
 
-                <button
-                  type="button"
-                  id="send-btn"
-                  class="nyx-send-btn"
-                  onclick="sendToAI()"
-                  title="Send message"
-                >
-                  ↑
-                </button>
+            <div class="stat-card">
+              <span class="stat-icon">◈</span>
+              <span class="stat-label">AI Status</span>
+              <strong>ONLINE</strong>
+            </div>
 
+            <div class="stat-card">
+              <span class="stat-icon">⚡</span>
+              <span class="stat-label">Response Mode</span>
+              <strong>HYBRID</strong>
+            </div>
+
+            <div class="stat-card">
+              <span class="stat-icon">🧠</span>
+              <span class="stat-label">Memory</span>
+              <strong>ACTIVE</strong>
+            </div>
+
+            <div class="stat-card">
+              <span class="stat-icon">✦</span>
+              <span class="stat-label">Interface</span>
+              <strong>NYXIUM</strong>
+            </div>
+
+          </div>
+
+
+          <!-- FEATURES -->
+
+          <div class="dashboard-section">
+
+            <h3>
+              Core capabilities
+            </h3>
+
+            <div class="feature-grid">
+
+              <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h4>Intelligent Chat</h4>
+                <p>
+                  Context-aware conversations with memory and
+                  natural responses.
+                </p>
+              </div>
+
+              <div class="feature-card">
+                <div class="feature-icon">⌘</div>
+                <h4>Programming</h4>
+                <p>
+                  Debug, explain and generate code with formatted
+                  code blocks.
+                </p>
+              </div>
+
+              <div class="feature-card">
+                <div class="feature-icon">📄</div>
+                <h4>Analysis</h4>
+                <p>
+                  Analyze information, summarize content and
+                  organize complex ideas.
+                </p>
+              </div>
+
+              <div class="feature-card">
+                <div class="feature-icon">✧</div>
+                <h4>Creative Mode</h4>
+                <p>
+                  Generate ideas, stories, concepts and creative
+                  content.
+                </p>
               </div>
 
             </div>
 
+          </div>
 
-            <div class="flex items-center justify-between mt-2 px-2">
 
-              <div class="text-[10px] text-gray-600">
-                Nyx can make mistakes. Verify important information.
+          <!-- COMMAND DIRECTORY -->
+
+          <div class="dashboard-section">
+
+            <div class="section-heading">
+
+              <div>
+                <h3>
+                  Command directory
+                </h3>
+
+                <p>
+                  Nyxium terminal operations.
+                </p>
               </div>
 
-              <div
-                id="character-count"
-                class="text-[10px] text-gray-600"
-              >
-                0 / 12000
+              <span class="online-pill">
+                ● SYSTEM ONLINE
+              </span>
+
+            </div>
+
+
+            <div class="command-directory">
+
+              <div class="command-row">
+                <code>/ask</code>
+                <span>Ask Nyxium AI anything.</span>
+              </div>
+
+              <div class="command-row">
+                <code>/clear</code>
+                <span>Clear the current conversation.</span>
+              </div>
+
+              <div class="command-row">
+                <code>/toggle-sass</code>
+                <span>Toggle Nyxium's playful personality.</span>
+              </div>
+
+              <div class="command-row">
+                <code>/help</code>
+                <span>Display available commands.</span>
+              </div>
+
+              <div class="command-row">
+                <code>/code</code>
+                <span>Switch into programming-focused assistance.</span>
+              </div>
+
+              <div class="command-row">
+                <code>/summarize</code>
+                <span>Summarize provided content.</span>
+              </div>
+
+              <div class="command-row">
+                <code>/translate</code>
+                <span>Translate text between languages.</span>
               </div>
 
             </div>
@@ -926,452 +703,139 @@
       </section>
 
 
+
       <!-- =====================================================
-           TOOLS
-           ===================================================== -->
+           AI TOOLS
+      ====================================================== -->
 
       <section
         id="tools"
-        class="view min-h-full p-5 md:p-8 lg:p-10"
+        class="view"
       >
 
-        <div class="nyx-page-header">
+        <div class="page-container">
 
-          <div>
+          <div class="page-heading">
 
-            <div class="nyx-eyebrow">
-              TOOL NETWORK
+            <div>
+              <span class="eyebrow">
+                NYXIUM TOOLKIT
+              </span>
+
+              <h2>
+                AI Tools
+              </h2>
+
+              <p>
+                Quick access to Nyxium's specialized workflows.
+              </p>
             </div>
-
-            <h1 class="nyx-title">
-              Nyxium
-              <span>Tools.</span>
-            </h1>
-
-            <p class="nyx-subtitle">
-              Quick access to the capabilities exposed by your Nyxium
-              terminal.
-            </p>
 
           </div>
 
-        </div>
 
-
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-
-
-          <!-- Ask -->
-
-          <article class="nyx-tool-card">
-
-            <div class="nyx-tool-icon">🧠</div>
-
-            <div class="nyx-pill purple mb-4">
-              AI
-            </div>
-
-            <h2>AI Chat</h2>
-
-            <p>
-              Have contextual conversations with Nyx using the active
-              AI gateway.
-            </p>
+          <div class="tools-grid">
 
             <button
-              type="button"
-              onclick="openTool('ask')"
-              class="nyx-feature-btn mt-5"
+              class="tool-card"
+              onclick="useQuickPrompt('Help me write and improve this code: ')"
             >
-              Open
-              <span>→</span>
-            </button>
+              <div class="tool-card-icon">⌘</div>
 
-          </article>
-
-
-          <!-- Code -->
-
-          <article class="nyx-tool-card">
-
-            <div class="nyx-tool-icon">💻</div>
-
-            <div class="nyx-pill blue mb-4">
-              DEV
-            </div>
-
-            <h2>Code Assistant</h2>
-
-            <p>
-              Generate, explain, debug and improve code through the
-              Nyx console.
-            </p>
-
-            <button
-              type="button"
-              onclick="openTool('code')"
-              class="nyx-feature-btn mt-5"
-            >
-              Open
-              <span>→</span>
-            </button>
-
-          </article>
-
-
-          <!-- Image -->
-
-          <article class="nyx-tool-card">
-
-            <div class="nyx-tool-icon">🎨</div>
-
-            <div class="nyx-pill pink mb-4">
-              CREATIVE
-            </div>
-
-            <h2>Image Studio</h2>
-
-            <p>
-              Prepare image-generation and editing requests for
-              connected media providers.
-            </p>
-
-            <button
-              type="button"
-              onclick="openTool('image')"
-              class="nyx-feature-btn mt-5"
-            >
-              Open
-              <span>→</span>
-            </button>
-
-          </article>
-
-
-          <!-- Video -->
-
-          <article class="nyx-tool-card">
-
-            <div class="nyx-tool-icon">🎬</div>
-
-            <div class="nyx-pill red mb-4">
-              MEDIA
-            </div>
-
-            <h2>Video Studio</h2>
-
-            <p>
-              Access your video-generation workflow and media commands.
-            </p>
-
-            <button
-              type="button"
-              onclick="openTool('video')"
-              class="nyx-feature-btn mt-5"
-            >
-              Open
-              <span>→</span>
-            </button>
-
-          </article>
-
-
-          <!-- Search -->
-
-          <article class="nyx-tool-card">
-
-            <div class="nyx-tool-icon">🔎</div>
-
-            <div class="nyx-pill green mb-4">
-              SEARCH
-            </div>
-
-            <h2>Media Search</h2>
-
-            <p>
-              Search connected media sources for images and other
-              supported assets.
-            </p>
-
-            <button
-              type="button"
-              onclick="openTool('search')"
-              class="nyx-feature-btn mt-5"
-            >
-              Open
-              <span>→</span>
-            </button>
-
-          </article>
-
-
-          <!-- Utilities -->
-
-          <article class="nyx-tool-card">
-
-            <div class="nyx-tool-icon">⚙️</div>
-
-            <div class="nyx-pill amber mb-4">
-              SYSTEM
-            </div>
-
-            <h2>Utilities</h2>
-
-            <p>
-              Ping, status, polls, calculations, translation,
-              summarization and other utilities.
-            </p>
-
-            <button
-              type="button"
-              onclick="openTool('utilities')"
-              class="nyx-feature-btn mt-5"
-            >
-              Open
-              <span>→</span>
-            </button>
-
-          </article>
-
-        </div>
-
-      </section>
-
-
-      <!-- =====================================================
-           COMMAND DIRECTORY
-           ===================================================== -->
-
-      <section
-        id="commands"
-        class="view min-h-full p-5 md:p-8 lg:p-10"
-      >
-
-        <div class="nyx-page-header">
-
-          <div>
-
-            <div class="nyx-eyebrow">
-              NYXIUM TERMINAL
-            </div>
-
-            <h1 class="nyx-title">
-              Command
-              <span>Directory.</span>
-            </h1>
-
-            <p class="nyx-subtitle">
-              Available operations for the Nyxium ecosystem.
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            onclick="showView('chat')"
-            class="nyx-primary-btn"
-          >
-            Open Console →
-          </button>
-
-        </div>
-
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-
-          <div class="nyx-command-panel">
-
-            <div class="nyx-command-header">
-              <span>🤖</span>
               <div>
-                <h2>AI Operations</h2>
-                <p>Intelligence and reasoning</p>
+                <h3>Code Assistant</h3>
+                <p>
+                  Generate, debug and explain code.
+                </p>
               </div>
-            </div>
 
-            <div class="nyx-command-list">
-
-              <button
-                type="button"
-                onclick="runCommand('/ask')"
-              >
-                <code>/ask</code>
-                <span>Ask Nyx a question</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/summarize')"
-              >
-                <code>/summarize</code>
-                <span>Summarize text</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/translate')"
-              >
-                <code>/translate</code>
-                <span>Translate content</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/code')"
-              >
-                <code>/code</code>
-                <span>Code assistance</span>
-              </button>
-
-            </div>
-
-          </div>
+              <span>→</span>
+            </button>
 
 
-          <div class="nyx-command-panel">
+            <button
+              class="tool-card"
+              onclick="useQuickPrompt('Summarize the following text clearly: ')"
+            >
+              <div class="tool-card-icon">▤</div>
 
-            <div class="nyx-command-header">
-              <span>🎨</span>
               <div>
-                <h2>Creative Operations</h2>
-                <p>Images and media</p>
+                <h3>Summarizer</h3>
+                <p>
+                  Turn large text into concise notes.
+                </p>
               </div>
-            </div>
 
-            <div class="nyx-command-list">
-
-              <button
-                type="button"
-                onclick="runCommand('/draw')"
-              >
-                <code>/draw</code>
-                <span>Generate an image</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/edit')"
-              >
-                <code>/edit</code>
-                <span>Edit an image</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/create_video')"
-              >
-                <code>/create_video</code>
-                <span>Create video</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/search')"
-              >
-                <code>/search</code>
-                <span>Search media</span>
-              </button>
-
-            </div>
-
-          </div>
+              <span>→</span>
+            </button>
 
 
-          <div class="nyx-command-panel">
+            <button
+              class="tool-card"
+              onclick="useQuickPrompt('Translate the following text: ')"
+            >
+              <div class="tool-card-icon">文</div>
 
-            <div class="nyx-command-header">
-              <span>⚙️</span>
               <div>
-                <h2>Utility Operations</h2>
-                <p>System and productivity</p>
+                <h3>Translator</h3>
+                <p>
+                  Translate content naturally.
+                </p>
               </div>
-            </div>
 
-            <div class="nyx-command-list">
-
-              <button
-                type="button"
-                onclick="runCommand('/ping')"
-              >
-                <code>/ping</code>
-                <span>Check latency</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/status')"
-              >
-                <code>/status</code>
-                <span>System status</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/poll')"
-              >
-                <code>/poll</code>
-                <span>Create a poll</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="runCommand('/choose')"
-              >
-                <code>/choose</code>
-                <span>Choose between options</span>
-              </button>
-
-            </div>
-
-          </div>
+              <span>→</span>
+            </button>
 
 
-          <div class="nyx-command-panel">
+            <button
+              class="tool-card"
+              onclick="useQuickPrompt('Analyze this and give me the important points: ')"
+            >
+              <div class="tool-card-icon">⌁</div>
 
-            <div class="nyx-command-header">
-              <span>🛰️</span>
               <div>
-                <h2>Discord Operations</h2>
-                <p>Nyxium bot commands</p>
+                <h3>Analyzer</h3>
+                <p>
+                  Break down complex information.
+                </p>
               </div>
-            </div>
 
-            <div class="nyx-command-list">
+              <span>→</span>
+            </button>
 
-              <button
-                type="button"
-                onclick="openInvite()"
-              >
-                <code>/invite</code>
-                <span>Invite Nyxium Bot</span>
-              </button>
 
-              <button
-                type="button"
-                onclick="openDiscord()"
-              >
-                <code>/community</code>
-                <span>Join community</span>
-              </button>
+            <button
+              class="tool-card"
+              onclick="useQuickPrompt('Give me creative ideas for: ')"
+            >
+              <div class="tool-card-icon">✧</div>
 
-              <button
-                type="button"
-                onclick="runCommand('/feedback')"
-              >
-                <code>/feedback</code>
-                <span>Send feedback</span>
-              </button>
+              <div>
+                <h3>Idea Engine</h3>
+                <p>
+                  Brainstorm concepts and possibilities.
+                </p>
+              </div>
 
-              <button
-                type="button"
-                onclick="runCommand('/help')"
-              >
-                <code>/help</code>
-                <span>Show help</span>
-              </button>
+              <span>→</span>
+            </button>
 
-            </div>
+
+            <button
+              class="tool-card"
+              onclick="useQuickPrompt('Teach me this topic step by step: ')"
+            >
+              <div class="tool-card-icon">🎓</div>
+
+              <div>
+                <h3>Study Mode</h3>
+                <p>
+                  Learn difficult topics step by step.
+                </p>
+              </div>
+
+              <span>→</span>
+            </button>
 
           </div>
 
@@ -1384,79 +848,32 @@
   </div>
 
 
+
   <!-- =========================================================
-       MOBILE SIDEBAR OVERLAY
-       ========================================================= -->
+       MOBILE OVERLAY
+  ========================================================== -->
 
   <div
     id="sidebar-overlay"
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] hidden"
+    onclick="toggleSidebar()"
   ></div>
 
 
+
   <!-- =========================================================
-       GLOBAL TOAST
-       ========================================================= -->
+       TOAST
+  ========================================================== -->
 
   <div
-    id="nyx-toast-container"
-    class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none"
+    id="toast-container"
+    aria-live="polite"
   ></div>
 
 
-  <!-- =========================================================
-       COMMAND / TOOL MODAL
-       ========================================================= -->
-
-  <div
-    id="tool-modal"
-    class="fixed inset-0 z-[150] hidden items-center justify-center p-4 bg-black/70 backdrop-blur-md"
-  >
-
-    <div
-      id="tool-modal-card"
-      class="nyx-modal w-full max-w-2xl"
-    >
-
-      <div class="flex items-center justify-between mb-6">
-
-        <div>
-          <div
-            id="tool-modal-eyebrow"
-            class="nyx-eyebrow"
-          >
-            NYXIUM TOOL
-          </div>
-
-          <h2
-            id="tool-modal-title"
-            class="text-2xl font-bold"
-          >
-            Tool
-          </h2>
-
-        </div>
-
-        <button
-          type="button"
-          onclick="closeToolModal()"
-          class="nyx-icon-btn"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div id="tool-modal-content"></div>
-
-    </div>
-
-  </div>
-
 
   <!-- =========================================================
-       APPLICATION SCRIPT
-       ========================================================= -->
+       APP SCRIPT
+  ========================================================== -->
 
   <script src="src/chat.js"></script>
 
