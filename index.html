@@ -1,198 +1,1323 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nyxium AI Dashboard</title>
+
+  <title>Nyxium AI — Cybernetic Intelligence</title>
+  <meta name="description" content="Nyxium AI — a futuristic AI workspace for chat, code, images, media and intelligent tools.">
+  <meta name="theme-color" content="#080512">
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Puter.js loaded first to ensure 'puter' global is ready immediately -->
-  <script src="https://js.puter.com/v2/"></script> 
+
+  <!-- Puter -->
+  <script src="https://js.puter.com/v2/"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css">
+
   <style>
-    .view { display: none; }
-    .view.active { display: block; }
-    
-    /* Subtle breathing animation for the robotic screen visor */
-    @keyframes visor-glow {
-      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4)); }
-      50% { transform: scale(1.02); filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.7)); }
+    :root {
+      --nyx-purple: #a855f7;
+      --nyx-indigo: #6366f1;
+      --nyx-cyan: #38bdf8;
+      --nyx-bg: #080512;
     }
-    .visor-active {
-      animation: visor-glow 3s ease-in-out infinite;
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(124, 58, 237, .12), transparent 30%),
+        radial-gradient(circle at 85% 80%, rgba(59, 130, 246, .08), transparent 30%),
+        var(--nyx-bg);
+    }
+
+    .nyx-font {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .view {
+      display: none;
+      animation: viewIn .35s ease;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes viewIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .sidebar-item {
+      position: relative;
+      transition: all .25s ease;
+    }
+
+    .sidebar-item.active {
+      background: linear-gradient(
+        90deg,
+        rgba(99, 102, 241, .18),
+        rgba(168, 85, 247, .08)
+      );
+      border-color: rgba(129, 140, 248, .25);
+      color: white;
+    }
+
+    .sidebar-item.active::before {
+      content: "";
+      position: absolute;
+      left: -1px;
+      top: 20%;
+      height: 60%;
+      width: 3px;
+      border-radius: 99px;
+      background: linear-gradient(#6366f1, #a855f7);
+      box-shadow: 0 0 14px rgba(168, 85, 247, .8);
+    }
+
+    .nyx-gradient-text {
+      background: linear-gradient(90deg, #c4b5fd, #a855f7, #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .nyx-glow {
+      box-shadow:
+        0 0 30px rgba(124, 58, 237, .12),
+        inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .tool-card {
+      transition:
+        transform .25s ease,
+        border-color .25s ease,
+        background .25s ease,
+        box-shadow .25s ease;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(168, 85, 247, .35);
+      background: rgba(255,255,255,.055);
+      box-shadow: 0 18px 50px rgba(76, 29, 149, .14);
+    }
+
+    .status-dot {
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .quick-prompt {
+      transition: all .2s ease;
+    }
+
+    .quick-prompt:hover {
+      transform: translateY(-2px);
+      border-color: rgba(168, 85, 247, .4);
+      background: rgba(168, 85, 247, .08);
+    }
+
+    .composer {
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.35),
+        0 0 35px rgba(99,102,241,.08);
+    }
+
+    .command-chip {
+      transition: all .2s ease;
+    }
+
+    .command-chip:hover {
+      border-color: rgba(168,85,247,.45);
+      background: rgba(168,85,247,.1);
+    }
+
+    .mobile-menu {
+      transform: translateX(-110%);
+      transition: transform .3s ease;
+    }
+
+    .mobile-menu.open {
+      transform: translateX(0);
+    }
+
+    #mobile-overlay {
+      display: none;
+    }
+
+    #mobile-overlay.open {
+      display: block;
+    }
+
+    .ai-core-ring {
+      animation: corePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes corePulse {
+      0%,100% {
+        transform: scale(1);
+        box-shadow:
+          0 0 20px rgba(168,85,247,.15),
+          inset 0 0 20px rgba(99,102,241,.08);
+      }
+      50% {
+        transform: scale(1.025);
+        box-shadow:
+          0 0 45px rgba(168,85,247,.28),
+          inset 0 0 25px rgba(99,102,241,.12);
+      }
+    }
+
+    .scan-line {
+      animation: scan 3s linear infinite;
+    }
+
+    @keyframes scan {
+      0% {
+        transform: translateY(-120%);
+        opacity: 0;
+      }
+      20% {
+        opacity: .5;
+      }
+      80% {
+        opacity: .5;
+      }
+      100% {
+        transform: translateY(120%);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        cursor: auto !important;
+      }
+
+      main {
+        padding: 1rem !important;
+      }
+
+      #chat-messages {
+        height: 55vh !important;
+      }
     }
   </style>
 </head>
-<body class="flex h-screen overflow-hidden bg-[#0d0216] text-white">
-  
-  <canvas id="starfield" class="absolute inset-0"></canvas>
 
-  <!-- Sidebar Navigation Panel -->
-  <aside class="w-64 border-r border-white/10 p-6 flex flex-col z-50 bg-[#0d0216]/80 backdrop-blur-md">
-    <h1 class="text-xl font-bold mb-8 text-indigo-400 flex items-center gap-2">⚡ Nyxium AI</h1>
-    <nav class="space-y-4">
-      <button onclick="showView('dashboard')" class="w-full text-left p-3 rounded-lg bg-white/5 font-semibold transition hover:bg-white/10">🏠 Dashboard</button>
-      <button onclick="showView('chat')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition">💬 AI Chat</button>
-      <button onclick="window.open('https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands', '_blank')" class="w-full text-left p-3 rounded-lg hover:bg-white/5 transition flex items-center gap-2">
-        <span>🤖</span> Invite Bot
+<body class="min-h-screen overflow-hidden text-white">
+
+  <!-- ========================================================= -->
+  <!-- BACKGROUND -->
+  <!-- ========================================================= -->
+
+  <canvas id="starfield" class="fixed inset-0 pointer-events-none"></canvas>
+
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute w-[500px] h-[500px] rounded-full bg-purple-700/10 blur-[140px] -top-48 -left-48"></div>
+    <div class="absolute w-[450px] h-[450px] rounded-full bg-indigo-600/10 blur-[140px] bottom-[-180px] right-[-100px]"></div>
+  </div>
+
+  <!-- Mobile overlay -->
+  <div
+    id="mobile-overlay"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70]"
+    onclick="toggleMobileSidebar()">
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SIDEBAR -->
+  <!-- ========================================================= -->
+
+  <aside
+    id="main-sidebar"
+    class="fixed md:relative left-0 top-0 bottom-0 w-[280px] shrink-0 z-[80]
+           border-r border-white/[.07] bg-[#090611]/90 backdrop-blur-2xl
+           p-5 flex flex-col mobile-menu md:translate-x-0">
+
+    <!-- Brand -->
+    <div class="flex items-center justify-between mb-8">
+
+      <button
+        onclick="showView('dashboard'); closeMobileSidebar();"
+        class="flex items-center gap-3 text-left">
+
+        <div class="relative w-11 h-11 rounded-2xl
+                    bg-gradient-to-br from-indigo-500/20 to-purple-500/20
+                    border border-purple-400/20 flex items-center justify-center
+                    ai-core-ring">
+
+          <span class="text-xl">✦</span>
+
+          <span class="absolute inset-0 rounded-2xl border border-purple-400/10"></span>
+        </div>
+
+        <div>
+          <div class="nyx-font text-lg font-bold tracking-tight">
+            NYXIUM
+          </div>
+          <div class="text-[10px] text-purple-300/60 tracking-[.25em]">
+            INTELLIGENCE CORE
+          </div>
+        </div>
       </button>
+
+      <button
+        onclick="toggleMobileSidebar()"
+        class="md:hidden w-9 h-9 rounded-lg bg-white/5 border border-white/10">
+        ✕
+      </button>
+    </div>
+
+    <!-- Main navigation -->
+    <div class="text-[10px] uppercase tracking-[.2em] text-gray-500 mb-3 px-3">
+      Workspace
+    </div>
+
+    <nav class="space-y-1">
+
+      <button
+        data-view="dashboard"
+        onclick="showView('dashboard'); closeMobileSidebar();"
+        class="sidebar-item active w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-gray-400 hover:text-white">
+        <span class="text-lg">⌂</span>
+        <span class="font-medium">Dashboard</span>
+      </button>
+
+      <button
+        data-view="chat"
+        onclick="showView('chat'); closeMobileSidebar();"
+        class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-gray-400 hover:text-white">
+        <span class="text-lg">✦</span>
+        <span class="font-medium">AI Chat</span>
+      </button>
+
+      <button
+        data-view="tools"
+        onclick="showView('tools'); closeMobileSidebar();"
+        class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-gray-400 hover:text-white">
+        <span class="text-lg">◈</span>
+        <span class="font-medium">AI Tools</span>
+      </button>
+
+      <button
+        data-view="media"
+        onclick="showView('media'); closeMobileSidebar();"
+        class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-gray-400 hover:text-white">
+        <span class="text-lg">▧</span>
+        <span class="font-medium">Media Lab</span>
+      </button>
+
+      <button
+        data-view="commands"
+        onclick="showView('commands'); closeMobileSidebar();"
+        class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-gray-400 hover:text-white">
+        <span class="text-lg">⌘</span>
+        <span class="font-medium">Commands</span>
+      </button>
+
     </nav>
+
+    <!-- Divider -->
+    <div class="my-6 border-t border-white/[.06]"></div>
+
+    <div class="text-[10px] uppercase tracking-[.2em] text-gray-500 mb-3 px-3">
+      Network
+    </div>
+
+    <nav class="space-y-1">
+
+      <button
+        onclick="window.open('https://discord.com/oauth2/authorize?client_id=1497476268847796377&permissions=6755676466969664&integration_type=0&scope=bot+applications.commands', '_blank')"
+        class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition">
+        <span class="text-lg">🤖</span>
+        <span class="font-medium">Invite Discord Bot</span>
+      </button>
+
+      <button
+        onclick="window.open('https://discord.gg/PBnxckkCzf', '_blank')"
+        class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition">
+        <span class="text-lg">◉</span>
+        <span class="font-medium">Community</span>
+      </button>
+
+    </nav>
+
+    <!-- Bottom status -->
+    <div class="mt-auto">
+
+      <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-4">
+
+        <div class="flex items-center gap-3">
+
+          <div class="relative">
+            <div class="w-9 h-9 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+              ◉
+            </div>
+            <span class="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 rounded-full bg-green-400 status-dot text-green-400"></span>
+          </div>
+
+          <div>
+            <div class="text-sm font-semibold">System Online</div>
+            <div class="text-[11px] text-gray-500">Nyx Core operational</div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="flex gap-2 mt-3">
+
+        <button
+          onclick="window.location.href='privacy.html'"
+          class="flex-1 text-xs text-gray-500 hover:text-white transition py-2">
+          Privacy
+        </button>
+
+        <button
+          onclick="window.location.href='terms.html'"
+          class="flex-1 text-xs text-gray-500 hover:text-white transition py-2">
+          Terms
+        </button>
+
+      </div>
+
+    </div>
+
   </aside>
 
-  <!-- Main View Frame Area -->
-  <main class="flex-1 p-8 overflow-y-auto z-10">
-    
-    <!-- DASHBOARD VIEW -->
-    <div id="dashboard" class="view active">
-      <h2 class="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">⚡ Nyxium System Core</h2>
-      
-      <!-- Top Action Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
-          <div class="text-3xl mb-4">🧠</div>
-          <h3 class="font-bold text-xl mb-2">/ask Command</h3>
-          <p class="text-gray-400 text-sm mb-6">Leverage Gemini 2.5 Flash to get instant, accurate AI responses, debug code, and solve problems.</p>
-          <button onclick="showView('chat')" class="w-full py-3 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition">Try Asking AI</button>
+  <!-- ========================================================= -->
+  <!-- MAIN -->
+  <!-- ========================================================= -->
+
+  <main class="flex-1 min-w-0 h-screen overflow-y-auto relative z-10">
+
+    <!-- Mobile header -->
+    <header class="md:hidden sticky top-0 z-50 px-4 py-3 bg-[#090611]/80 backdrop-blur-xl border-b border-white/[.07]">
+      <div class="flex items-center justify-between">
+
+        <button
+          onclick="toggleMobileSidebar()"
+          class="w-10 h-10 rounded-xl bg-white/5 border border-white/10">
+          ☰
+        </button>
+
+        <div class="nyx-font font-bold">
+          NYXIUM
         </div>
 
-        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
-          <div class="text-3xl mb-4">🌌</div>
-          <h3 class="font-bold text-xl mb-2">Galaxy Mode</h3>
-          <p class="text-gray-400 text-sm mb-6">Immersive starfield animations and cosmic UI themes active across your session.</p>
-          <button class="w-full py-3 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Active</button>
-        </div>
+        <button
+          onclick="showView('chat')"
+          class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+          ✦
+        </button>
 
-        <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl">
-          <div class="text-3xl mb-4">🚀</div>
-          <h3 class="font-bold text-xl mb-2">Join Our Server</h3>
-          <p class="text-gray-400 text-sm mb-6">Connect with the Nyxium community, trade tips, and get 24/7 terminal support.</p>
-          <button onclick="window.open('https://discord.gg/PBnxckkCzf', '_blank')" class="w-full py-3 bg-purple-600 rounded-xl font-bold hover:bg-purple-500 transition">Join Community</button>
-        </div>
       </div>
+    </header>
 
-      <!-- Command Embed Integration Row -->
-      <div class="glass-card bg-white/5 border border-white/10 p-6 rounded-2xl mb-12 max-w-5xl flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="flex-1">
-          <div class="flex items-center gap-3 mb-2">
-            <span class="text-2xl">⚡</span>
-            <h3 class="font-bold text-xl text-indigo-400">Nyxium AI — Command Directory</h3>
-          </div>
-          <p class="text-gray-300 text-sm mb-4">Welcome to the Nyxium Terminal. Here is a list of available operations deployed across our system network nodes.</p>
-          
-          <div class="space-y-3 text-sm">
-            <div class="flex items-start gap-2">
-              <span class="text-blue-400">🤖</span>
-              <p><strong class="text-white">Core AI Modules:</strong> Active logic models processing requests in real-time.</p>
+    <div class="max-w-[1500px] mx-auto p-4 md:p-8 lg:p-10">
+
+      <!-- ===================================================== -->
+      <!-- DASHBOARD -->
+      <!-- ===================================================== -->
+
+      <section id="dashboard" class="view active">
+
+        <!-- Hero -->
+        <div class="relative overflow-hidden rounded-3xl border border-white/[.08]
+                    bg-gradient-to-br from-indigo-950/50 via-[#10091d]/80 to-purple-950/30
+                    p-6 md:p-10 mb-8 nyx-glow">
+
+          <div class="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-purple-600/10 blur-3xl"></div>
+
+          <div class="relative z-10 max-w-3xl">
+
+            <div class="flex items-center gap-2 mb-5">
+              <span class="w-2 h-2 rounded-full bg-green-400 status-dot text-green-400"></span>
+              <span class="text-xs uppercase tracking-[.25em] text-green-300/80">
+                System Online
+              </span>
             </div>
-            <div class="flex items-start gap-2">
-              <span class="text-indigo-400">💎</span>
-              <p><strong class="text-white">Nyxium Premium Status:</strong> <span class="px-2 py-0.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-semibold">✅ Active</span></p>
+
+            <h1 class="nyx-font text-4xl md:text-6xl font-bold tracking-tight mb-5">
+              Welcome to
+              <span class="nyx-gradient-text">Nyxium.</span>
+            </h1>
+
+            <p class="text-gray-400 text-base md:text-lg leading-relaxed max-w-2xl">
+              Your cybernetic intelligence workspace for conversations,
+              coding, analysis, creative generation and intelligent tools.
+            </p>
+
+            <div class="flex flex-wrap gap-3 mt-7">
+
+              <button
+                onclick="showView('chat')"
+                class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition shadow-lg shadow-indigo-900/20">
+                ✦ Open AI Console
+              </button>
+
+              <button
+                onclick="showView('tools')"
+                class="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold transition">
+                Explore Tools →
+              </button>
+
             </div>
+
           </div>
+
+          <!-- Core graphic -->
+          <div class="hidden lg:flex absolute right-12 top-1/2 -translate-y-1/2">
+
+            <div class="relative w-56 h-56 rounded-full border border-purple-400/20
+                        bg-purple-500/[.03] flex items-center justify-center ai-core-ring">
+
+              <div class="absolute inset-5 rounded-full border border-indigo-400/10"></div>
+              <div class="absolute inset-10 rounded-full border border-purple-400/10"></div>
+
+              <div class="w-28 h-28 rounded-3xl bg-[#0b0615]
+                          border border-purple-400/20
+                          flex items-center justify-center
+                          shadow-[0_0_50px_rgba(168,85,247,.18)]">
+
+                <span class="text-5xl">✦</span>
+
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
 
-        <!-- Cosmic Portal Graphic -->
-        <div class="w-full md:w-48 h-32 rounded-xl bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border border-white/10 flex items-center justify-center overflow-hidden relative group">
-          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition duration-300"></div>
-          <span class="text-4xl transform group-hover:scale-110 transition duration-300 z-10">🌌</span>
-        </div>
-      </div>
+        <!-- Stats -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
-      <!-- Expanded System Capabilities Directory Element -->
-      <div class="glass-card bg-white/5 border border-white/10 p-8 rounded-2xl mb-12 max-w-5xl">
-        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <div class="text-xs text-gray-500 mb-2">CORE</div>
+            <div class="text-xl font-bold">Nyx AI</div>
+            <div class="text-xs text-green-400 mt-1">● Operational</div>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <div class="text-xs text-gray-500 mb-2">MEMORY</div>
+            <div class="text-xl font-bold">12 turns</div>
+            <div class="text-xs text-gray-500 mt-1">Context buffer</div>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <div class="text-xs text-gray-500 mb-2">TOOLS</div>
+            <div class="text-xl font-bold">Multi-Node</div>
+            <div class="text-xs text-gray-500 mt-1">AI + Media</div>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <div class="text-xs text-gray-500 mb-2">MODE</div>
+            <div class="text-xl font-bold">Galaxy</div>
+            <div class="text-xs text-purple-400 mt-1">✦ Active</div>
+          </div>
+
+        </div>
+
+        <!-- Main tools -->
+        <div class="flex items-end justify-between mb-4">
+
           <div>
-            <h3 class="font-bold text-2xl text-indigo-300">🛰️ Operational Directory & Capabilities</h3>
-            <p class="text-gray-400 text-sm mt-1">Official roadmap of active operations deployed to the network.</p>
+            <div class="text-xs uppercase tracking-[.2em] text-purple-400 mb-2">
+              Intelligence
+            </div>
+            <h2 class="nyx-font text-2xl font-bold">
+              What can Nyxium do?
+            </h2>
           </div>
-          <span class="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-xs font-semibold tracking-wide flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> PREMIUM STATUS: ACTIVE
-          </span>
+
+          <button
+            onclick="showView('tools')"
+            class="hidden sm:block text-sm text-gray-400 hover:text-white">
+            View all →
+          </button>
+
         </div>
 
-        <!-- System Modules Layout -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div class="space-y-2">
-            <h4 class="text-sm font-bold text-purple-400 tracking-wider uppercase">🤖 Core AI Modules</h4>
-            <ul class="space-y-4 text-sm text-gray-300">
-              <li><code>/ask</code> — <strong class="text-white">Reasoning & Logic Array:</strong> Solves advanced equations, analyzes complex documents, and holds fully contextual discussions.</li>
-              <li><code>/draw</code> — <strong class="text-white">Art Rendering Engine:</strong> Connected to Flux & Imagen networks to render high-definition digital layouts.</li>
-              <li><code>/edit</code> — <strong class="text-white">Canvas Manipulation:</strong> Modify image details, repaint boundaries, and cycle through lighting patterns effortlessly.</li>
-            </ul>
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
-          <div class="space-y-2">
-            <h4 class="text-sm font-bold text-purple-400 tracking-wider uppercase">⚙️ Utility Operations</h4>
-            <ul class="space-y-4 text-sm text-gray-300">
-              <li><code>/create_video</code> — <strong class="text-white">Motion Synthesis:</strong> Animates text data or structural assets into short cinematic motion files.</li>
-              <li><code>/ping</code> — <strong class="text-white">Network Diagnostics:</strong> Logs terminal responses and parses raw connection latency.</li>
-              <li><code>/feedback</code> — <strong class="text-white">Developer Pipeline:</strong> Transmits diagnostic reports or framework upgrades straight to the team.</li>
-            </ul>
-          </div>
+          <button
+            onclick="showView('chat')"
+            class="tool-card text-left rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xl mb-5">
+              🧠
+            </div>
+
+            <h3 class="font-bold text-lg mb-2">AI Chat</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed">
+              Ask questions, solve problems, code and maintain contextual conversations.
+            </p>
+
+          </button>
+
+          <button
+            onclick="showView('tools')"
+            class="tool-card text-left rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl mb-5">
+              ✨
+            </div>
+
+            <h3 class="font-bold text-lg mb-2">Creative AI</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed">
+              Explore image generation, editing and creative workflows.
+            </p>
+
+          </button>
+
+          <button
+            onclick="showView('media')"
+            class="tool-card text-left rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xl mb-5">
+              ◈
+            </div>
+
+            <h3 class="font-bold text-lg mb-2">Media Lab</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed">
+              Search images and videos through the Nyxium media network.
+            </p>
+
+          </button>
+
+          <button
+            onclick="showView('commands')"
+            class="tool-card text-left rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-xl mb-5">
+              ⌘
+            </div>
+
+            <h3 class="font-bold text-lg mb-2">Commands</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed">
+              Browse the Nyxium command and utility system.
+            </p>
+
+          </button>
+
         </div>
 
-        <!-- Premium Feature Row Block -->
-        <div class="bg-indigo-950/20 border border-indigo-500/20 rounded-xl p-4 text-sm">
-          <span class="font-bold text-indigo-300 block mb-2">💎 Elite Access Node Benefits:</span>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-400">
-            <div class="flex items-start gap-2"><span>⚡</span> <div><strong class="text-gray-300 block">Priority Queue</strong> Bypass wait intervals entirely on full operations.</div></div>
-            <div class="flex items-start gap-2"><span>👁️</span> <div><strong class="text-gray-300 block">Vision Arrays</strong> Drop graphics directly inside code workflows.</div></div>
-            <div class="flex items-start gap-2"><span>🔑</span> <div><strong class="text-gray-300 block">Infinite Keys</strong> No daily request ceiling limitations.</div></div>
-          </div>
-        </div>
-      </div>
+        <!-- Community -->
+        <div class="mt-8 rounded-2xl border border-purple-500/10 bg-purple-500/[.025] p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
 
-      <!-- Dashboard Footer -->
-      <footer class="mt-20 pt-10 border-t border-white/10 text-center text-gray-500 text-sm">
-        <p class="mb-2">&copy; 2026 Nyxium AI. All rights reserved.</p>
-        <a href="privacy.html" class="hover:text-indigo-400">Privacy Policy</a> | 
-        <a href="terms.html" class="hover:text-indigo-400">Terms of Service</a>
+          <div>
+            <div class="text-sm font-bold mb-1">Join the Nyxium network</div>
+            <div class="text-sm text-gray-500">
+              Connect with the community and use Nyxium directly in Discord.
+            </div>
+          </div>
+
+          <button
+            onclick="window.open('https://discord.gg/PBnxckkCzf', '_blank')"
+            class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 font-semibold transition">
+            Join Discord →
+          </button>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- AI CHAT -->
+      <!-- ===================================================== -->
+
+      <section id="chat" class="view">
+
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-6">
+
+          <div class="flex items-center gap-4">
+
+            <div class="relative w-14 h-14 rounded-2xl bg-[#0d071a]
+                        border border-purple-500/20 p-1 overflow-hidden
+                        shadow-[0_0_30px_rgba(168,85,247,.12)]">
+
+              <div id="ai-face" class="w-full h-full flex items-center justify-center visor-active"></div>
+
+              <div class="absolute left-0 right-0 h-px bg-cyan-300/30 scan-line pointer-events-none"></div>
+
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="nyx-font text-2xl font-bold">
+                  Nyx Console
+                </h2>
+
+                <span class="px-2 py-0.5 rounded-full text-[10px]
+                             bg-green-500/10 border border-green-500/20 text-green-400">
+                  ONLINE
+                </span>
+              </div>
+
+              <p id="ai-status" class="text-gray-500 text-sm mt-1">
+                Status: Chilling
+              </p>
+            </div>
+
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+
+            <button
+              onclick="executeConsoleCommand('/clear')"
+              class="command-chip px-3 py-2 rounded-xl text-xs font-semibold
+                     bg-white/[.025] border border-white/10 text-gray-400">
+              🗑 Clear
+            </button>
+
+            <button
+              onclick="executeConsoleCommand('/toggle-sass')"
+              class="command-chip px-3 py-2 rounded-xl text-xs font-semibold
+                     bg-white/[.025] border border-white/10 text-gray-400">
+              🎭 Sass
+            </button>
+
+            <button
+              onclick="showView('tools')"
+              class="command-chip px-3 py-2 rounded-xl text-xs font-semibold
+                     bg-white/[.025] border border-white/10 text-gray-400">
+              ◈ Tools
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Tip -->
+        <div id="ai-tip-box"></div>
+
+        <!-- Chat -->
+        <div
+          id="chat-messages"
+          class="h-[58vh] md:h-[62vh] overflow-y-auto
+                 p-4 md:p-7 mb-4 space-y-4
+                 rounded-2xl border border-white/[.07]
+                 bg-black/20">
+        </div>
+
+        <!-- Suggestions -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+
+          <button
+            onclick="document.getElementById('user-input').value='Explain quantum physics simply'; document.getElementById('user-input').focus();"
+            class="quick-prompt text-left p-3 rounded-xl border border-white/[.07] bg-white/[.025] text-xs text-gray-400">
+            🧪 Explain something
+          </button>
+
+          <button
+            onclick="document.getElementById('user-input').value='Help me write code'; document.getElementById('user-input').focus();"
+            class="quick-prompt text-left p-3 rounded-xl border border-white/[.07] bg-white/[.025] text-xs text-gray-400">
+            💻 Write code
+          </button>
+
+          <button
+            onclick="document.getElementById('user-input').value='Summarize this for me'; document.getElementById('user-input').focus();"
+            class="quick-prompt text-left p-3 rounded-xl border border-white/[.07] bg-white/[.025] text-xs text-gray-400">
+            📝 Summarize
+          </button>
+
+          <button
+            onclick="document.getElementById('user-input').value='Give me a creative idea'; document.getElementById('user-input').focus();"
+            class="quick-prompt text-left p-3 rounded-xl border border-white/[.07] bg-white/[.025] text-xs text-gray-400">
+            ✨ Create something
+          </button>
+
+        </div>
+
+        <!-- Composer -->
+        <div class="composer rounded-2xl border border-white/10 bg-[#0c0815]/95 backdrop-blur-xl p-3">
+
+          <div class="flex items-end gap-2">
+
+            <button
+              onclick="showView('media')"
+              class="w-11 h-11 shrink-0 rounded-xl
+                     bg-white/5 border border-white/10
+                     text-gray-400 hover:text-white hover:bg-white/10 transition"
+              title="Media tools">
+              ＋
+            </button>
+
+            <textarea
+              id="user-input"
+              rows="1"
+              placeholder="Ask Nyxium anything..."
+              class="flex-1 resize-none bg-transparent outline-none
+                     text-sm md:text-base text-white
+                     placeholder:text-gray-600 px-2 py-3
+                     min-h-[44px] max-h-40"
+              onkeydown="
+                if(event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  sendToAI();
+                }
+              "
+              oninput="
+                this.style.height='auto';
+                this.style.height=Math.min(this.scrollHeight,160)+'px';
+              "></textarea>
+
+            <button
+              onclick="sendToAI()"
+              class="w-11 h-11 shrink-0 rounded-xl
+                     bg-indigo-600 hover:bg-indigo-500
+                     flex items-center justify-center
+                     font-bold transition
+                     shadow-lg shadow-indigo-900/20">
+              ↑
+            </button>
+
+          </div>
+
+          <div class="flex items-center justify-between px-2 pt-2">
+
+            <div class="text-[10px] text-gray-600">
+              Enter to send · Shift + Enter for new line
+            </div>
+
+            <div class="text-[10px] text-gray-600">
+              ✦ Nyx Core
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- AI TOOLS -->
+      <!-- ===================================================== -->
+
+      <section id="tools" class="view">
+
+        <div class="mb-8">
+
+          <div class="text-xs uppercase tracking-[.2em] text-purple-400 mb-2">
+            Intelligence Suite
+          </div>
+
+          <h2 class="nyx-font text-4xl font-bold mb-3">
+            AI Tools
+          </h2>
+
+          <p class="text-gray-500 max-w-2xl">
+            Access Nyxium's specialized AI operations from one workspace.
+          </p>
+
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+          <!-- Ask -->
+          <div class="tool-card rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="flex items-center justify-between mb-5">
+              <div class="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xl">
+                🧠
+              </div>
+
+              <span class="text-[10px] px-2 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                ACTIVE
+              </span>
+            </div>
+
+            <h3 class="text-xl font-bold mb-2">Ask Nyx</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed mb-5">
+              General intelligence, reasoning, coding, explanations and contextual conversations.
+            </p>
+
+            <button
+              onclick="showView('chat')"
+              class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition">
+              Open Console
+            </button>
+
+          </div>
+
+          <!-- Code -->
+          <div class="tool-card rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xl mb-5">
+              </>
+            </div>
+
+            <h3 class="text-xl font-bold mb-2">Code Engine</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed mb-5">
+              Generate, debug, explain and improve code across programming languages.
+            </p>
+
+            <button
+              onclick="executeConsoleCommand('/code'); showView('chat')"
+              class="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold transition">
+              Launch
+            </button>
+
+          </div>
+
+          <!-- Summarize -->
+          <div class="tool-card rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl mb-5">
+              📝
+            </div>
+
+            <h3 class="text-xl font-bold mb-2">Summarizer</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed mb-5">
+              Turn long text and information into concise, understandable summaries.
+            </p>
+
+            <button
+              onclick="executeConsoleCommand('/summarize'); showView('chat')"
+              class="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold transition">
+              Launch
+            </button>
+
+          </div>
+
+          <!-- Translate -->
+          <div class="tool-card rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-xl mb-5">
+              🌐
+            </div>
+
+            <h3 class="text-xl font-bold mb-2">Translator</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed mb-5">
+              Translate text between languages while preserving meaning and tone.
+            </p>
+
+            <button
+              onclick="executeConsoleCommand('/translate'); showView('chat')"
+              class="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold transition">
+              Launch
+            </button>
+
+          </div>
+
+          <!-- Imagine -->
+          <div class="tool-card rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-xl mb-5">
+              ✨
+            </div>
+
+            <h3 class="text-xl font-bold mb-2">Imagine</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed mb-5">
+              Create visual concepts and AI-generated artwork through the Nyxium creative network.
+            </p>
+
+            <button
+              onclick="showView('media')"
+              class="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold transition">
+              Open Media Lab
+            </button>
+
+          </div>
+
+          <!-- Edit -->
+          <div class="tool-card rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+            <div class="w-11 h-11 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-xl mb-5">
+              🖌
+            </div>
+
+            <h3 class="text-xl font-bold mb-2">Image Edit</h3>
+
+            <p class="text-sm text-gray-500 leading-relaxed mb-5">
+              Prepare image-editing workflows for the Nyxium creative engine.
+            </p>
+
+            <button
+              onclick="showView('media')"
+              class="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-semibold transition">
+              Open
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- MEDIA LAB -->
+      <!-- ===================================================== -->
+
+      <section id="media" class="view">
+
+        <div class="mb-8">
+
+          <div class="text-xs uppercase tracking-[.2em] text-cyan-400 mb-2">
+            Media Network
+          </div>
+
+          <h2 class="nyx-font text-4xl font-bold mb-3">
+            Media Lab
+          </h2>
+
+          <p class="text-gray-500 max-w-2xl">
+            Search, generate and work with visual media through Nyxium's connected tools.
+          </p>
+
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <!-- Images -->
+          <div class="rounded-3xl border border-white/[.07] bg-gradient-to-br from-purple-950/30 to-transparent p-7">
+
+            <div class="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-2xl mb-6">
+              🖼️
+            </div>
+
+            <h3 class="text-2xl font-bold mb-3">
+              Image Network
+            </h3>
+
+            <p class="text-gray-500 text-sm leading-relaxed mb-6">
+              Search images, explore visual references and connect image-generation workflows.
+            </p>
+
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
+                Pexels
+              </span>
+              <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
+                Hugging Face
+              </span>
+              <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
+                AI Generation
+              </span>
+            </div>
+
+            <button
+              onclick="showView('chat'); document.getElementById('user-input').value='/draw';"
+              class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 font-semibold transition">
+              Start Image Workflow
+            </button>
+
+          </div>
+
+          <!-- Videos -->
+          <div class="rounded-3xl border border-white/[.07] bg-gradient-to-br from-cyan-950/20 to-transparent p-7">
+
+            <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-2xl mb-6">
+              🎬
+            </div>
+
+            <h3 class="text-2xl font-bold mb-3">
+              Video Network
+            </h3>
+
+            <p class="text-gray-500 text-sm leading-relaxed mb-6">
+              Search and prepare video workflows using connected media providers.
+            </p>
+
+            <div class="flex flex-wrap gap-2 mb-6">
+              <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
+                Pexels Video
+              </span>
+              <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
+                Search
+              </span>
+              <span class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400">
+                Create Video
+              </span>
+            </div>
+
+            <button
+              onclick="showView('chat'); document.getElementById('user-input').value='/create_video';"
+              class="px-5 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 font-semibold transition">
+              Start Video Workflow
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Provider status -->
+        <div class="mt-6 rounded-2xl border border-white/[.07] bg-white/[.025] p-6">
+
+          <div class="flex items-center justify-between mb-5">
+
+            <div>
+              <h3 class="font-bold text-lg">Media Nodes</h3>
+              <p class="text-sm text-gray-500">
+                Connected provider architecture
+              </p>
+            </div>
+
+            <span class="text-xs text-green-400">
+              ● NETWORK READY
+            </span>
+
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+            <div class="p-4 rounded-xl bg-black/20 border border-white/[.06]">
+              <div class="text-sm font-semibold">Pexels</div>
+              <div class="text-xs text-gray-500 mt-1">Images & videos</div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-black/20 border border-white/[.06]">
+              <div class="text-sm font-semibold">Hugging Face</div>
+              <div class="text-xs text-gray-500 mt-1">AI models</div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-black/20 border border-white/[.06]">
+              <div class="text-sm font-semibold">Nyx Core</div>
+              <div class="text-xs text-gray-500 mt-1">Orchestration</div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ===================================================== -->
+      <!-- COMMAND DIRECTORY -->
+      <!-- ===================================================== -->
+
+      <section id="commands" class="view">
+
+        <div class="mb-8">
+
+          <div class="text-xs uppercase tracking-[.2em] text-indigo-400 mb-2">
+            Terminal
+          </div>
+
+          <h2 class="nyx-font text-4xl font-bold mb-3">
+            Command Directory
+          </h2>
+
+          <p class="text-gray-500 max-w-2xl">
+            Nyxium operations available across the intelligence network.
+          </p>
+
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/ask</code>
+            <p class="text-sm text-gray-500 mt-2">
+              General AI reasoning and conversation.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/draw</code>
+            <p class="text-sm text-gray-500 mt-2">
+              AI image generation workflow.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/edit</code>
+            <p class="text-sm text-gray-500 mt-2">
+              AI image editing workflow.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/create_video</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Video generation and media workflow.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/summarize</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Summarize long information.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/translate</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Translate text between languages.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/code</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Coding and debugging assistant.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/ping</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Network latency diagnostics.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/clear</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Clear the current AI conversation.
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-white/[.07] bg-white/[.025] p-5">
+            <code class="text-purple-300">/toggle-sass</code>
+            <p class="text-sm text-gray-500 mt-2">
+              Toggle Nyxium's personality mode.
+            </p>
+          </div>
+
+        </div>
+
+        <div class="mt-8 rounded-2xl border border-indigo-500/10 bg-indigo-500/[.025] p-6">
+
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xl">⚡</span>
+            <h3 class="font-bold">Quick Command</h3>
+          </div>
+
+          <p class="text-sm text-gray-500 mb-5">
+            Open the AI console and execute any command directly.
+          </p>
+
+          <button
+            onclick="showView('chat')"
+            class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition">
+            Open Terminal →
+          </button>
+
+        </div>
+
+      </section>
+
+      <!-- Footer -->
+      <footer class="mt-12 pt-7 border-t border-white/[.06] flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+
+        <div>
+          © 2026 Nyxium AI. All systems operational.
+        </div>
+
+        <div class="flex gap-5">
+          <a href="privacy.html" class="hover:text-purple-400 transition">
+            Privacy Policy
+          </a>
+
+          <a href="terms.html" class="hover:text-purple-400 transition">
+            Terms of Service
+          </a>
+        </div>
+
       </footer>
+
     </div>
 
-    <!-- AI CHAT VIEW -->
-    <div id="chat" class="view">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div class="flex items-center gap-6">
-          <!-- Added explicit min-w/min-h to prevent collapsing -->
-          <div class="flex items-center justify-center bg-[#150a25]/90 border border-purple-500/30 w-28 h-28 min-w-[112px] min-h-[112px] rounded-2xl p-1 relative overflow-hidden shadow-[0_0_20px_rgba(168,85,247,0.15)]">
-            <div class="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none z-10"></div>
-            <div id="ai-face" class="w-full h-full flex items-center justify-center visor-active"></div>
-          </div>
-          <div>
-            <h2 class="text-3xl font-bold tracking-tight">Nyxium Console</h2>
-            <p id="ai-status" class="text-gray-400 text-sm mt-1">Status: Chilling</p>
-          </div>
-        </div>
-
-        <!-- Action Commands Toolbar Quick Links -->
-        <div class="flex items-center gap-3 bg-white/5 border border-white/10 p-2 rounded-xl self-start md:self-auto">
-          <button onclick="executeConsoleCommand('/clear')" class="px-3 py-1.5 text-xs font-semibold bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition flex items-center gap-1.5 border border-red-500/20">
-            🗑️ /clear
-          </button>
-          <button onclick="executeConsoleCommand('/toggle-sass')" class="px-3 py-1.5 text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 rounded-lg transition flex items-center gap-1.5 border border-amber-500/20">
-            🎭 /toggle-sass
-          </button>
-        </div>
-      </div>
-
-      <div id="ai-tip-box"></div>
-      <div id="chat-messages" class="h-[45vh] overflow-y-auto p-6 mb-4 space-y-4 bg-white/5 rounded-xl border border-white/10"></div>
-      
-      <!-- Input Frame Control Block -->
-      <div class="flex gap-4">
-        <input id="user-input" type="text" placeholder="Ask Nyxium something or type a command..." class="flex-1 bg-white/5 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-indigo-500" onkeydown="if(event.key === 'Enter') sendToAI()">
-        <button onclick="sendToAI()" class="px-8 py-4 bg-indigo-600 rounded-xl font-bold hover:bg-indigo-500 transition">Send</button>
-      </div>
-    </div>
   </main>
+
+  <!-- ========================================================= -->
+  <!-- NAVIGATION HELPERS -->
+  <!-- ========================================================= -->
 
   <script>
     function showView(viewId) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(viewId).classList.add('active');
+
+      document.querySelectorAll('.view').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      const target = document.getElementById(viewId);
+
+      if (target) {
+        target.classList.add('active');
+      }
+
+      document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      const activeItem = document.querySelector(
+        `.sidebar-item[data-view="${viewId}"]`
+      );
+
+      if (activeItem) {
+        activeItem.classList.add('active');
+      }
+
+      if (viewId === 'chat' && typeof showRandomTip === 'function') {
+        showRandomTip();
+      }
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+
+    function toggleMobileSidebar() {
+
+      const sidebar = document.getElementById('main-sidebar');
+      const overlay = document.getElementById('mobile-overlay');
+
+      if (!sidebar || !overlay) return;
+
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    }
+
+    function closeMobileSidebar() {
+
+      const sidebar = document.getElementById('main-sidebar');
+      const overlay = document.getElementById('mobile-overlay');
+
+      if (!sidebar || !overlay) return;
+
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
     }
   </script>
-  <!-- Loaded last so index.html and puter are fully parsed -->
+
+  <!-- Existing Nyxium engine -->
   <script src="src/chat.js"></script>
+
 </body>
 </html>
+```
