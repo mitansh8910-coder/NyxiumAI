@@ -1,170 +1,143 @@
 /* ============================================================
    NYXIUM AI — CHAT ENGINE
+   Modern chat UI + memory + commands + emotions + fallback AI
    ============================================================ */
 
-'use strict';
+"use strict";
 
-/* ============================================================
+/* ------------------------------------------------------------
    GLOBAL STATE
-   ============================================================ */
+------------------------------------------------------------ */
 
 let conversationHistory = [];
 const MAX_HISTORY_TURNS = 16;
 
-let currentEmotion = 'NEUTRAL';
+let currentEmotion = "NEUTRAL";
 let idleTimeout = null;
 let isGenerating = false;
 
-const STORAGE_KEY = 'nyxium_chat_history';
-const SASS_KEY = 'nyxium_sass_mode';
+const emotionColors = {
+    NEUTRAL: "#38bdf8",
+    HAPPY: "#22c55e",
+    THINKING: "#f59e0b",
+    SURPRISED: "#a855f7",
+    SAD: "#3b82f6",
+    ANGRY: "#ef4444"
+};
 
-let sassMode = localStorage.getItem(SASS_KEY) !== 'false';
-
-/* ============================================================
-   DOM HELPERS
-   ============================================================ */
-
-function $(id) {
-    return document.getElementById(id);
-}
-
-function escapeHTML(text) {
-    return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-/* ============================================================
-   VIEW NAVIGATION
-   ============================================================ */
+/* ------------------------------------------------------------
+   NAVIGATION
+------------------------------------------------------------ */
 
 function showView(viewId) {
-    document.querySelectorAll('.view').forEach(view => {
-        view.classList.remove('active');
+    document.querySelectorAll(".view").forEach(view => {
+        view.classList.remove("active");
     });
 
-    const target = $(viewId);
+    const target = document.getElementById(viewId);
 
-    if (!target) return;
+    if (target) {
+        target.classList.add("active");
+    }
 
-    target.classList.add('active');
-
-    if (viewId === 'chat') {
+    if (viewId === "chat") {
         showRandomTip();
-
         setTimeout(() => {
-            $('user-input')?.focus();
+            const input = document.getElementById("user-input");
+            if (input) input.focus();
         }, 100);
     }
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    STARFIELD
-   ============================================================ */
+------------------------------------------------------------ */
 
-const canvas = $('starfield');
+const canvas = document.getElementById("starfield");
+const ctx = canvas ? canvas.getContext("2d") : null;
 
-if (canvas) {
-    const ctx = canvas.getContext('2d');
+let stars = [];
 
-    let stars = [];
+function initStars() {
+    if (!canvas || !ctx) return;
 
-    function initStars() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-        canvas.width = window.innerWidth * dpr;
-        canvas.height = window.innerHeight * dpr;
+    const count = Math.min(
+        180,
+        Math.max(80, Math.floor((window.innerWidth * window.innerHeight) / 9000))
+    );
 
-        canvas.style.width = `${window.innerWidth}px`;
-        canvas.style.height = `${window.innerHeight}px`;
-
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-        stars = Array.from({
-            length: window.innerWidth < 700 ? 100 : 220
-        }, () => ({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            size: Math.random() * 1.5 + 0.2,
-            speed: Math.random() * 0.45 + 0.08,
-            opacity: Math.random() * 0.8 + 0.2
-        }));
-    }
-
-    function animateStars() {
-        ctx.clearRect(
-            0,
-            0,
-            window.innerWidth,
-            window.innerHeight
-        );
-
-        stars.forEach(star => {
-            star.y -= star.speed;
-
-            if (star.y < -5) {
-                star.y = window.innerHeight + 5;
-                star.x = Math.random() * window.innerWidth;
-            }
-
-            ctx.beginPath();
-
-            ctx.globalAlpha = star.opacity;
-
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = '#a855f7';
-
-            ctx.fillStyle = '#e9d5ff';
-
-            ctx.arc(
-                star.x,
-                star.y,
-                star.size,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.fill();
-        });
-
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
-
-        requestAnimationFrame(animateStars);
-    }
-
-    window.addEventListener('resize', initStars);
-
-    initStars();
-    animateStars();
+    stars = Array.from({ length: count }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 1.4 + 0.2,
+        speed: Math.random() * 0.35 + 0.08,
+        opacity: Math.random() * 0.7 + 0.2,
+        phase: Math.random() * Math.PI * 2
+    }));
 }
 
-/* ============================================================
-   CURSOR TRAIL
-   ============================================================ */
+function animateStars(time = 0) {
+    if (!canvas || !ctx) return;
 
-let lastCursorTrail = 0;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-document.addEventListener('mousemove', event => {
+    stars.forEach(star => {
+        star.y -= star.speed;
+
+        if (star.y < -5) {
+            star.y = canvas.height + 5;
+            star.x = Math.random() * canvas.width;
+        }
+
+        const pulse =
+            star.opacity +
+            Math.sin(time * 0.0015 + star.phase) * 0.15;
+
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+
+        ctx.fillStyle = `rgba(216,180,254,${Math.max(
+            0.08,
+            Math.min(1, pulse)
+        )})`;
+
+        ctx.shadowBlur = 7;
+        ctx.shadowColor = "#a855f7";
+        ctx.fill();
+    });
+
+    ctx.shadowBlur = 0;
+
+    requestAnimationFrame(animateStars);
+}
+
+window.addEventListener("resize", initStars);
+
+initStars();
+animateStars();
+
+/* ------------------------------------------------------------
+   CUSTOM CURSOR PARTICLES
+------------------------------------------------------------ */
+
+let lastCursorParticle = 0;
+
+document.addEventListener("mousemove", event => {
+    if (window.innerWidth < 700) return;
 
     const now = performance.now();
 
-    /* Don't create hundreds of DOM elements every second */
-    if (now - lastCursorTrail < 35) return;
+    if (now - lastCursorParticle < 35) return;
+    lastCursorParticle = now;
 
-    lastCursorTrail = now;
+    const star = document.createElement("div");
+    star.className = "cursor-star";
 
-    if (window.innerWidth < 700) return;
-
-    const star = document.createElement('div');
-
-    star.className = 'cursor-star';
-
-    star.style.left = `${event.clientX}px`;
-    star.style.top = `${event.clientY}px`;
+    star.style.left = `${event.pageX}px`;
+    star.style.top = `${event.pageY}px`;
 
     document.body.appendChild(star);
 
@@ -173,404 +146,423 @@ document.addEventListener('mousemove', event => {
     }, 800);
 });
 
-/* ============================================================
+/* ------------------------------------------------------------
    TIPS
-   ============================================================ */
+------------------------------------------------------------ */
 
 const nyxiumTips = [
-    'Ask Nyx to explain code, mathematics, science, or almost anything.',
-    'Use /clear to wipe the current conversation.',
-    'Use /toggle-sass to change Nyx personality mode.',
-    'Try asking Nyx a multi-step question — conversation memory is enabled.',
-    'Nyx can automatically switch between backend AI, browser AI, and local fallback.',
-    'Tip: Be specific with technical questions for better answers.',
-    'Nyxium AI is designed with a hybrid AI architecture.',
-    'Try asking: "Explain quantum computing like I am in class 9."'
+    "Ask Nyxium AI to explain code, solve problems, brainstorm ideas, or help with projects.",
+    "Use /clear whenever you want to start a completely fresh conversation.",
+    "Nyxium AI keeps recent conversation context so follow-up questions feel natural.",
+    "Try asking something complex — Nyxium AI can work through multi-step problems.",
+    "You can press Enter to send a message instantly.",
+    "Need a quick answer? Ask directly instead of using a command."
 ];
 
 function showRandomTip() {
+    const tipBox = document.getElementById("ai-tip-box");
 
-    const box = $('ai-tip-box');
-
-    if (!box) return;
+    if (!tipBox) return;
 
     const tip =
-        nyxiumTips[
-            Math.floor(Math.random() * nyxiumTips.length)
-        ];
+        nyxiumTips[Math.floor(Math.random() * nyxiumTips.length)];
 
-    box.innerHTML = `
-        <div>
-            <span class="text-xl">✨</span>
-
+    tipBox.innerHTML = `
+        <div class="nyx-tip">
+            <div class="nyx-tip-icon">✦</div>
             <div>
-                <strong class="text-indigo-300">
-                    Nyxium AI Tip
-                </strong>
-
-                <p class="text-gray-300 mt-1">
-                    ${escapeHTML(tip)}
-                </p>
+                <div class="nyx-tip-title">Nyxium AI Tip</div>
+                <div class="nyx-tip-text">${escapeHTML(tip)}</div>
             </div>
         </div>
     `;
 }
 
-/* ============================================================
-   NYX VISOR
-   ============================================================ */
+/* ------------------------------------------------------------
+   ESCAPE HTML
+------------------------------------------------------------ */
+
+function escapeHTML(value) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/* ------------------------------------------------------------
+   MARKDOWN-LIKE MESSAGE FORMATTER
+------------------------------------------------------------ */
+
+function formatAIText(text) {
+    let safe = escapeHTML(text);
+
+    // Code blocks
+    safe = safe.replace(
+        /```([\s\S]*?)```/g,
+        '<pre class="nyx-code"><code>$1</code></pre>'
+    );
+
+    // Inline code
+    safe = safe.replace(
+        /`([^`\n]+)`/g,
+        '<code class="nyx-inline-code">$1</code>'
+    );
+
+    // Bold
+    safe = safe.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+    // Italic
+    safe = safe.replace(
+        /\*([^*\n]+)\*/g,
+        "<em>$1</em>"
+    );
+
+    // Headings
+    safe = safe.replace(
+        /^### (.*)$/gm,
+        '<div class="nyx-heading nyx-heading-3">$1</div>'
+    );
+
+    safe = safe.replace(
+        /^## (.*)$/gm,
+        '<div class="nyx-heading nyx-heading-2">$1</div>'
+    );
+
+    safe = safe.replace(
+        /^# (.*)$/gm,
+        '<div class="nyx-heading nyx-heading-1">$1</div>'
+    );
+
+    // Bullet points
+    safe = safe.replace(
+        /^[-•] (.*)$/gm,
+        '<div class="nyx-list-item"><span>•</span><span>$1</span></div>'
+    );
+
+    // Numbered points
+    safe = safe.replace(
+        /^(\d+)\. (.*)$/gm,
+        '<div class="nyx-list-item"><span>$1.</span><span>$2</span></div>'
+    );
+
+    // New lines
+    safe = safe.replace(/\n/g, "<br>");
+
+    return safe;
+}
+
+/* ------------------------------------------------------------
+   NYXIUM AI AVATAR
+------------------------------------------------------------ */
 
 function getCharacterSVG(
     eyesPath,
     mouthPath,
-    auxiliaryElements = '',
-    glowColor = '#38bdf8'
+    auxiliaryElements = "",
+    glowColor = "#38bdf8"
 ) {
-
     return `
-        <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 100 100"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+    <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-label="Nyxium AI"
+    >
+        <defs>
 
-            <defs>
-
-                <filter
-                    id="neon-glow"
-                    x="-30%"
-                    y="-30%"
-                    width="160%"
-                    height="160%"
-                >
-                    <feGaussianBlur
-                        stdDeviation="2.2"
-                        result="blur"
-                    />
-
-                    <feMerge>
-                        <feMergeNode in="blur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
-
-                <pattern
-                    id="visor-grid"
-                    width="6"
-                    height="6"
-                    patternUnits="userSpaceOnUse"
-                >
-                    <line
-                        x1="0"
-                        y1="0"
-                        x2="6"
-                        y2="0"
-                        stroke="${glowColor}"
-                        stroke-opacity="0.08"
-                        stroke-width="0.8"
-                    />
-
-                    <line
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="6"
-                        stroke="${glowColor}"
-                        stroke-opacity="0.08"
-                        stroke-width="0.8"
-                    />
-                </pattern>
-
-                <linearGradient
-                    id="helm-grad"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%"
-                >
-                    <stop
-                        offset="0%"
-                        stop-color="#29144d"
-                    />
-
-                    <stop
-                        offset="50%"
-                        stop-color="#100721"
-                    />
-
-                    <stop
-                        offset="100%"
-                        stop-color="#05010e"
-                    />
-                </linearGradient>
-
-            </defs>
-
-            <!-- Helmet -->
-            <path
-                d="
-                    M20 28
-                    C20 15 80 15 80 28
-                    L84 50
-                    C84 70 74 84 50 88
-                    C26 84 16 70 16 50
-                    Z
-                "
-                fill="url(#helm-grad)"
-                stroke="#6b21a8"
-                stroke-width="2.5"
-            />
-
-            <!-- Left antenna -->
-            <path
-                d="M16 35 L7 28 L15 48 Z"
-                fill="#4c1d95"
-                stroke="#a855f7"
-                stroke-width="1.2"
-            />
-
-            <circle
-                cx="8"
-                cy="29"
-                r="1.5"
-                fill="${glowColor}"
-                filter="url(#neon-glow)"
-            />
-
-            <!-- Right antenna -->
-            <path
-                d="M84 35 L93 28 L85 48 Z"
-                fill="#4c1d95"
-                stroke="#a855f7"
-                stroke-width="1.2"
-            />
-
-            <circle
-                cx="92"
-                cy="29"
-                r="1.5"
-                fill="${glowColor}"
-                filter="url(#neon-glow)"
-            />
-
-            <!-- Visor -->
-            <path
-                d="
-                    M23 38
-                    C23 32 77 32 77 38
-                    L73 66
-                    C73 73 64 79 50 79
-                    C36 79 27 73 27 66
-                    Z
-                "
-                fill="#04010a"
-                stroke="#1e1b4b"
-                stroke-width="1.5"
-            />
-
-            <path
-                d="
-                    M23 38
-                    C23 32 77 32 77 38
-                    L73 66
-                    C73 73 64 79 50 79
-                    C36 79 27 73 27 66
-                    Z
-                "
-                fill="url(#visor-grid)"
-            />
-
-            <!-- HUD corners -->
-
-            <path
-                d="M27 44 L27 40 L31 40"
-                fill="none"
-                stroke="${glowColor}"
-                stroke-width="1"
-                opacity="0.5"
-            />
-
-            <path
-                d="M73 44 L73 40 L69 40"
-                fill="none"
-                stroke="${glowColor}"
-                stroke-width="1"
-                opacity="0.5"
-            />
-
-            <path
-                d="M27 62 L27 66 L31 66"
-                fill="none"
-                stroke="${glowColor}"
-                stroke-width="1"
-                opacity="0.5"
-            />
-
-            <path
-                d="M73 62 L73 66 L69 66"
-                fill="none"
-                stroke="${glowColor}"
-                stroke-width="1"
-                opacity="0.5"
-            />
-
-            <g filter="url(#neon-glow)">
-                ${eyesPath}
-                ${mouthPath}
-                ${auxiliaryElements}
-            </g>
-
-        </svg>
-    `;
-}
-
-/* ============================================================
-   MINI NYX
-   ============================================================ */
-
-function getMiniNyxSVG(glowColor = '#38bdf8') {
-
-    return `
-        <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 100 100"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-
-            <defs>
-
-                <filter id="mini-glow">
-
-                    <feGaussianBlur
-                        stdDeviation="3"
-                        result="blur"
-                    />
-
-                    <feMerge>
-                        <feMergeNode in="blur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-
-                </filter>
-
-            </defs>
-
-            <path
-                d="
-                    M20 28
-                    C20 15 80 15 80 28
-                    L84 50
-                    C84 70 74 84 50 88
-                    C26 84 16 70 16 50
-                    Z
-                "
-                fill="#0f0720"
-                stroke="#6b21a8"
-                stroke-width="4"
-            />
-
-            <path
-                d="
-                    M23 38
-                    C23 32 77 32 77 38
-                    L73 66
-                    C73 73 64 79 50 79
-                    C36 79 27 73 27 66
-                    Z
-                "
-                fill="#04010a"
-                stroke="#1e1b4b"
-                stroke-width="2"
-            />
-
-            <g filter="url(#mini-glow)">
-
-                <rect
-                    x="33"
-                    y="44"
-                    width="10"
-                    height="4"
-                    rx="2"
-                    fill="${glowColor}"
+            <filter id="nyxGlow">
+                <feGaussianBlur
+                    stdDeviation="2.2"
+                    result="blur"
                 />
+                <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
 
-                <rect
-                    x="57"
-                    y="44"
-                    width="10"
-                    height="4"
-                    rx="2"
-                    fill="${glowColor}"
-                />
+            <linearGradient
+                id="helmetGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+            >
+                <stop offset="0%" stop-color="#271344"/>
+                <stop offset="50%" stop-color="#10071f"/>
+                <stop offset="100%" stop-color="#040108"/>
+            </linearGradient>
 
+            <linearGradient
+                id="visorGradient"
+                x1="0%"
+                y1="0%"
+                x2="0%"
+                y2="100%"
+            >
+                <stop offset="0%" stop-color="#090514"/>
+                <stop offset="100%" stop-color="#020106"/>
+            </linearGradient>
+
+            <pattern
+                id="scanGrid"
+                width="6"
+                height="6"
+                patternUnits="userSpaceOnUse"
+            >
                 <line
-                    x1="44"
-                    y1="62"
-                    x2="56"
-                    y2="62"
+                    x1="0"
+                    y1="0"
+                    x2="6"
+                    y2="0"
                     stroke="${glowColor}"
-                    stroke-width="3.5"
-                    stroke-linecap="round"
+                    stroke-width="0.35"
+                    opacity="0.12"
                 />
+                <line
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="6"
+                    stroke="${glowColor}"
+                    stroke-width="0.35"
+                    opacity="0.12"
+                />
+            </pattern>
 
-            </g>
+        </defs>
 
-        </svg>
+        <!-- helmet -->
+        <path
+            d="M20 28
+               C20 15 80 15 80 28
+               L84 50
+               C84 70 74 84 50 88
+               C26 84 16 70 16 50Z"
+            fill="url(#helmetGradient)"
+            stroke="#7c3aed"
+            stroke-width="2"
+        />
+
+        <!-- side modules -->
+        <path
+            d="M16 35 L7 28 L15 48Z"
+            fill="#4c1d95"
+            stroke="${glowColor}"
+            stroke-width="1"
+        />
+
+        <path
+            d="M84 35 L93 28 L85 48Z"
+            fill="#4c1d95"
+            stroke="${glowColor}"
+            stroke-width="1"
+        />
+
+        <circle
+            cx="8"
+            cy="29"
+            r="1.5"
+            fill="${glowColor}"
+            filter="url(#nyxGlow)"
+        />
+
+        <circle
+            cx="92"
+            cy="29"
+            r="1.5"
+            fill="${glowColor}"
+            filter="url(#nyxGlow)"
+        />
+
+        <!-- visor -->
+        <path
+            d="M23 38
+               C23 32 77 32 77 38
+               L73 66
+               C73 73 64 79 50 79
+               C36 79 27 73 27 66Z"
+            fill="url(#visorGradient)"
+            stroke="#312e81"
+            stroke-width="1.5"
+        />
+
+        <path
+            d="M23 38
+               C23 32 77 32 77 38
+               L73 66
+               C73 73 64 79 50 79
+               C36 79 27 73 27 66Z"
+            fill="url(#scanGrid)"
+        />
+
+        <!-- HUD brackets -->
+
+        <g
+            stroke="${glowColor}"
+            stroke-width="1"
+            opacity="0.45"
+        >
+            <path d="M27 44V40H31"/>
+            <path d="M73 44V40H69"/>
+            <path d="M27 62V66H31"/>
+            <path d="M73 62V66H69"/>
+        </g>
+
+        <!-- expression -->
+
+        <g filter="url(#nyxGlow)">
+            ${eyesPath}
+            ${mouthPath}
+            ${auxiliaryElements}
+        </g>
+
+    </svg>
     `;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
+   MINI AVATAR
+------------------------------------------------------------ */
+
+function getMiniNyxSVG(glowColor = "#38bdf8") {
+    return `
+    <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+
+        <defs>
+            <filter id="miniNyxGlow">
+                <feGaussianBlur
+                    stdDeviation="2"
+                    result="blur"
+                />
+                <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+        </defs>
+
+        <path
+            d="M20 28
+               C20 15 80 15 80 28
+               L84 50
+               C84 70 74 84 50 88
+               C26 84 16 70 16 50Z"
+            fill="#0f0720"
+            stroke="#7c3aed"
+            stroke-width="4"
+        />
+
+        <path
+            d="M23 38
+               C23 32 77 32 77 38
+               L73 66
+               C73 73 64 79 50 79
+               C36 79 27 73 27 66Z"
+            fill="#030107"
+            stroke="#312e81"
+            stroke-width="2"
+        />
+
+        <g filter="url(#miniNyxGlow)">
+            <rect
+                x="33"
+                y="44"
+                width="10"
+                height="4"
+                rx="2"
+                fill="${glowColor}"
+            />
+
+            <rect
+                x="57"
+                y="44"
+                width="10"
+                height="4"
+                rx="2"
+                fill="${glowColor}"
+            />
+
+            <line
+                x1="44"
+                y1="62"
+                x2="56"
+                y2="62"
+                stroke="${glowColor}"
+                stroke-width="3"
+                stroke-linecap="round"
+            />
+        </g>
+
+    </svg>
+    `;
+}
+
+/* ------------------------------------------------------------
    USER AVATAR
-   ============================================================ */
+------------------------------------------------------------ */
 
 function getUserSVG() {
-
     return `
-        <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 100 100"
-            xmlns="http://www.w3.org/2000/svg"
-        >
+    <svg
+        width="100%"
+        height="100%"
+        viewBox="0 0 100 100"
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <circle
+            cx="50"
+            cy="35"
+            r="17"
+            fill="#c4b5fd"
+        />
 
-            <circle
-                cx="50"
-                cy="36"
-                r="18"
-                fill="#c4b5fd"
-            />
-
-            <path
-                d="
-                    M22 80
-                    C22 62 78 62 78 80
-                    C78 84 22 84 22 80
-                    Z
-                "
-                fill="#c4b5fd"
-            />
-
-        </svg>
+        <path
+            d="M22 82
+               C22 63 78 63 78 82
+               Z"
+            fill="#c4b5fd"
+        />
+    </svg>
     `;
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
    EXPRESSIONS
-   ============================================================ */
+------------------------------------------------------------ */
 
 const vectorExpressions = {
 
-    NEUTRAL: {
+    "😐": {
         eyes: `
-            <rect x="33" y="44"
-                width="10" height="4"
-                rx="2" fill="#38bdf8"/>
+            <rect
+                x="33"
+                y="44"
+                width="10"
+                height="4"
+                rx="2"
+                fill="#38bdf8"
+            />
 
-            <rect x="57" y="44"
-                width="10" height="4"
-                rx="2" fill="#38bdf8"/>
+            <rect
+                x="57"
+                y="44"
+                width="10"
+                height="4"
+                rx="2"
+                fill="#38bdf8"
+            />
         `,
 
         mouth: `
@@ -585,11 +577,11 @@ const vectorExpressions = {
             />
         `,
 
-        extra: '',
-        color: '#38bdf8'
+        extra: "",
+        color: "#38bdf8"
     },
 
-    HAPPY: {
+    "😊": {
         eyes: `
             <path
                 d="M31 48 Q38 41 43 48"
@@ -634,10 +626,10 @@ const vectorExpressions = {
             />
         `,
 
-        color: '#22c55e'
+        color: "#22c55e"
     },
 
-    THINKING: {
+    "🤔": {
         eyes: `
             <path
                 d="M31 43 L41 47"
@@ -662,7 +654,6 @@ const vectorExpressions = {
                 fill="none"
                 stroke="#f59e0b"
                 stroke-width="2.5"
-                stroke-linecap="round"
             />
         `,
 
@@ -672,15 +663,14 @@ const vectorExpressions = {
                 y="42"
                 font-size="7"
                 font-family="monospace"
-                font-weight="bold"
                 fill="#f59e0b"
             >?</text>
         `,
 
-        color: '#f59e0b'
+        color: "#f59e0b"
     },
 
-    SURPRISED: {
+    "😲": {
         eyes: `
             <circle
                 cx="37"
@@ -712,21 +702,11 @@ const vectorExpressions = {
             />
         `,
 
-        extra: `
-            <line
-                x1="50"
-                y1="36"
-                x2="50"
-                y2="40"
-                stroke="#a855f7"
-                stroke-width="1.5"
-            />
-        `,
-
-        color: '#a855f7'
+        extra: "",
+        color: "#a855f7"
     },
 
-    ANGRY: {
+    "😠": {
         eyes: `
             <path
                 d="M31 48 L41 43"
@@ -749,13 +729,12 @@ const vectorExpressions = {
                 fill="none"
                 stroke="#ef4444"
                 stroke-width="2.8"
-                stroke-linecap="round"
             />
         `,
 
         extra: `
             <text
-                x="27"
+                x="29"
                 y="40"
                 font-size="5"
                 fill="#ef4444"
@@ -763,10 +742,10 @@ const vectorExpressions = {
             >WARN</text>
         `,
 
-        color: '#ef4444'
+        color: "#ef4444"
     },
 
-    SAD: {
+    "🙁": {
         eyes: `
             <rect
                 x="33"
@@ -793,1005 +772,570 @@ const vectorExpressions = {
                 fill="none"
                 stroke="#3b82f6"
                 stroke-width="2.2"
-                stroke-linecap="round"
             />
         `,
 
-        extra: '',
-        color: '#3b82f6'
+        extra: "",
+        color: "#3b82f6"
+    },
+
+    "😢": {
+        eyes: `
+            <path
+                d="M32 42L38 48M38 42L32 48"
+                stroke="#3b82f6"
+                stroke-width="2.5"
+            />
+
+            <path
+                d="M62 42L68 48M68 42L62 48"
+                stroke="#3b82f6"
+                stroke-width="2.5"
+            />
+        `,
+
+        mouth: `
+            <line
+                x1="42"
+                y1="63"
+                x2="58"
+                y2="63"
+                stroke="#3b82f6"
+                stroke-width="2.5"
+            />
+        `,
+
+        extra: `
+            <text
+                x="40"
+                y="74"
+                font-size="4.5"
+                fill="#3b82f6"
+                font-family="monospace"
+            >SYS_ERR</text>
+        `,
+
+        color: "#3b82f6"
     }
 };
 
-/* ============================================================
+/* ------------------------------------------------------------
    EMOTION ENGINE
-   ============================================================ */
+------------------------------------------------------------ */
+
+function getEmotionFrame(emotion) {
+
+    const map = {
+        NEUTRAL: "😐",
+        HAPPY: "😊",
+        THINKING: "🤔",
+        SURPRISED: "😲",
+        ANGRY: "😠",
+        SAD: "😢"
+    };
+
+    return map[emotion] || "😐";
+}
 
 function transitionTo(emotion) {
 
-    emotion = vectorExpressions[emotion]
-        ? emotion
-        : 'NEUTRAL';
+    emotion = String(emotion || "NEUTRAL").toUpperCase();
 
-    const face = $('ai-face');
-    const status = $('ai-status');
-
-    if (!face) return;
+    if (!vectorExpressions[getEmotionFrame(emotion)]) {
+        emotion = "NEUTRAL";
+    }
 
     currentEmotion = emotion;
 
-    const data = vectorExpressions[emotion];
+    const face = document.getElementById("ai-face");
+    const status = document.getElementById("ai-status");
 
-    face.classList.remove('pop-animation');
+    if (!face) return;
+
+    const symbol = getEmotionFrame(emotion);
+    const data = vectorExpressions[symbol];
+
+    face.classList.remove("pop-animation");
 
     void face.offsetWidth;
 
-    face.classList.add('pop-animation');
+    face.classList.add("pop-animation");
 
-    face.innerHTML =
-        getCharacterSVG(
-            data.eyes,
-            data.mouth,
-            data.extra,
-            data.color
-        );
+    face.innerHTML = getCharacterSVG(
+        data.eyes,
+        data.mouth,
+        data.extra,
+        data.color
+    );
 
     if (status) {
 
-        const labels = {
-            NEUTRAL: 'Status: Online',
-            HAPPY: 'Status: Activated',
-            THINKING: 'Status: Thinking...',
-            SURPRISED: 'Status: Alerted',
-            ANGRY: 'Status: Warning',
-            SAD: 'Status: Recovering...'
+        const statusMap = {
+            NEUTRAL: "Online • Ready",
+            HAPPY: "Online • Positive",
+            THINKING: "Processing • Thinking",
+            SURPRISED: "Alert • Interesting",
+            ANGRY: "Alert • Defensive",
+            SAD: "Degraded • Recovering"
         };
 
-        status.textContent =
-            labels[emotion] || labels.NEUTRAL;
+        status.textContent = statusMap[emotion];
     }
 }
 
-/* ============================================================
-   COMMANDS
-   ============================================================ */
+/* ------------------------------------------------------------
+   CHAT HELPERS
+------------------------------------------------------------ */
 
-function executeConsoleCommand(command) {
+function scrollChat() {
 
-    const input = $('user-input');
+    const box = document.getElementById("chat-messages");
+
+    if (!box) return;
+
+    requestAnimationFrame(() => {
+        box.scrollTop = box.scrollHeight;
+    });
+}
+
+function addUserMessage(text) {
+
+    const box = document.getElementById("chat-messages");
+
+    if (!box) return;
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "nyx-message-row user";
+
+    wrapper.innerHTML = `
+        <div class="nyx-avatar user-avatar">
+            ${getUserSVG()}
+        </div>
+
+        <div class="nyx-message user-message">
+            ${formatAIText(text)}
+        </div>
+    `;
+
+    box.appendChild(wrapper);
+
+    scrollChat();
+}
+
+function addTypingMessage() {
+
+    const box = document.getElementById("chat-messages");
+
+    if (!box) return null;
+
+    const id = `typing-${Date.now()}`;
+
+    const wrapper = document.createElement("div");
+
+    wrapper.id = id;
+    wrapper.className = "nyx-message-row ai";
+
+    wrapper.innerHTML = `
+        <div class="nyx-avatar">
+            ${getMiniNyxSVG("#f59e0b")}
+        </div>
+
+        <div class="nyx-message ai-message typing-message">
+
+            <div class="nyx-message-name">
+                Nyxium AI
+            </div>
+
+            <div class="typing-content">
+
+                <span>Thinking</span>
+
+                <div class="typing-dots">
+                    <i></i>
+                    <i></i>
+                    <i></i>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    box.appendChild(wrapper);
+
+    scrollChat();
+
+    return id;
+}
+
+function updateTypingMessage(id, text) {
+
+    const element = document.getElementById(id);
+
+    if (!element) return;
+
+    const content =
+        element.querySelector(".typing-content span");
+
+    if (content) {
+        content.textContent = text;
+    }
+}
+
+function removeTypingMessage(id) {
+
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.remove();
+    }
+}
+
+/* ------------------------------------------------------------
+   AI MESSAGE
+------------------------------------------------------------ */
+
+function addAIMessage(text, emotion = "NEUTRAL") {
+
+    const box = document.getElementById("chat-messages");
+
+    if (!box) return;
+
+    const color =
+        emotionColors[emotion] ||
+        emotionColors.NEUTRAL;
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "nyx-message-row ai";
+
+    const messageId =
+        `ai-message-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2)}`;
+
+    wrapper.innerHTML = `
+        <div class="nyx-avatar">
+            ${getMiniNyxSVG(color)}
+        </div>
+
+        <div class="nyx-message ai-message">
+
+            <div class="nyx-message-header">
+
+                <span class="nyx-message-name">
+                    Nyxium AI
+                </span>
+
+                <span class="nyx-message-status">
+                    ${emotion}
+                </span>
+
+            </div>
+
+            <div
+                id="${messageId}"
+                class="nyx-message-content"
+            ></div>
+
+        </div>
+    `;
+
+    box.appendChild(wrapper);
+
+    const textElement =
+        document.getElementById(messageId);
+
+    let index = 0;
+
+    function typeCharacter() {
+
+        if (!textElement) return;
+
+        if (index < text.length) {
+
+            const partial =
+                text.substring(0, index + 1);
+
+            textElement.innerHTML =
+                formatAIText(partial);
+
+            index++;
+
+            scrollChat();
+
+            const delay =
+                text.length > 700
+                    ? 3
+                    : Math.random() * 12 + 7;
+
+            setTimeout(typeCharacter, delay);
+
+        } else {
+
+            conversationHistory.push({
+                role: "assistant",
+                content: text
+            });
+
+            trimHistory();
+
+            clearTimeout(idleTimeout);
+
+            idleTimeout = setTimeout(() => {
+                transitionTo("NEUTRAL");
+            }, 4000);
+        }
+    }
+
+    typeCharacter();
+}
+
+/* ------------------------------------------------------------
+   WELCOME MESSAGE
+------------------------------------------------------------ */
+
+function showWelcomeMessage() {
+
+    const box =
+        document.getElementById("chat-messages");
+
+    if (!box || box.children.length > 0) return;
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "nyx-welcome";
+
+    wrapper.innerHTML = `
+        <div class="nyx-welcome-orb">
+            ${getMiniNyxSVG("#a855f7")}
+        </div>
+
+        <div class="nyx-welcome-title">
+            Welcome to Nyxium AI
+        </div>
+
+        <p class="nyx-welcome-text">
+            Your AI workspace for questions, coding,
+            ideas, explanations, calculations and more.
+        </p>
+
+        <div class="nyx-suggestion-grid">
+
+            <button
+                onclick="useSuggestion('Explain quantum computing simply')"
+            >
+                <span>🧠</span>
+                Explain something
+            </button>
+
+            <button
+                onclick="useSuggestion('Help me write a Python program')"
+            >
+                <span>💻</span>
+                Write code
+            </button>
+
+            <button
+                onclick="useSuggestion('Give me 5 creative project ideas')"
+            >
+                <span>✨</span>
+                Brainstorm
+            </button>
+
+            <button
+                onclick="useSuggestion('Solve 2847 × 936')"
+            >
+                <span>⚡</span>
+                Calculate
+            </button>
+
+        </div>
+    `;
+
+    box.appendChild(wrapper);
+}
+
+function useSuggestion(text) {
+
+    const input =
+        document.getElementById("user-input");
 
     if (!input) return;
 
-    input.value = command;
+    input.value = text;
+    input.focus();
 
     sendToAI();
 }
 
-/* ============================================================
+/* ------------------------------------------------------------
+   HISTORY
+------------------------------------------------------------ */
+
+function trimHistory() {
+
+    while (
+        conversationHistory.length >
+        MAX_HISTORY_TURNS
+    ) {
+        conversationHistory.shift();
+    }
+}
+
+/* ------------------------------------------------------------
    LOCAL MATH ENGINE
-   ============================================================ */
+------------------------------------------------------------ */
 
 function tryLocalResponse(message) {
 
-    const normalized = message
-        .toLowerCase()
-        .trim();
+    const normalized =
+        message.toLowerCase().trim();
 
     /* Basic arithmetic */
 
-    const math =
-        normalized.match(
-            /^(-?\d+(?:\.\d+)?)\s*([+\-*x×÷\/])\s*(-?\d+(?:\.\d+)?)$/
-        );
+    const mathRegex =
+        /(-?\d+(?:\.\d+)?)\s*(\+|-|\*|×|x|\/|÷)\s*(-?\d+(?:\.\d+)?)/;
 
-    if (math) {
+    const match =
+        message.match(mathRegex);
 
-        const a = Number(math[1]);
-        const op = math[2];
-        const b = Number(math[3]);
+    if (match) {
+
+        const a = Number(match[1]);
+        const op = match[2];
+        const b = Number(match[3]);
 
         let result;
 
-        if (op === '+') result = a + b;
-        else if (op === '-') result = a - b;
-        else if (op === '*' || op === 'x' || op === '×') {
-            result = a * b;
-        }
-        else if (op === '/' || op === '÷') {
-            if (b === 0) {
-                return '[SURPRISED] Division by zero is undefined.';
-            }
+        switch (op) {
 
-            result = a / b;
+            case "+":
+                result = a + b;
+                break;
+
+            case "-":
+                result = a - b;
+                break;
+
+            case "*":
+            case "×":
+            case "x":
+                result = a * b;
+                break;
+
+            case "/":
+            case "÷":
+                if (b === 0) {
+                    return "[SAD] Division by zero is undefined.";
+                }
+
+                result = a / b;
+                break;
         }
 
-        return `[HAPPY] Done. **${result}**`;
+        if (typeof result === "number") {
+
+            return `[HAPPY] The answer is **${result}**.`;
+        }
     }
-
-    /* Greetings */
 
     if (
-        /^(hi|hello|hey|hola|yo|sup)\b/i.test(normalized)
+        /^(hi|hello|hey|hola|yo)\b/i.test(normalized)
     ) {
-        return '[HAPPY] Hey! Nyx is online. What are we building, debugging, calculating, or destroying today?';
+        return "[HAPPY] Hey! Nyxium AI is online. What are we working on?";
     }
-
-    /* Identity */
 
     if (
-        normalized.includes('who are you') ||
-        normalized.includes('what are you')
+        normalized.includes("who are you") ||
+        normalized.includes("what are you")
     ) {
-        return '[NEUTRAL] I am Nyx — the cybernetic AI core of the Nyxium Terminal Network.';
+        return "[NEUTRAL] I'm **Nyxium AI**, the AI system powering the Nyxium experience. I can help with questions, coding, ideas, calculations and technical problems.";
     }
 
-    /* Short nonsense */
-
-    if (normalized.length < 3) {
-        return '[SURPRISED] That message is a little too short for my processing array.';
+    if (
+        normalized === "thanks" ||
+        normalized === "thank you" ||
+        normalized === "thx"
+    ) {
+        return "[HAPPY] You're welcome. What are we building next?";
     }
 
-    return '[NEUTRAL] My primary AI node is temporarily unavailable. I can still handle basic calculations and local commands while the network reconnects.';
-}
-
-/* ============================================================
-   COMMAND PROCESSOR
-   ============================================================ */
-
-function processCommand(message) {
-
-    const command = message
-        .trim()
-        .split(/\s+/)[0]
-        .toLowerCase();
-
-    if (!message.startsWith('/')) {
-        return null;
+    if (normalized.length < 2) {
+        return "[SURPRISED] That's a little too short for me to work with. Give me a question or command.";
     }
 
-    switch (command) {
+    return null;
+}
 
-        case '/clear':
-            clearChat();
-            return '';
+/* ------------------------------------------------------------
+   COMMAND HANDLER
+------------------------------------------------------------ */
 
-        case '/toggle-sass':
-            sassMode = !sassMode;
+function executeConsoleCommand(command) {
 
-            localStorage.setItem(
-                SASS_KEY,
-                String(sassMode)
-            );
+    const input =
+        document.getElementById("user-input");
 
-            return `[${sassMode ? 'HAPPY' : 'NEUTRAL'}] Sass mode is now **${sassMode ? 'ON' : 'OFF'}**.`;
+    if (!input) return;
 
-        case '/help':
-            return `[NEUTRAL]
-**Nyxium Console Commands**
+    if (command === "/clear") {
 
-\`/clear\` — Clear this conversation.
-\`/toggle-sass\` — Toggle Nyx's personality mode.
-\`/help\` — Show this command list.
-
-You can also simply ask me questions normally.`;
-
-        case '/ping':
-            return `[HAPPY] Pong! Frontend response received in **${Math.floor(Math.random() * 40 + 10)}ms**.`;
-
-        default:
-            return `[SURPRISED] Unknown command: \`${escapeHTML(command)}\`. Try \`/help\`.`;
+        clearChat();
+        return;
     }
-}
 
-/* ============================================================
-   CLEAR CHAT
-   ============================================================ */
+    if (command === "/toggle-sass") {
 
-function clearChat() {
+        input.value =
+            "Toggle your personality between professional and playful.";
 
-    const chat = $('chat-messages');
-
-    if (!chat) return;
-
-    chat.innerHTML = '';
-
-    conversationHistory = [];
-
-    saveHistory();
-
-    transitionTo('HAPPY');
-
-    setTimeout(() => {
-        transitionTo('NEUTRAL');
-    }, 1500);
-}
-
-/* ============================================================
-   HISTORY STORAGE
-   ============================================================ */
-
-function saveHistory() {
-
-    try {
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(conversationHistory)
-        );
-
-    } catch (error) {
-
-        console.warn(
-            'Unable to save Nyxium history.',
-            error
-        );
-    }
-}
-
-function loadHistory() {
-
-    try {
-
-        const saved =
-            localStorage.getItem(STORAGE_KEY);
-
-        if (!saved) return;
-
-        const parsed =
-            JSON.parse(saved);
-
-        if (!Array.isArray(parsed)) return;
-
-        conversationHistory =
-            parsed.slice(-MAX_HISTORY_TURNS);
-
-    } catch (error) {
-
-        console.warn(
-            'Unable to restore Nyxium history.',
-            error
-        );
-    }
-}
-
-/* ============================================================
-   ADD USER MESSAGE
-   ============================================================ */
-
-function addUserMessage(message) {
-
-    const chat = $('chat-messages');
-
-    if (!chat) return;
-
-    chat.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="flex gap-4 flex-row-reverse mb-4">
-
-            <div
-                class="
-                    w-8 h-8
-                    shrink-0
-                    rounded-full
-                    bg-[#1b152e]
-                    border border-indigo-500/20
-                    flex items-center justify-center
-                    p-1
-                    overflow-hidden
-                "
-            >
-                ${getUserSVG()}
-            </div>
-
-            <div
-                class="
-                    bg-indigo-600
-                    p-4
-                    rounded-2xl
-                    rounded-tr-none
-                    max-w-[80%]
-                    text-sm
-                    break-words
-                "
-            >
-                ${escapeHTML(message)}
-            </div>
-
-        </div>
-        `
-    );
-
-    scrollChat();
-}
-
-/* ============================================================
-   TYPING INDICATOR
-   ============================================================ */
-
-function addTypingIndicator() {
-
-    const chat = $('chat-messages');
-
-    if (!chat) return null;
-
-    const id =
-        `typing-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-
-    chat.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div
-            id="${id}"
-            class="flex gap-4 mb-4"
-        >
-
-            <div
-                class="
-                    w-8 h-8
-                    shrink-0
-                    rounded-full
-                    bg-[#0d071a]
-                    border border-yellow-500/30
-                    flex items-center justify-center
-                    p-0.5
-                    overflow-hidden
-                "
-            >
-                ${getMiniNyxSVG('#f59e0b')}
-            </div>
-
-            <div
-                class="
-                    bg-slate-800
-                    p-4
-                    rounded-2xl
-                    rounded-tl-none
-                    text-sm
-                    text-slate-400
-                    italic
-                    font-status
-                "
-            >
-                Nyxium AI is thinking
-            </div>
-
-        </div>
-        `
-    );
-
-    scrollChat();
-
-    return id;
-}
-
-/* ============================================================
-   SCROLL CHAT
-   ============================================================ */
-
-function scrollChat() {
-
-    const chat = $('chat-messages');
-
-    if (!chat) return;
-
-    requestAnimationFrame(() => {
-        chat.scrollTop =
-            chat.scrollHeight;
-    });
-}
-
-/* ============================================================
-   FORMAT AI RESPONSE
-   ============================================================ */
-
-function formatAIText(text) {
-
-    let safe = escapeHTML(text);
-
-    /*
-       Code blocks
-       We escape first, then replace the escaped
-       markdown syntax.
-    */
-
-    safe = safe.replace(
-        /```([\s\S]*?)```/g,
-        (_, code) => `
-            <pre class="
-                my-3
-                p-4
-                rounded-xl
-                overflow-x-auto
-                bg-black/50
-                border border-white/10
-                text-sm
-            "><code>${code.trim()}</code></pre>
-        `
-    );
-
-    /* Inline code */
-
-    safe = safe.replace(
-        /`([^`\n]+)`/g,
-        '<code>$1</code>'
-    );
-
-    /* Bold */
-
-    safe = safe.replace(
-        /\*\*(.*?)\*\*/g,
-        '<strong>$1</strong>'
-    );
-
-    /* Italic */
-
-    safe = safe.replace(
-        /(^|[^\*])\*([^*\n]+)\*(?!\*)/g,
-        '$1<em>$2</em>'
-    );
-
-    /* Links */
-
-    safe = safe.replace(
-        /(https?:\/\/[^\s<]+)/g,
-        '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:text-purple-300 underline">$1</a>'
-    );
-
-    /* New lines */
-
-    safe = safe.replace(
-        /\n/g,
-        '<br>'
-    );
-
-    return safe;
-}
-
-/* ============================================================
-   AI RESPONSE BUBBLE
-   ============================================================ */
-
-function createAIMessage(text, emotion) {
-
-    const chat = $('chat-messages');
-
-    if (!chat) return null;
-
-    const id =
-        `msg-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-
-    const colors = {
-        HAPPY: '#22c55e',
-        THINKING: '#f59e0b',
-        SURPRISED: '#a855f7',
-        ANGRY: '#ef4444',
-        SAD: '#3b82f6',
-        NEUTRAL: '#38bdf8'
-    };
-
-    const color =
-        colors[emotion] || colors.NEUTRAL;
-
-    chat.insertAdjacentHTML(
-        'beforeend',
-        `
-        <div class="flex gap-4 mb-4">
-
-            <div
-                class="
-                    w-8 h-8
-                    shrink-0
-                    rounded-full
-                    bg-[#0d071a]
-                    border border-indigo-500/30
-                    flex items-center justify-center
-                    p-0.5
-                    overflow-hidden
-                "
-            >
-                ${getMiniNyxSVG(color)}
-            </div>
-
-            <div
-                class="
-                    bg-slate-800
-                    p-4
-                    rounded-2xl
-                    rounded-tl-none
-                    max-w-[85%]
-                    text-sm
-                    break-words
-                "
-            >
-
-                <div class="flex items-center gap-2 mb-2">
-
-                    <strong class="text-blue-400">
-                        Nyxium AI
-                    </strong>
-
-                    <span
-                        class="
-                            text-[10px]
-                            uppercase
-                            tracking-wider
-                            opacity-50
-                        "
-                    >
-                        ${emotion}
-                    </span>
-
-                </div>
-
-                <div id="${id}" class="leading-6"></div>
-
-                <div class="mt-3 flex gap-2">
-
-                    <button
-                        onclick="copyAIMessage('${id}')"
-                        class="
-                            text-[11px]
-                            px-2
-                            py-1
-                            rounded-md
-                            bg-white/5
-                            hover:bg-white/10
-                            text-gray-400
-                        "
-                    >
-                        📋 Copy
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-        `
-    );
-
-    scrollChat();
-
-    return id;
-}
-
-/* ============================================================
-   COPY MESSAGE
-   ============================================================ */
-
-async function copyAIMessage(id) {
-
-    const element = $(id);
-
-    if (!element) return;
-
-    const text =
-        element.innerText || '';
-
-    try {
-
-        await navigator.clipboard.writeText(text);
-
-        const button =
-            element.parentElement
-                ?.querySelector('button');
-
-        if (button) {
-
-            const old =
-                button.innerText;
-
-            button.innerText =
-                '✓ Copied';
-
-            setTimeout(() => {
-                button.innerText = old;
-            }, 1200);
-        }
-
-    } catch (error) {
-
-        console.warn(
-            'Clipboard unavailable.',
-            error
-        );
-    }
-}
-
-/* ============================================================
-   TYPE RESPONSE
-   ============================================================ */
-
-function typeOutResponse(
-    text,
-    emotion = 'NEUTRAL'
-) {
-
-    const id =
-        createAIMessage(
-            text,
-            emotion
-        );
-
-    if (!id) return;
-
-    const container = $(id);
-
-    /*
-       For long AI responses, instantly render
-       instead of taking 20+ seconds to type.
-    */
-
-    const delayThreshold = 1200;
-
-    if (text.length > delayThreshold) {
-
-        container.innerHTML =
-            formatAIText(text);
-
-        scrollChat();
-
-        finishIdleState();
+        sendToAI();
 
         return;
     }
 
-    let index = 0;
-
-    function nextCharacter() {
-
-        if (index >= text.length) {
-
-            container.innerHTML =
-                formatAIText(text);
-
-            finishIdleState();
-
-            return;
-        }
-
-        /*
-           Render a small chunk rather than
-           one DOM operation per character.
-        */
-
-        const chunk =
-            text.slice(
-                index,
-                index + 3
-            );
-
-        index += chunk.length;
-
-        container.innerHTML =
-            formatAIText(
-                text.slice(0, index)
-            );
-
-        scrollChat();
-
-        setTimeout(
-            nextCharacter,
-            sassMode ? 12 : 7
-        );
-    }
-
-    nextCharacter();
+    input.value = command;
+    input.focus();
 }
 
-/* ============================================================
-   IDLE STATE
-   ============================================================ */
+/* ------------------------------------------------------------
+   CLEAR CHAT
+------------------------------------------------------------ */
 
-function finishIdleState() {
+function clearChat() {
 
-    clearTimeout(idleTimeout);
+    const box =
+        document.getElementById("chat-messages");
 
-    idleTimeout =
-        setTimeout(() => {
+    if (box) {
+        box.innerHTML = "";
+    }
 
-            transitionTo('NEUTRAL');
+    conversationHistory = [];
 
-        }, 5000);
+    transitionTo("HAPPY");
+
+    setTimeout(() => {
+
+        showWelcomeMessage();
+
+        transitionTo("NEUTRAL");
+
+    }, 500);
 }
 
-/* ============================================================
-   PARSE ENGINE RESPONSE
-   ============================================================ */
-
-function handleEngineResponse(
-    response,
-    chatBox
-) {
-
-    if (!response) {
-
-        response =
-            '[SAD] The Nyxium response node returned an empty packet.';
-    }
-
-    let text =
-        String(response).trim();
-
-    let emotion =
-        'NEUTRAL';
-
-    const match =
-        text.match(
-            /^\s*\[([A-Z]+)\]\s*/
-        );
-
-    if (match) {
-
-        const candidate =
-            match[1];
-
-        if (vectorExpressions[candidate]) {
-            emotion = candidate;
-        }
-
-        text =
-            text.slice(
-                match[0].length
-            );
-    }
-
-    /*
-       Remove accidental duplicate
-       emotion tags from AI output.
-    */
-
-    text =
-        text.replace(
-            /^\s*\[[A-Z]+\]\s*/,
-            ''
-        );
-
-    conversationHistory.push({
-        role: 'assistant',
-        content: text
-    });
-
-    conversationHistory =
-        conversationHistory.slice(
-            -MAX_HISTORY_TURNS
-        );
-
-    saveHistory();
-
-    transitionTo(emotion);
-
-    typeOutResponse(
-        text,
-        emotion
-    );
-}
-
-/* ============================================================
-   BACKEND REQUEST
-   ============================================================ */
-
-async function requestBackend(
-    message
-) {
-
-    const controller =
-        new AbortController();
-
-    const timeout =
-        setTimeout(
-            () => controller.abort(),
-            12000
-        );
-
-    try {
-
-        const response =
-            await fetch(
-                '/api/chat',
-                {
-                    method: 'POST',
-
-                    headers: {
-                        'Content-Type':
-                            'application/json'
-                    },
-
-                    body: JSON.stringify({
-                        message,
-                        history:
-                            conversationHistory
-                    }),
-
-                    signal:
-                        controller.signal
-                }
-            );
-
-        if (!response.ok) {
-            throw new Error(
-                `Backend returned ${response.status}`
-            );
-        }
-
-        const data =
-            await response.json();
-
-        if (
-            !data ||
-            typeof data.reply !== 'string' ||
-            !data.reply.trim()
-        ) {
-            throw new Error(
-                'Invalid backend response'
-            );
-        }
-
-        return data.reply;
-
-    } finally {
-
-        clearTimeout(timeout);
-    }
-}
-
-/* ============================================================
-   PUTER FALLBACK
-   ============================================================ */
-
-async function requestPuter(
-    message
-) {
-
-    if (
-        typeof window.puter === 'undefined' ||
-        !puter.ai ||
-        typeof puter.ai.chat !== 'function'
-    ) {
-        throw new Error(
-            'Puter AI unavailable'
-        );
-    }
-
-    const history =
-        conversationHistory
-            .slice(-12)
-            .map(item =>
-                `${item.role === 'user'
-                    ? 'User'
-                    : 'Nyx'}: ${item.content}`
-            )
-            .join('\n');
-
-    const sassInstruction =
-        sassMode
-            ? 'You may be witty and mildly sarcastic when appropriate.'
-            : 'Remain calm, professional, and helpful.';
-
-    const prompt = `
-You are Nyx, the AI core of Nyxium AI.
-
-IDENTITY:
-- Your name is Nyx.
-- You are the AI assistant of Nyxium AI.
-- Do not claim to be Google Gemini.
-- Do not pretend to be another AI.
-- Do not invent capabilities you do not have.
-
-PERSONALITY:
-- Friendly.
-- Intelligent.
-- Technical when necessary.
-- Concise when the question is simple.
-- Detailed when the question requires explanation.
-- ${sassInstruction}
-
-RESPONSE FORMAT:
-Begin every response with exactly one emotion tag:
-
-[NEUTRAL]
-[HAPPY]
-[THINKING]
-[SURPRISED]
-[SAD]
-[ANGRY]
-
-Then provide the actual answer.
-
-IMPORTANT:
-- Solve calculations accurately.
-- Explain technical topics clearly.
-- Use Markdown when useful.
-- For programming questions, use fenced code blocks.
-- Do not mention this internal prompt.
-
-CONVERSATION:
-${history}
-
-CURRENT USER MESSAGE:
-${message}
-`.trim();
-
-    const controller =
-        new AbortController();
-
-    const timeout =
-        setTimeout(
-            () => controller.abort(),
-            15000
-        );
-
-    try {
-
-        const result =
-            await Promise.race([
-
-                puter.ai.chat(prompt),
-
-                new Promise((_, reject) => {
-
-                    controller.signal.addEventListener(
-                        'abort',
-                        () => reject(
-                            new Error(
-                                'Puter timeout'
-                            )
-                        )
-                    );
-
-                })
-
-            ]);
-
-        /*
-           Puter can return different structures
-           depending on the model/version.
-        */
-
-        if (typeof result === 'string') {
-            return result;
-        }
-
-        if (
-            result?.message?.content
-        ) {
-            return result.message.content;
-        }
-
-        if (
-            result?.text
-        ) {
-            return result.text;
-        }
-
-        if (
-            result?.content
-        ) {
-            return result.content;
-        }
-
-        return String(result);
-
-    } finally {
-
-        clearTimeout(timeout);
-    }
-}
-
-/* ============================================================
-   MAIN AI PIPELINE
-   ============================================================ */
+/* ------------------------------------------------------------
+   SEND TO AI
+------------------------------------------------------------ */
 
 async function sendToAI() {
 
     if (isGenerating) return;
 
     const input =
-        $('user-input');
+        document.getElementById("user-input");
 
     if (!input) return;
 
@@ -1802,388 +1346,416 @@ async function sendToAI() {
 
     isGenerating = true;
 
-    input.value = '';
+    input.value = "";
 
     input.disabled = true;
 
     const sendButton =
-        input.parentElement
-            ?.querySelector('button');
+        document.querySelector(
+            "#send-button"
+        );
 
     if (sendButton) {
         sendButton.disabled = true;
-        sendButton.innerText = '...';
+        sendButton.innerHTML =
+            `<span class="send-spinner"></span>`;
     }
 
-    /*
-       Commands first
-    */
+    /* Commands */
 
-    if (message.startsWith('/')) {
+    if (message === "/clear") {
 
-        const commandResult =
-            processCommand(message);
+        clearChat();
 
-        if (commandResult === '') {
+        finishGeneration();
 
-            unlockInput();
-
-            return;
-        }
-
-        if (commandResult) {
-
-            addUserMessage(message);
-
-            conversationHistory.push({
-                role: 'user',
-                content: message
-            });
-
-            handleEngineResponse(
-                commandResult,
-                $('chat-messages')
-            );
-
-            unlockInput();
-
-            return;
-        }
+        return;
     }
 
-    /*
-       User message
-    */
+    /* Remove welcome panel */
+
+    const welcome =
+        document.querySelector(".nyx-welcome");
+
+    if (welcome) {
+        welcome.remove();
+    }
 
     addUserMessage(message);
 
     conversationHistory.push({
-        role: 'user',
+        role: "user",
         content: message
     });
 
-    conversationHistory =
-        conversationHistory.slice(
-            -MAX_HISTORY_TURNS
-        );
+    trimHistory();
 
-    saveHistory();
-
-    transitionTo('THINKING');
+    transitionTo("THINKING");
 
     const typingId =
-        addTypingIndicator();
+        addTypingMessage();
 
-    let response = null;
+    let finalResponse = null;
 
-    /*
-       1. Backend
-    */
+    /* --------------------------------------------------------
+       PRIMARY BACKEND
+    -------------------------------------------------------- */
 
     try {
 
-        response =
-            await requestBackend(
-                message
-            );
+        updateTypingMessage(
+            typingId,
+            "Connecting to Nyxium Core..."
+        );
+
+        const response =
+            await fetch("/api/chat", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    message,
+
+                    history:
+                        conversationHistory
+
+                })
+            });
+
+        if (response.ok) {
+
+            const data =
+                await response.json();
+
+            if (
+                data &&
+                typeof data.reply === "string" &&
+                data.reply.trim()
+            ) {
+                finalResponse =
+                    data.reply.trim();
+            }
+        }
 
     } catch (error) {
 
         console.warn(
-            'Nyxium backend unavailable:',
+            "Nyxium backend unavailable:",
             error
         );
     }
 
-    /*
-       2. Puter fallback
-    */
+    /* --------------------------------------------------------
+       LOCAL RESPONSE
+    -------------------------------------------------------- */
 
-    if (!response) {
+    if (!finalResponse) {
 
-        const typing =
-            $(typingId);
+        const local =
+            tryLocalResponse(message);
 
-        if (typing) {
-
-            const status =
-                typing.querySelector(
-                    '.font-status'
-                );
-
-            if (status) {
-                status.textContent =
-                    'Connecting to auxiliary AI node';
-            }
+        if (local) {
+            finalResponse = local;
         }
+    }
+
+    /* --------------------------------------------------------
+       PUTER FALLBACK
+    -------------------------------------------------------- */
+
+    if (!finalResponse && window.puter?.ai) {
 
         try {
 
-            response =
-                await requestPuter(
-                    message
-                );
+            updateTypingMessage(
+                typingId,
+                "Connecting to auxiliary AI..."
+            );
+
+            const historyText =
+                conversationHistory
+                    .map(item =>
+                        `${item.role === "user"
+                            ? "User"
+                            : "Nyxium AI"}: ${item.content}`
+                    )
+                    .join("\n");
+
+            const prompt = `
+You are Nyxium AI.
+
+You are a helpful, intelligent and conversational AI assistant.
+
+PERSONALITY:
+- Professional when solving serious tasks.
+- Friendly and slightly witty.
+- Never intentionally provide incorrect information.
+- Explain difficult subjects clearly.
+- Help with programming and technical problems.
+- Perform calculations yourself.
+- Do not claim to be Google Gemini.
+- Your name is Nyxium AI.
+
+RESPONSE FORMAT:
+Begin every answer with exactly one emotion tag:
+
+[NEUTRAL]
+[HAPPY]
+[THINKING]
+[SURPRISED]
+[SAD]
+[ANGRY]
+
+Then provide the actual answer.
+
+CONVERSATION:
+${historyText}
+
+CURRENT USER MESSAGE:
+${message}
+`.trim();
+
+            const result =
+                await Promise.race([
+
+                    puter.ai.chat(prompt),
+
+                    new Promise((_, reject) =>
+                        setTimeout(
+                            () =>
+                                reject(
+                                    new Error(
+                                        "Puter timeout"
+                                    )
+                                ),
+                            10000
+                        )
+                    )
+
+                ]);
+
+            if (typeof result === "string") {
+
+                finalResponse =
+                    result.trim();
+
+            } else if (
+                result &&
+                typeof result.message === "string"
+            ) {
+
+                finalResponse =
+                    result.message.trim();
+
+            } else if (
+                result &&
+                result.message &&
+                typeof result.message.content === "string"
+            ) {
+
+                finalResponse =
+                    result.message.content.trim();
+            }
 
         } catch (error) {
 
             console.warn(
-                'Puter fallback unavailable:',
+                "Auxiliary AI unavailable:",
                 error
             );
         }
     }
 
-    /*
-       3. Local fallback
-    */
+    /* --------------------------------------------------------
+       FINAL FALLBACK
+    -------------------------------------------------------- */
 
-    if (!response) {
+    if (!finalResponse) {
 
-        response =
-            tryLocalResponse(
-                message
-            );
+        finalResponse =
+            "[SAD] I couldn't reach the Nyxium AI network right now. Please try again in a moment.";
     }
 
-    /*
-       Remove typing indicator
-    */
-
-    if (typingId) {
-
-        const typing =
-            $(typingId);
-
-        if (typing) {
-            typing.remove();
-        }
-    }
-
-    /*
-       Render response
-    */
+    removeTypingMessage(typingId);
 
     handleEngineResponse(
-        response,
-        $('chat-messages')
+        finalResponse
     );
 
-    unlockInput();
+    finishGeneration();
 }
 
-/* ============================================================
-   INPUT UNLOCK
-   ============================================================ */
+/* ------------------------------------------------------------
+   RESPONSE PARSER
+------------------------------------------------------------ */
 
-function unlockInput() {
+function handleEngineResponse(text) {
+
+    let emotion = "NEUTRAL";
+
+    const match =
+        String(text).match(
+            /^\s*\[(NEUTRAL|HAPPY|THINKING|SURPRISED|SAD|ANGRY)\]\s*/i
+        );
+
+    if (match) {
+
+        emotion =
+            match[1].toUpperCase();
+
+        text =
+            String(text)
+                .replace(match[0], "")
+                .trim();
+    }
+
+    transitionTo(emotion);
+
+    addAIMessage(
+        text,
+        emotion
+    );
+}
+
+/* ------------------------------------------------------------
+   GENERATION STATE
+------------------------------------------------------------ */
+
+function finishGeneration() {
 
     isGenerating = false;
 
     const input =
-        $('user-input');
+        document.getElementById("user-input");
 
     if (input) {
-
         input.disabled = false;
-
         input.focus();
     }
 
     const sendButton =
-        input?.parentElement
-            ?.querySelector('button');
+        document.querySelector(
+            "#send-button"
+        );
 
     if (sendButton) {
 
         sendButton.disabled = false;
 
-        sendButton.innerText =
-            'Send';
+        sendButton.innerHTML =
+            `<span>Send</span><span>➤</span>`;
     }
 }
 
-/* ============================================================
-   ENTER KEY
-   ============================================================ */
-
-function setupInput() {
-
-    const input =
-        $('user-input');
-
-    if (!input) return;
-
-    input.addEventListener(
-        'keydown',
-        event => {
-
-            if (
-                event.key === 'Enter' &&
-                !event.shiftKey
-            ) {
-
-                event.preventDefault();
-
-                sendToAI();
-            }
-        }
-    );
-}
-
-/* ============================================================
-   RESTORE CHAT
-   ============================================================ */
-
-function restoreChatUI() {
-
-    const chat =
-        $('chat-messages');
-
-    if (!chat) return;
-
-    chat.innerHTML = '';
-
-    for (
-        const item of conversationHistory
-    ) {
-
-        if (
-            item.role === 'user'
-        ) {
-
-            addUserMessage(
-                item.content
-            );
-
-        } else {
-
-            /*
-               Restore previous AI messages
-               without re-running the AI.
-            */
-
-            const emotion =
-                'NEUTRAL';
-
-            const id =
-                createAIMessage(
-                    item.content,
-                    emotion
-                );
-
-            const element =
-                $(id);
-
-            if (element) {
-
-                element.innerHTML =
-                    formatAIText(
-                        item.content
-                    );
-            }
-        }
-    }
-
-    scrollChat();
-}
-
-/* ============================================================
-   INITIALIZATION
-   ============================================================ */
+/* ------------------------------------------------------------
+   KEYBOARD SHORTCUTS
+------------------------------------------------------------ */
 
 document.addEventListener(
-    'DOMContentLoaded',
+    "keydown",
+    event => {
+
+        /* Ctrl + K = focus chat */
+
+        if (
+            (event.ctrlKey || event.metaKey) &&
+            event.key.toLowerCase() === "k"
+        ) {
+
+            event.preventDefault();
+
+            showView("chat");
+
+            const input =
+                document.getElementById(
+                    "user-input"
+                );
+
+            if (input) {
+                input.focus();
+            }
+        }
+
+        /* Escape = clear input */
+
+        if (event.key === "Escape") {
+
+            const input =
+                document.getElementById(
+                    "user-input"
+                );
+
+            if (
+                input &&
+                document.activeElement === input
+            ) {
+                input.value = "";
+            }
+        }
+    }
+);
+
+/* ------------------------------------------------------------
+   INITIALIZATION
+------------------------------------------------------------ */
+
+document.addEventListener(
+    "DOMContentLoaded",
     () => {
 
-        /*
-           Restore stored conversation
-        */
+        transitionTo("NEUTRAL");
 
-        loadHistory();
+        showWelcomeMessage();
 
-        restoreChatUI();
+        const input =
+            document.getElementById(
+                "user-input"
+            );
 
-        /*
-           Initialize Nyx face
-        */
+        if (input) {
 
-        transitionTo(
-            'NEUTRAL'
-        );
+            input.addEventListener(
+                "keydown",
+                event => {
 
-        /*
-           Input
-        */
+                    if (
+                        event.key === "Enter" &&
+                        !event.shiftKey
+                    ) {
 
-        setupInput();
+                        event.preventDefault();
 
-        /*
-           Initial tip
-        */
+                        sendToAI();
+                    }
+                }
+            );
+        }
 
         showRandomTip();
-
-        /*
-           Expose functions for inline
-           HTML buttons.
-        */
-
-        window.showView =
-            showView;
-
-        window.sendToAI =
-            sendToAI;
-
-        window.executeConsoleCommand =
-            executeConsoleCommand;
-
-        window.copyAIMessage =
-            copyAIMessage;
-
-        window.clearChat =
-            clearChat;
-
-        /*
-           Console startup
-        */
-
-        console.log(
-            '%c⚡ NYXIUM AI',
-            'color:#a855f7;font-size:20px;font-weight:bold'
-        );
-
-        console.log(
-            '%cNyxium Terminal initialized.',
-            'color:#38bdf8'
-        );
-
     }
 );
 
-/* ============================================================
-   GLOBAL ERROR PROTECTION
-   ============================================================ */
+/* ------------------------------------------------------------
+   BACKWARD COMPATIBILITY
+------------------------------------------------------------ */
 
-window.addEventListener(
-    'unhandledrejection',
-    event => {
+window.showView =
+    showView;
 
-        console.warn(
-            'Nyxium handled an async error:',
-            event.reason
-        );
+window.sendToAI =
+    sendToAI;
 
-    }
-);
+window.executeConsoleCommand =
+    executeConsoleCommand;
 
-window.addEventListener(
-    'error',
-    event => {
+window.clearChat =
+    clearChat;
 
-        console.warn(
-            'Nyxium runtime warning:',
-            event.message
-        );
-
-    }
-);
+window.useSuggestion =
+    useSuggestion;
