@@ -1,17 +1,20 @@
 /* =========================================================
-   NYXIUM AI — MAIN DESIGN SYSTEM
+   NYXIUM AI — COMPLETE DESIGN SYSTEM
    ========================================================= */
 
 :root {
     --bg: #07050d;
     --bg-soft: #0b0813;
+
     --panel: rgba(15, 11, 25, 0.82);
     --panel-solid: #100b19;
 
     --border: rgba(255, 255, 255, 0.08);
+    --border-soft: rgba(255, 255, 255, 0.055);
     --border-hover: rgba(167, 139, 250, 0.32);
 
     --text: #f8f7fb;
+    --text-soft: #d9d5df;
     --muted: #9691a5;
     --muted-2: #6f697d;
 
@@ -43,6 +46,11 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        rgba(139, 92, 246, 0.35)
+        transparent;
 }
 
 html {
@@ -51,8 +59,9 @@ html {
 }
 
 body {
-    min-height: 100%;
+    width: 100%;
     height: 100vh;
+    min-height: 100%;
 
     margin: 0;
 
@@ -86,17 +95,31 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+button,
+input,
+textarea {
+    font: inherit;
+}
+
+button {
+    user-select: none;
+}
+
+button:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid rgba(139, 92, 246, 0.55);
+    outline-offset: 2px;
+}
+
+::selection {
+    background: rgba(139, 92, 246, 0.35);
+    color: white;
+}
+
 
 /* =========================================================
    SCROLLBARS
    ========================================================= */
-
-* {
-    scrollbar-width: thin;
-    scrollbar-color:
-        rgba(139, 92, 246, 0.35)
-        transparent;
-}
 
 ::-webkit-scrollbar {
     width: 7px;
@@ -231,6 +254,16 @@ body {
     z-index: 50;
 }
 
+.sidebar-top {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-bottom {
+    flex-shrink: 0;
+}
+
 
 /* =========================================================
    BRAND
@@ -252,6 +285,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
 
     border-radius: 11px;
 
@@ -427,7 +462,6 @@ body {
 
 .nav-item:hover {
     color: #eeeafa;
-
     background: rgba(255, 255, 255, 0.045);
 }
 
@@ -450,7 +484,7 @@ body {
 
 
 /* =========================================================
-   SIDEBAR SECTIONS
+   QUICK ACTIONS
    ========================================================= */
 
 .sidebar-section {
@@ -498,8 +532,197 @@ body {
 
 .quick-action:hover {
     background: rgba(255, 255, 255, 0.04);
-
     color: #ddd8e8;
+}
+
+
+/* =========================================================
+   RECENT CHATS
+   ========================================================= */
+
+.recent-chats-section {
+    margin-top: 24px;
+
+    padding-bottom: 8px;
+}
+
+.recent-chats-title {
+    padding: 0 12px 9px;
+
+    color: #5f596b;
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 9px;
+    font-weight: 750;
+
+    letter-spacing: 0.13em;
+    line-height: 1.2;
+}
+
+.recent-chats-day {
+    padding: 7px 12px 5px;
+
+    color: #686273;
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    letter-spacing: 0.01em;
+}
+
+.recent-chat-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    min-height: 38px;
+
+    padding: 7px 11px;
+
+    border: 1px solid transparent;
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: #9a94a5;
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    line-height: 1.35;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.recent-chat-item:hover {
+    color: #e3dfea;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    border-color: rgba(255, 255, 255, 0.045);
+}
+
+.recent-chat-item.active {
+    color: #f0edf5;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(124, 58, 237, 0.14),
+            rgba(124, 58, 237, 0.045)
+        );
+
+    border-color: rgba(139, 92, 246, 0.12);
+}
+
+.recent-chat-icon {
+    width: 20px;
+    height: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    color: #81798f;
+
+    font-size: 11px;
+}
+
+.recent-chat-item.active .recent-chat-icon {
+    color: #a78bfa;
+}
+
+.recent-chat-name {
+    min-width: 0;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    letter-spacing: -0.005em;
+}
+
+.recent-chat-item.new-conversation {
+    color: #aaa4b5;
+}
+
+.recent-chat-item.new-conversation:hover {
+    color: #eeeaf5;
+}
+
+.recent-chat-item.new-conversation .recent-chat-icon {
+    color: #817a90;
+}
+
+.recent-chats-empty {
+    padding: 8px 12px;
+
+    color: #57515f;
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    font-size: 10px;
+
+    line-height: 1.5;
 }
 
 
@@ -609,7 +832,6 @@ body {
 
 .discord-button:hover {
     background: rgba(99, 102, 241, 0.16);
-
     color: #c4c3ff;
 }
 
@@ -723,6 +945,8 @@ body {
     align-items: center;
     justify-content: center;
 
+    overflow: hidden;
+
     border-radius: 13px;
 
     border: 1px solid rgba(139, 92, 246, 0.25);
@@ -739,12 +963,35 @@ body {
 }
 
 .ai-face {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
 
     display: flex;
     align-items: center;
     justify-content: center;
+
+    overflow: hidden;
+
+    border-radius: 10px;
+
+    transition:
+        transform 0.25s ease,
+        filter 0.25s ease;
+}
+
+.ai-face img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    border-radius: inherit;
+}
+
+.ai-face:hover {
+    transform: scale(1.05);
 }
 
 .avatar-status-dot {
@@ -872,6 +1119,8 @@ body {
     overflow-y: auto;
 
     scroll-behavior: smooth;
+
+    overscroll-behavior: contain;
 }
 
 .chat-messages {
@@ -879,7 +1128,7 @@ body {
 
     margin: 0 auto;
 
-    padding: 42px 0 180px;
+    padding: 42px 0 210px;
 }
 
 
@@ -1066,17 +1315,17 @@ body {
 
 
 /* =========================================================
-   USER / AI MESSAGE ROWS
+   MESSAGE ROWS
    ========================================================= */
 
 .message-row {
     display: flex;
 
-    gap: 13px;
+    gap: 12px;
 
     width: 100%;
 
-    margin-bottom: 27px;
+    margin-bottom: 28px;
 
     animation:
         message-enter 0.25s ease both;
@@ -1115,6 +1364,19 @@ body {
     background: rgba(255, 255, 255, 0.045);
 
     border: 1px solid rgba(255, 255, 255, 0.07);
+
+    color: #a7a0b2;
+
+    font-size: 11px;
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
 }
 
 .message-row.user .message-avatar {
@@ -1132,7 +1394,8 @@ body {
 
 .message-row.user .message-body {
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 .message-content {
@@ -1143,9 +1406,13 @@ body {
     line-height: 1.72;
 
     overflow-wrap: anywhere;
+
+    word-break: break-word;
 }
 
 .message-row.user .message-content {
+    max-width: 100%;
+
     padding: 11px 15px;
 
     border-radius: 15px 4px 15px 15px;
@@ -1160,6 +1427,9 @@ body {
     border: 1px solid rgba(139, 92, 246, 0.16);
 
     color: #f4f2f8;
+
+    box-shadow:
+        0 7px 25px rgba(0, 0, 0, 0.12);
 }
 
 
@@ -1266,6 +1536,8 @@ body {
 .code-wrapper {
     position: relative;
 
+    width: 100%;
+
     margin: 15px 0;
 
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1320,11 +1592,12 @@ body {
     font-size: 9px;
 
     cursor: pointer;
+
+    transition: 0.18s ease;
 }
 
 .copy-code-button:hover {
     background: rgba(255, 255, 255, 0.06);
-
     color: white;
 }
 
@@ -1385,6 +1658,8 @@ body {
     font-size: 10px;
 
     cursor: pointer;
+
+    transition: 0.18s ease;
 }
 
 .message-action:hover {
@@ -1625,6 +1900,8 @@ body {
     font-size: 14px;
 
     line-height: 1.55;
+
+    overflow-y: auto;
 }
 
 #user-input::placeholder {
@@ -1633,6 +1910,8 @@ body {
 
 #user-input:disabled {
     opacity: 0.5;
+
+    cursor: wait;
 }
 
 
@@ -1655,6 +1934,8 @@ body {
     align-items: center;
 
     gap: 4px;
+
+    min-width: 0;
 }
 
 .composer-tool {
@@ -1664,6 +1945,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
 
     border: 0;
 
@@ -1692,6 +1975,8 @@ body {
     color: #504a59;
 
     font-size: 9px;
+
+    white-space: nowrap;
 }
 
 .composer-right {
@@ -1707,6 +1992,11 @@ body {
     font-size: 9px;
 }
 
+
+/* =========================================================
+   SEND BUTTON
+   ========================================================= */
+
 .send-button {
     width: 32px;
     height: 32px;
@@ -1714,6 +2004,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    flex-shrink: 0;
 
     border: 0;
 
@@ -1739,26 +2031,63 @@ body {
     transition:
         transform 0.18s ease,
         filter 0.18s ease,
-        opacity 0.18s ease;
+        opacity 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-.send-button:hover {
+.send-button:hover:not(:disabled) {
     filter: brightness(1.12);
 
     transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 24px rgba(99, 102, 241, 0.3);
 }
 
-.send-button:active {
+.send-button:active:not(:disabled) {
     transform: scale(0.95);
 }
 
 .send-button:disabled {
-    opacity: 0.35;
+    opacity: 0.4;
 
     cursor: not-allowed;
 
     transform: none;
+
+    filter: none;
+
+    box-shadow:
+        0 3px 10px rgba(99, 102, 241, 0.08);
 }
+
+.send-button.sending {
+    opacity: 0.45;
+
+    cursor: wait;
+
+    transform: none;
+
+    animation: send-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes send-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 5px 18px rgba(99, 102, 241, 0.15);
+    }
+
+    50% {
+        box-shadow:
+            0 5px 28px rgba(139, 92, 246, 0.35);
+    }
+}
+
+
+/* =========================================================
+   COMPOSER DISCLAIMER
+   ========================================================= */
 
 .composer-disclaimer {
     width: min(900px, 100%);
@@ -1844,6 +2173,8 @@ body {
     font-weight: 650;
 
     cursor: pointer;
+
+    transition: 0.18s ease;
 }
 
 .primary-button:hover {
@@ -2230,51 +2561,8 @@ body {
 
 
 /* =========================================================
-   BUTTON / INTERACTION RESET
-   ========================================================= */
-
-button,
-input,
-textarea {
-    font: inherit;
-}
-
-button {
-    user-select: none;
-}
-
-button:focus-visible,
-textarea:focus-visible {
-    outline: 2px solid rgba(139, 92, 246, 0.55);
-
-    outline-offset: 2px;
-}
-
-
-/* =========================================================
-   SELECTION
-   ========================================================= */
-
-::selection {
-    background: rgba(139, 92, 246, 0.35);
-
-    color: white;
-}
-
-
-/* =========================================================
    AVATAR ANIMATIONS
    ========================================================= */
-
-.ai-face {
-    transition:
-        transform 0.25s ease,
-        filter 0.25s ease;
-}
-
-.ai-face:hover {
-    transform: scale(1.05);
-}
 
 .pop-animation {
     animation:
@@ -2384,7 +2672,7 @@ textarea:focus-visible {
         width: calc(100% - 24px);
 
         padding-top: 25px;
-        padding-bottom: 180px;
+        padding-bottom: 200px;
     }
 
     .welcome-screen {
@@ -2529,6 +2817,18 @@ textarea:focus-visible {
 
     .message-body {
         max-width: 90%;
+    }
+
+    .message-content {
+        font-size: 12.5px;
+    }
+
+    .composer {
+        padding: 8px 9px 7px;
+    }
+
+    .character-count {
+        display: none;
     }
 }
 
