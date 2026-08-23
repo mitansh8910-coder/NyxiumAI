@@ -1,201 +1,170 @@
-/* ==========================================================================
-   NYXIUM AI — CHAT ENGINE V2
-   --------------------------------------------------------------------------
-   Architecture:
-   /api/chat -> Puter -> Local fallback
+/* ============================================================
+   NYXIUM AI — CHAT ENGINE
+   ============================================================ */
 
-   Includes:
-   - Conversation memory
-   - Long-response handling
-   - Streaming-style output
-   - Markdown/code rendering
-   - Copy / regenerate
-   - /clear
-   - /toggle-sass
-   - /summarize
-   - /translate
-   - /code
-   - /imagine
-   - /edit
-   - Image/video/search tool hooks
-   - Pexels/Hugging Face backend hooks
-   - Nyx emotional engine
-   - Thinking / answering / success / error states
-   - Tool execution UI
-   - Persistent local settings
-   ========================================================================== */
+'use strict';
 
-
-/* ==========================================================================
-   1. GLOBAL STATE
-   ========================================================================== */
+/* ============================================================
+   GLOBAL STATE
+   ============================================================ */
 
 let conversationHistory = [];
-const MAX_HISTORY_TURNS = 20;
+const MAX_HISTORY_TURNS = 16;
 
-let sassEnabled = true;
-let currentEmotion = "NEUTRAL";
+let currentEmotion = 'NEUTRAL';
 let idleTimeout = null;
-
-let currentRequestController = null;
-let lastUserPrompt = "";
-let lastAssistantResponse = "";
-
 let isGenerating = false;
 
-const STORAGE_KEYS = {
-    history: "nyxium_chat_history_v2",
-    sass: "nyxium_sass_v2"
-};
+const STORAGE_KEY = 'nyxium_chat_history';
+const SASS_KEY = 'nyxium_sass_mode';
 
+let sassMode = localStorage.getItem(SASS_KEY) !== 'false';
 
-/* ==========================================================================
-   2. SAFE DOM HELPERS
-   ========================================================================== */
+/* ============================================================
+   DOM HELPERS
+   ============================================================ */
 
 function $(id) {
     return document.getElementById(id);
 }
 
-function escapeHTML(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+function escapeHTML(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-
-/* ==========================================================================
-   3. VIEW NAVIGATION
-   ========================================================================== */
+/* ============================================================
+   VIEW NAVIGATION
+   ============================================================ */
 
 function showView(viewId) {
-    document.querySelectorAll(".view").forEach(view => {
-        view.classList.remove("active");
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.remove('active');
     });
 
     const target = $(viewId);
 
-    if (target) {
-        target.classList.add("active");
-    }
+    if (!target) return;
 
-    if (viewId === "chat") {
+    target.classList.add('active');
+
+    if (viewId === 'chat') {
         showRandomTip();
-        scrollChatToBottom();
+
+        setTimeout(() => {
+            $('user-input')?.focus();
+        }, 100);
     }
-
-    updateSidebarState(viewId);
 }
 
-function updateSidebarState(viewId) {
-    document.querySelectorAll("[data-view]").forEach(button => {
-        button.classList.toggle(
-            "active",
-            button.dataset.view === viewId
-        );
-    });
-}
+/* ============================================================
+   STARFIELD
+   ============================================================ */
 
-
-/* ==========================================================================
-   4. STARFIELD
-   ========================================================================== */
-
-const canvas = $("starfield");
-
-let ctx = null;
-let stars = [];
+const canvas = $('starfield');
 
 if (canvas) {
-    ctx = canvas.getContext("2d");
-}
+    const ctx = canvas.getContext('2d');
 
-function initStars() {
-    if (!canvas || !ctx) return;
+    let stars = [];
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    function initStars() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    stars = Array.from({
-        length: window.innerWidth < 700 ? 100 : 220
-    }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 1.5 + 0.2,
-        speed: Math.random() * 0.45 + 0.05,
-        opacity: Math.random() * 0.8 + 0.2
-    }));
-}
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
 
-function animateStars() {
-    if (!canvas || !ctx) return;
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
 
-    ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    ctx.fillStyle = "#e9d5ff";
+        stars = Array.from({
+            length: window.innerWidth < 700 ? 100 : 220
+        }, () => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            size: Math.random() * 1.5 + 0.2,
+            speed: Math.random() * 0.45 + 0.08,
+            opacity: Math.random() * 0.8 + 0.2
+        }));
+    }
 
-    stars.forEach(star => {
-        star.y -= star.speed;
-
-        if (star.y < -5) {
-            star.y = canvas.height + 5;
-            star.x = Math.random() * canvas.width;
-        }
-
-        ctx.globalAlpha = star.opacity;
-
-        ctx.beginPath();
-
-        ctx.arc(
-            star.x,
-            star.y,
-            star.size,
+    function animateStars() {
+        ctx.clearRect(
             0,
-            Math.PI * 2
+            0,
+            window.innerWidth,
+            window.innerHeight
         );
 
-        ctx.fill();
-    });
+        stars.forEach(star => {
+            star.y -= star.speed;
 
-    ctx.globalAlpha = 1;
+            if (star.y < -5) {
+                star.y = window.innerHeight + 5;
+                star.x = Math.random() * window.innerWidth;
+            }
 
-    requestAnimationFrame(animateStars);
+            ctx.beginPath();
+
+            ctx.globalAlpha = star.opacity;
+
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = '#a855f7';
+
+            ctx.fillStyle = '#e9d5ff';
+
+            ctx.arc(
+                star.x,
+                star.y,
+                star.size,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+        });
+
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(animateStars);
+    }
+
+    window.addEventListener('resize', initStars);
+
+    initStars();
+    animateStars();
 }
 
-window.addEventListener("resize", initStars);
+/* ============================================================
+   CURSOR TRAIL
+   ============================================================ */
 
-initStars();
-animateStars();
+let lastCursorTrail = 0;
 
+document.addEventListener('mousemove', event => {
 
-/* ==========================================================================
-   5. CURSOR EFFECT
-   ========================================================================== */
+    const now = performance.now();
 
-let lastCursorStar = 0;
+    /* Don't create hundreds of DOM elements every second */
+    if (now - lastCursorTrail < 35) return;
 
-document.addEventListener("mousemove", event => {
-    const now = Date.now();
+    lastCursorTrail = now;
 
-    // Prevent hundreds of DOM nodes being created every second.
-    if (now - lastCursorStar < 35) return;
+    if (window.innerWidth < 700) return;
 
-    lastCursorStar = now;
+    const star = document.createElement('div');
 
-    const star = document.createElement("div");
+    star.className = 'cursor-star';
 
-    star.className = "cursor-star";
-
-    star.style.left = `${event.pageX}px`;
-    star.style.top = `${event.pageY}px`;
+    star.style.left = `${event.clientX}px`;
+    star.style.top = `${event.clientY}px`;
 
     document.body.appendChild(star);
 
@@ -204,104 +173,42 @@ document.addEventListener("mousemove", event => {
     }, 800);
 });
 
-
-/* ==========================================================================
-   6. LOCAL STORAGE
-   ========================================================================== */
-
-function loadSavedState() {
-    try {
-        const savedHistory =
-            localStorage.getItem(STORAGE_KEYS.history);
-
-        const savedSass =
-            localStorage.getItem(STORAGE_KEYS.sass);
-
-        if (savedHistory) {
-            conversationHistory =
-                JSON.parse(savedHistory);
-
-            if (!Array.isArray(conversationHistory)) {
-                conversationHistory = [];
-            }
-        }
-
-        if (savedSass !== null) {
-            sassEnabled = savedSass === "true";
-        }
-    } catch (error) {
-        console.warn(
-            "Nyxium local state recovery failed:",
-            error
-        );
-    }
-}
-
-function saveState() {
-    try {
-        localStorage.setItem(
-            STORAGE_KEYS.history,
-            JSON.stringify(
-                conversationHistory.slice(-MAX_HISTORY_TURNS)
-            )
-        );
-
-        localStorage.setItem(
-            STORAGE_KEYS.sass,
-            String(sassEnabled)
-        );
-    } catch (error) {
-        console.warn(
-            "Nyxium state persistence unavailable:",
-            error
-        );
-    }
-}
-
-loadSavedState();
-
-
-/* ==========================================================================
-   7. NYX TIPS
-   ========================================================================== */
+/* ============================================================
+   TIPS
+   ============================================================ */
 
 const nyxiumTips = [
-    "Try /code followed by your programming request.",
-    "Use /summarize to compress a long conversation.",
-    "Use /translate to translate text into another language.",
-    "Use /imagine to send an image-generation request.",
-    "Use /clear to completely reset the current conversation.",
-    "Use /toggle-sass to change Nyx's personality mode.",
-    "Ask Nyxium to explain code step-by-step.",
-    "You can ask follow-up questions because conversation memory is enabled.",
-    "Long answers are automatically rendered progressively.",
-    "Media tools can connect through your backend API routes."
+    'Ask Nyx to explain code, mathematics, science, or almost anything.',
+    'Use /clear to wipe the current conversation.',
+    'Use /toggle-sass to change Nyx personality mode.',
+    'Try asking Nyx a multi-step question — conversation memory is enabled.',
+    'Nyx can automatically switch between backend AI, browser AI, and local fallback.',
+    'Tip: Be specific with technical questions for better answers.',
+    'Nyxium AI is designed with a hybrid AI architecture.',
+    'Try asking: "Explain quantum computing like I am in class 9."'
 ];
 
 function showRandomTip() {
-    const tipBox = $("ai-tip-box");
 
-    if (!tipBox) return;
+    const box = $('ai-tip-box');
+
+    if (!box) return;
 
     const tip =
         nyxiumTips[
             Math.floor(Math.random() * nyxiumTips.length)
         ];
 
-    tipBox.innerHTML = `
-        <div class="nyx-tip p-4 mb-6 rounded-xl
-                    bg-indigo-900/30
-                    border border-indigo-500/30
-                    flex gap-3 items-start">
-
-            <div class="text-xl">✨</div>
+    box.innerHTML = `
+        <div>
+            <span class="text-xl">✨</span>
 
             <div>
                 <strong class="text-indigo-300">
-                    Nyxium Tip
+                    Nyxium AI Tip
                 </strong>
 
-                <p class="text-gray-300 mt-1 text-sm">
+                <p class="text-gray-300 mt-1">
                     ${escapeHTML(tip)}
                 </p>
             </div>
@@ -309,202 +216,435 @@ function showRandomTip() {
     `;
 }
 
-
-/* ==========================================================================
-   8. NYX CHARACTER SVG
-   ========================================================================== */
+/* ============================================================
+   NYX VISOR
+   ============================================================ */
 
 function getCharacterSVG(
     eyesPath,
     mouthPath,
-    auxiliaryElements = "",
-    glowColor = "#38bdf8"
+    auxiliaryElements = '',
+    glowColor = '#38bdf8'
 ) {
+
     return `
-    <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg">
+        <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 100 100"
+            xmlns="http://www.w3.org/2000/svg"
+        >
 
-        <defs>
+            <defs>
 
-            <filter
-                id="neon-glow"
-                x="-30%"
-                y="-30%"
-                width="160%"
-                height="160%">
+                <filter
+                    id="neon-glow"
+                    x="-30%"
+                    y="-30%"
+                    width="160%"
+                    height="160%"
+                >
+                    <feGaussianBlur
+                        stdDeviation="2.2"
+                        result="blur"
+                    />
 
-                <feGaussianBlur
-                    stdDeviation="2.2"
-                    result="blur"/>
+                    <feMerge>
+                        <feMergeNode in="blur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
 
-                <feMerge>
-                    <feMergeNode in="blur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-            </filter>
+                <pattern
+                    id="visor-grid"
+                    width="6"
+                    height="6"
+                    patternUnits="userSpaceOnUse"
+                >
+                    <line
+                        x1="0"
+                        y1="0"
+                        x2="6"
+                        y2="0"
+                        stroke="${glowColor}"
+                        stroke-opacity="0.08"
+                        stroke-width="0.8"
+                    />
 
-            <pattern
-                id="visor-grid"
-                width="6"
-                height="6"
-                patternUnits="userSpaceOnUse">
+                    <line
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="6"
+                        stroke="${glowColor}"
+                        stroke-opacity="0.08"
+                        stroke-width="0.8"
+                    />
+                </pattern>
 
-                <line
-                    x1="0"
-                    y1="0"
-                    x2="6"
-                    y2="0"
-                    stroke="#38bdf8"
-                    stroke-opacity=".08"
-                    stroke-width=".8"/>
+                <linearGradient
+                    id="helm-grad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                >
+                    <stop
+                        offset="0%"
+                        stop-color="#29144d"
+                    />
 
-                <line
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="6"
-                    stroke="#38bdf8"
-                    stroke-opacity=".08"
-                    stroke-width=".8"/>
-            </pattern>
+                    <stop
+                        offset="50%"
+                        stop-color="#100721"
+                    />
 
-            <linearGradient
-                id="helm-grad"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%">
+                    <stop
+                        offset="100%"
+                        stop-color="#05010e"
+                    />
+                </linearGradient>
 
-                <stop offset="0%" stop-color="#241344"/>
-                <stop offset="50%" stop-color="#100721"/>
-                <stop offset="100%" stop-color="#05010e"/>
+            </defs>
 
-            </linearGradient>
+            <!-- Helmet -->
+            <path
+                d="
+                    M20 28
+                    C20 15 80 15 80 28
+                    L84 50
+                    C84 70 74 84 50 88
+                    C26 84 16 70 16 50
+                    Z
+                "
+                fill="url(#helm-grad)"
+                stroke="#6b21a8"
+                stroke-width="2.5"
+            />
 
-        </defs>
+            <!-- Left antenna -->
+            <path
+                d="M16 35 L7 28 L15 48 Z"
+                fill="#4c1d95"
+                stroke="#a855f7"
+                stroke-width="1.2"
+            />
 
-        <path
-            d="M20 28 C20 15,80 15,80 28
-               L84 50
-               C84 70,74 84,50 88
-               C26 84,16 70,16 50Z"
-            fill="url(#helm-grad)"
-            stroke="#6b21a8"
-            stroke-width="2.5"/>
+            <circle
+                cx="8"
+                cy="29"
+                r="1.5"
+                fill="${glowColor}"
+                filter="url(#neon-glow)"
+            />
 
-        <path
-            d="M16 35 L7 28 L15 48Z"
-            fill="#4c1d95"
-            stroke="#a855f7"
-            stroke-width="1.2"/>
+            <!-- Right antenna -->
+            <path
+                d="M84 35 L93 28 L85 48 Z"
+                fill="#4c1d95"
+                stroke="#a855f7"
+                stroke-width="1.2"
+            />
 
-        <circle
-            cx="8"
-            cy="29"
-            r="1.5"
-            fill="${glowColor}"
-            filter="url(#neon-glow)"/>
+            <circle
+                cx="92"
+                cy="29"
+                r="1.5"
+                fill="${glowColor}"
+                filter="url(#neon-glow)"
+            />
 
-        <path
-            d="M84 35 L93 28 L85 48Z"
-            fill="#4c1d95"
-            stroke="#a855f7"
-            stroke-width="1.2"/>
+            <!-- Visor -->
+            <path
+                d="
+                    M23 38
+                    C23 32 77 32 77 38
+                    L73 66
+                    C73 73 64 79 50 79
+                    C36 79 27 73 27 66
+                    Z
+                "
+                fill="#04010a"
+                stroke="#1e1b4b"
+                stroke-width="1.5"
+            />
 
-        <circle
-            cx="92"
-            cy="29"
-            r="1.5"
-            fill="${glowColor}"
-            filter="url(#neon-glow)"/>
+            <path
+                d="
+                    M23 38
+                    C23 32 77 32 77 38
+                    L73 66
+                    C73 73 64 79 50 79
+                    C36 79 27 73 27 66
+                    Z
+                "
+                fill="url(#visor-grid)"
+            />
 
-        <path
-            d="M23 38 C23 32,77 32,77 38
-               L73 66
-               C73 73,64 79,50 79
-               C36 79,27 73,27 66Z"
-            fill="#04010a"
-            stroke="#1e1b4b"
-            stroke-width="1.5"/>
+            <!-- HUD corners -->
 
-        <path
-            d="M23 38 C23 32,77 32,77 38
-               L73 66
-               C73 73,64 79,50 79
-               C36 79,27 73,27 66Z"
-            fill="url(#visor-grid)"/>
+            <path
+                d="M27 44 L27 40 L31 40"
+                fill="none"
+                stroke="${glowColor}"
+                stroke-width="1"
+                opacity="0.5"
+            />
 
-        <g filter="url(#neon-glow)">
-            ${eyesPath}
-            ${mouthPath}
-            ${auxiliaryElements}
-        </g>
+            <path
+                d="M73 44 L73 40 L69 40"
+                fill="none"
+                stroke="${glowColor}"
+                stroke-width="1"
+                opacity="0.5"
+            />
 
-    </svg>
+            <path
+                d="M27 62 L27 66 L31 66"
+                fill="none"
+                stroke="${glowColor}"
+                stroke-width="1"
+                opacity="0.5"
+            />
+
+            <path
+                d="M73 62 L73 66 L69 66"
+                fill="none"
+                stroke="${glowColor}"
+                stroke-width="1"
+                opacity="0.5"
+            />
+
+            <g filter="url(#neon-glow)">
+                ${eyesPath}
+                ${mouthPath}
+                ${auxiliaryElements}
+            </g>
+
+        </svg>
     `;
 }
 
+/* ============================================================
+   MINI NYX
+   ============================================================ */
 
-function getMiniNyxSVG(glowColor = "#38bdf8") {
+function getMiniNyxSVG(glowColor = '#38bdf8') {
+
     return `
-    <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg">
+        <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 100 100"
+            xmlns="http://www.w3.org/2000/svg"
+        >
 
-        <defs>
+            <defs>
 
-            <filter
-                id="mini-glow"
-                x="-20%"
-                y="-20%"
-                width="140%"
-                height="140%">
+                <filter id="mini-glow">
 
-                <feGaussianBlur
-                    stdDeviation="3"
-                    result="blur"/>
+                    <feGaussianBlur
+                        stdDeviation="3"
+                        result="blur"
+                    />
 
-                <feMerge>
-                    <feMergeNode in="blur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                </feMerge>
+                    <feMerge>
+                        <feMergeNode in="blur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
 
-            </filter>
+                </filter>
 
-        </defs>
+            </defs>
 
-        <path
-            d="M20 28 C20 15,80 15,80 28
-               L84 50
-               C84 70,74 84,50 88
-               C26 84,16 70,16 50Z"
-            fill="#0f0720"
-            stroke="#6b21a8"
-            stroke-width="4"/>
+            <path
+                d="
+                    M20 28
+                    C20 15 80 15 80 28
+                    L84 50
+                    C84 70 74 84 50 88
+                    C26 84 16 70 16 50
+                    Z
+                "
+                fill="#0f0720"
+                stroke="#6b21a8"
+                stroke-width="4"
+            />
 
-        <path
-            d="M23 38 C23 32,77 32,77 38
-               L73 66
-               C73 73,64 79,50 79
-               C36 79,27 73,27 66Z"
-            fill="#04010a"
-            stroke="#1e1b4b"
-            stroke-width="2"/>
+            <path
+                d="
+                    M23 38
+                    C23 32 77 32 77 38
+                    L73 66
+                    C73 73 64 79 50 79
+                    C36 79 27 73 27 66
+                    Z
+                "
+                fill="#04010a"
+                stroke="#1e1b4b"
+                stroke-width="2"
+            />
 
-        <g filter="url(#mini-glow)">
+            <g filter="url(#mini-glow)">
 
-            <rect
-                x="33"
-                y="44"
-                width="10"
-                height="4"
-                rx="2"
-                fill="${glowColor}"/>
+                <rect
+                    x="33"
+                    y="44"
+                    width="10"
+                    height="4"
+                    rx="2"
+                    fill="${glowColor}"
+                />
+
+                <rect
+                    x="57"
+                    y="44"
+                    width="10"
+                    height="4"
+                    rx="2"
+                    fill="${glowColor}"
+                />
+
+                <line
+                    x1="44"
+                    y1="62"
+                    x2="56"
+                    y2="62"
+                    stroke="${glowColor}"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                />
+
+            </g>
+
+        </svg>
+    `;
+}
+
+/* ============================================================
+   USER AVATAR
+   ============================================================ */
+
+function getUserSVG() {
+
+    return `
+        <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 100 100"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+
+            <circle
+                cx="50"
+                cy="36"
+                r="18"
+                fill="#c4b5fd"
+            />
+
+            <path
+                d="
+                    M22 80
+                    C22 62 78 62 78 80
+                    C78 84 22 84 22 80
+                    Z
+                "
+                fill="#c4b5fd"
+            />
+
+        </svg>
+    `;
+}
+
+/* ============================================================
+   EXPRESSIONS
+   ============================================================ */
+
+const vectorExpressions = {
+
+    NEUTRAL: {
+        eyes: `
+            <rect x="33" y="44"
+                width="10" height="4"
+                rx="2" fill="#38bdf8"/>
+
+            <rect x="57" y="44"
+                width="10" height="4"
+                rx="2" fill="#38bdf8"/>
+        `,
+
+        mouth: `
+            <line
+                x1="44"
+                y1="62"
+                x2="56"
+                y2="62"
+                stroke="#38bdf8"
+                stroke-width="2.5"
+                stroke-linecap="round"
+            />
+        `,
+
+        extra: '',
+        color: '#38bdf8'
+    },
+
+    HAPPY: {
+        eyes: `
+            <path
+                d="M31 48 Q38 41 43 48"
+                fill="none"
+                stroke="#22c55e"
+                stroke-width="3"
+                stroke-linecap="round"
+            />
+
+            <path
+                d="M57 48 Q62 41 69 48"
+                fill="none"
+                stroke="#22c55e"
+                stroke-width="3"
+                stroke-linecap="round"
+            />
+        `,
+
+        mouth: `
+            <path
+                d="M40 60 Q50 71 60 60"
+                fill="none"
+                stroke="#22c55e"
+                stroke-width="3"
+                stroke-linecap="round"
+            />
+        `,
+
+        extra: `
+            <circle
+                cx="28"
+                cy="40"
+                r="1.5"
+                fill="#22c55e"
+            />
+
+            <circle
+                cx="72"
+                cy="40"
+                r="1.5"
+                fill="#22c55e"
+            />
+        `,
+
+        color: '#22c55e'
+    },
+
+    THINKING: {
+        eyes: `
+            <path
+                d="M31 43 L41 47"
+                stroke="#f59e0b"
+                stroke-width="3"
+                stroke-linecap="round"
+            />
 
             <rect
                 x="57"
@@ -512,117 +652,20 @@ function getMiniNyxSVG(glowColor = "#38bdf8") {
                 width="10"
                 height="4"
                 rx="2"
-                fill="${glowColor}"/>
-
-            <line
-                x1="44"
-                y1="62"
-                x2="56"
-                y2="62"
-                stroke="${glowColor}"
-                stroke-width="3.5"
-                stroke-linecap="round"/>
-
-        </g>
-
-    </svg>
-    `;
-}
-
-
-function getUserSVG() {
-    return `
-    <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg">
-
-        <circle
-            cx="50"
-            cy="36"
-            r="18"
-            fill="#c4b5fd"/>
-
-        <path
-            d="M22 80 C22 62,78 62,78 80
-               C78 84,22 84,22 80Z"
-            fill="#c4b5fd"/>
-
-    </svg>
-    `;
-}
-
-
-/* ==========================================================================
-   9. EXPRESSIONS
-   ========================================================================== */
-
-const vectorExpressions = {
-
-    "😐": {
-        eyes: `
-            <rect x="33" y="44" width="10" height="4"
-                  rx="2" fill="#38bdf8"/>
-            <rect x="57" y="44" width="10" height="4"
-                  rx="2" fill="#38bdf8"/>
+                fill="#f59e0b"
+            />
         `,
+
         mouth: `
-            <line x1="44" y1="62"
-                  x2="56" y2="62"
-                  stroke="#38bdf8"
-                  stroke-width="2.5"
-                  stroke-linecap="round"/>
+            <path
+                d="M42 62 Q46 58 50 62 T58 62"
+                fill="none"
+                stroke="#f59e0b"
+                stroke-width="2.5"
+                stroke-linecap="round"
+            />
         `,
-        extra: "",
-        color: "#38bdf8"
-    },
 
-    "😊": {
-        eyes: `
-            <path d="M31 48 Q38 41 43 48"
-                  fill="none"
-                  stroke="#22c55e"
-                  stroke-width="3"
-                  stroke-linecap="round"/>
-
-            <path d="M57 48 Q62 41 69 48"
-                  fill="none"
-                  stroke="#22c55e"
-                  stroke-width="3"
-                  stroke-linecap="round"/>
-        `,
-        mouth: `
-            <path d="M40 60 Q50 71 60 60"
-                  fill="none"
-                  stroke="#22c55e"
-                  stroke-width="3"
-                  stroke-linecap="round"/>
-        `,
-        extra: "",
-        color: "#22c55e"
-    },
-
-    "🤔": {
-        eyes: `
-            <path d="M31 43 L41 47"
-                  stroke="#f59e0b"
-                  stroke-width="3"
-                  stroke-linecap="round"/>
-
-            <rect x="57" y="44"
-                  width="10"
-                  height="4"
-                  rx="2"
-                  fill="#f59e0b"/>
-        `,
-        mouth: `
-            <path d="M42 62 Q46 58 50 62 T58 62"
-                  fill="none"
-                  stroke="#f59e0b"
-                  stroke-width="2.5"
-                  stroke-linecap="round"/>
-        `,
         extra: `
             <text
                 x="70"
@@ -630,12 +673,14 @@ const vectorExpressions = {
                 font-size="7"
                 font-family="monospace"
                 font-weight="bold"
-                fill="#f59e0b">?</text>
+                fill="#f59e0b"
+            >?</text>
         `,
-        color: "#f59e0b"
+
+        color: '#f59e0b'
     },
 
-    "😲": {
+    SURPRISED: {
         eyes: `
             <circle
                 cx="37"
@@ -643,7 +688,8 @@ const vectorExpressions = {
                 r="3.5"
                 fill="none"
                 stroke="#a855f7"
-                stroke-width="2.5"/>
+                stroke-width="2.5"
+            />
 
             <circle
                 cx="63"
@@ -651,8 +697,10 @@ const vectorExpressions = {
                 r="3.5"
                 fill="none"
                 stroke="#a855f7"
-                stroke-width="2.5"/>
+                stroke-width="2.5"
+            />
         `,
+
         mouth: `
             <circle
                 cx="50"
@@ -660,624 +708,156 @@ const vectorExpressions = {
                 r="4.5"
                 fill="none"
                 stroke="#a855f7"
-                stroke-width="3"/>
+                stroke-width="3"
+            />
         `,
-        extra: "",
-        color: "#a855f7"
+
+        extra: `
+            <line
+                x1="50"
+                y1="36"
+                x2="50"
+                y2="40"
+                stroke="#a855f7"
+                stroke-width="1.5"
+            />
+        `,
+
+        color: '#a855f7'
     },
 
-    "😠": {
+    ANGRY: {
         eyes: `
-            <path d="M31 48 L41 43"
-                  stroke="#ef4444"
-                  stroke-width="3.5"
-                  stroke-linecap="round"/>
+            <path
+                d="M31 48 L41 43"
+                stroke="#ef4444"
+                stroke-width="3.5"
+                stroke-linecap="round"
+            />
 
-            <path d="M69 48 L59 43"
-                  stroke="#ef4444"
-                  stroke-width="3.5"
-                  stroke-linecap="round"/>
+            <path
+                d="M69 48 L59 43"
+                stroke="#ef4444"
+                stroke-width="3.5"
+                stroke-linecap="round"
+            />
         `,
+
         mouth: `
-            <path d="M41 62 L45 59 L49 64 L53 59 L57 62"
-                  fill="none"
-                  stroke="#ef4444"
-                  stroke-width="2.8"
-                  stroke-linecap="round"/>
+            <path
+                d="M41 62 L45 59 L49 64 L53 59 L57 62"
+                fill="none"
+                stroke="#ef4444"
+                stroke-width="2.8"
+                stroke-linecap="round"
+            />
         `,
-        extra: "",
-        color: "#ef4444"
-    },
 
-    "🙁": {
-        eyes: `
-            <rect x="33" y="47"
-                  width="10"
-                  height="2"
-                  rx="1"
-                  fill="#3b82f6"/>
-
-            <rect x="57" y="47"
-                  width="10"
-                  height="2"
-                  rx="1"
-                  fill="#3b82f6"/>
-        `,
-        mouth: `
-            <path d="M43 65 Q50 58 57 65"
-                  fill="none"
-                  stroke="#3b82f6"
-                  stroke-width="2.2"
-                  stroke-linecap="round"/>
-        `,
-        extra: "",
-        color: "#3b82f6"
-    },
-
-    "😢": {
-        eyes: `
-            <path d="M32 42 L38 48 M38 42 L32 48"
-                  stroke="#3b82f6"
-                  stroke-width="2.5"
-                  stroke-linecap="round"/>
-
-            <path d="M62 42 L68 48 M68 42 L62 48"
-                  stroke="#3b82f6"
-                  stroke-width="2.5"
-                  stroke-linecap="round"/>
-        `,
-        mouth: `
-            <line x1="42" y1="63"
-                  x2="58" y2="63"
-                  stroke="#3b82f6"
-                  stroke-width="2.5"
-                  stroke-linecap="round"/>
-        `,
         extra: `
             <text
-                x="40"
-                y="74"
-                font-size="4.5"
-                fill="#3b82f6"
-                font-family="monospace">SYS_ERR</text>
+                x="27"
+                y="40"
+                font-size="5"
+                fill="#ef4444"
+                font-family="monospace"
+            >WARN</text>
         `,
-        color: "#3b82f6"
+
+        color: '#ef4444'
+    },
+
+    SAD: {
+        eyes: `
+            <rect
+                x="33"
+                y="47"
+                width="10"
+                height="2"
+                rx="1"
+                fill="#3b82f6"
+            />
+
+            <rect
+                x="57"
+                y="47"
+                width="10"
+                height="2"
+                rx="1"
+                fill="#3b82f6"
+            />
+        `,
+
+        mouth: `
+            <path
+                d="M43 65 Q50 58 57 65"
+                fill="none"
+                stroke="#3b82f6"
+                stroke-width="2.2"
+                stroke-linecap="round"
+            />
+        `,
+
+        extra: '',
+        color: '#3b82f6'
     }
 };
 
+/* ============================================================
+   EMOTION ENGINE
+   ============================================================ */
 
-/* ==========================================================================
-   10. EMOTION ENGINE
-   ========================================================================== */
+function transitionTo(emotion) {
 
-const emotionTransitions = {
-    "NEUTRAL->HAPPY": ["😐", "😊"],
-    "NEUTRAL->THINKING": ["😐", "🤔"],
-    "NEUTRAL->SAD": ["😐", "🙁", "😢"],
-    "THINKING->SURPRISED": ["🤔", "😲"],
-    "THINKING->ANGRY": ["🤔", "😠"],
-    "THINKING->HAPPY": ["🤔", "😊"],
-    "SURPRISED->NEUTRAL": ["😲", "😐"],
-    "ANGRY->NEUTRAL": ["😠", "😐"],
-    "HAPPY->NEUTRAL": ["😊", "😐"],
-    "SAD->NEUTRAL": ["😢", "🙁", "😐"]
-};
+    emotion = vectorExpressions[emotion]
+        ? emotion
+        : 'NEUTRAL';
 
-const emotionStatus = {
-    NEUTRAL: "Online • Chilling",
-    THINKING: "Processing neural request...",
-    HAPPY: "Response ready • Core stable",
-    SURPRISED: "Alert • Unexpected input",
-    ANGRY: "Warning • Sass protocol active",
-    SAD: "System degraded • Recovering"
-};
+    const face = $('ai-face');
+    const status = $('ai-status');
 
-function transitionTo(targetEmotion) {
-    if (!vectorExpressions) return;
+    if (!face) return;
 
-    targetEmotion =
-        vectorExpressions[
-            Object.keys(vectorExpressions).find(
-                key => key === targetEmotion
-            )
-        ]
-            ? targetEmotion
-            : targetEmotion;
+    currentEmotion = emotion;
 
-    const faceElement = $("ai-face");
-    const statusElement = $("ai-status");
+    const data = vectorExpressions[emotion];
 
-    if (!faceElement) {
-        currentEmotion = targetEmotion;
-        return;
+    face.classList.remove('pop-animation');
+
+    void face.offsetWidth;
+
+    face.classList.add('pop-animation');
+
+    face.innerHTML =
+        getCharacterSVG(
+            data.eyes,
+            data.mouth,
+            data.extra,
+            data.color
+        );
+
+    if (status) {
+
+        const labels = {
+            NEUTRAL: 'Status: Online',
+            HAPPY: 'Status: Activated',
+            THINKING: 'Status: Thinking...',
+            SURPRISED: 'Status: Alerted',
+            ANGRY: 'Status: Warning',
+            SAD: 'Status: Recovering...'
+        };
+
+        status.textContent =
+            labels[emotion] || labels.NEUTRAL;
     }
-
-    if (currentEmotion === targetEmotion) {
-        if (statusElement) {
-            statusElement.textContent =
-                `Status: ${emotionStatus[targetEmotion] || "Online"}`;
-        }
-        return;
-    }
-
-    const emotionEmoji = {
-        NEUTRAL: "😐",
-        HAPPY: "😊",
-        THINKING: "🤔",
-        SAD: "😢",
-        ANGRY: "😠",
-        SURPRISED: "😲"
-    };
-
-    const routeKey =
-        `${currentEmotion}->${targetEmotion}`;
-
-    const frames =
-        emotionTransitions[routeKey] ||
-        [
-            emotionEmoji[currentEmotion] || "😐",
-            emotionEmoji[targetEmotion] || "😐"
-        ];
-
-    let frameIndex = 0;
-
-    if (statusElement) {
-        statusElement.textContent =
-            `Status: ${emotionStatus[targetEmotion] || "Online"}`;
-    }
-
-    function nextFrame() {
-        if (frameIndex >= frames.length) {
-            currentEmotion = targetEmotion;
-            return;
-        }
-
-        const emoji = frames[frameIndex];
-
-        const vector =
-            vectorExpressions[emoji] ||
-            vectorExpressions["😐"];
-
-        faceElement.classList.remove("pop-animation");
-
-        void faceElement.offsetWidth;
-
-        faceElement.classList.add("pop-animation");
-
-        faceElement.innerHTML =
-            getCharacterSVG(
-                vector.eyes,
-                vector.mouth,
-                vector.extra,
-                vector.color
-            );
-
-        frameIndex++;
-
-        setTimeout(nextFrame, 160);
-    }
-
-    nextFrame();
 }
 
-
-/* ==========================================================================
-   11. MARKDOWN RENDERER
-   ========================================================================== */
-
-function renderMarkdown(text) {
-
-    let html = escapeHTML(text);
-
-    // Code blocks first.
-    html = html.replace(
-        /```(\w+)?\n?([\s\S]*?)```/g,
-        (_, language, code) => {
-
-            const lang =
-                language || "code";
-
-            return `
-                <div class="nyx-code-block my-4">
-
-                    <div class="flex items-center
-                                justify-between
-                                px-3 py-2
-                                border-b border-white/10
-                                bg-black/20">
-
-                        <span class="text-xs
-                                     text-purple-300
-                                     uppercase
-                                     tracking-wider">
-                            ${escapeHTML(lang)}
-                        </span>
-
-                        <button
-                            onclick="copyText(this)"
-                            data-copy="${encodeURIComponent(code)}"
-                            class="text-xs text-gray-400
-                                   hover:text-white">
-                            Copy
-                        </button>
-
-                    </div>
-
-                    <pre class="p-4 overflow-x-auto">
-<code>${code}</code>
-                    </pre>
-
-                </div>
-            `;
-        }
-    );
-
-    // Inline code.
-    html = html.replace(
-        /`([^`]+)`/g,
-        "<code>$1</code>"
-    );
-
-    // Bold.
-    html = html.replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>"
-    );
-
-    // Italic.
-    html = html.replace(
-        /\*(.*?)\*/g,
-        "<em>$1</em>"
-    );
-
-    // Headings.
-    html = html.replace(
-        /^### (.*)$/gm,
-        "<h4 class='text-purple-300 font-bold text-lg mt-4 mb-2'>$1</h4>"
-    );
-
-    html = html.replace(
-        /^## (.*)$/gm,
-        "<h3 class='text-purple-300 font-bold text-xl mt-4 mb-2'>$1</h3>"
-    );
-
-    html = html.replace(
-        /^# (.*)$/gm,
-        "<h2 class='text-purple-300 font-bold text-2xl mt-4 mb-2'>$1</h2>"
-    );
-
-    // Bullets.
-    html = html.replace(
-        /^[-•] (.*)$/gm,
-        "<li class='ml-5 list-disc'>$1</li>"
-    );
-
-    // Numbered list.
-    html = html.replace(
-        /^\d+\. (.*)$/gm,
-        "<li class='ml-5 list-decimal'>$1</li>"
-    );
-
-    // Links.
-    html = html.replace(
-        /(https?:\/\/[^\s<]+)/g,
-        `<a href="$1"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-indigo-400 hover:text-indigo-300 underline">
-            $1
-        </a>`
-    );
-
-    // Newlines.
-    html = html.replace(/\n/g, "<br>");
-
-    return html;
-}
-
-
-/* ==========================================================================
-   12. CHAT UI
-   ========================================================================== */
-
-function scrollChatToBottom() {
-    const chatBox = $("chat-messages");
-
-    if (!chatBox) return;
-
-    requestAnimationFrame(() => {
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
-    });
-}
-
-
-function appendUserMessage(message) {
-
-    const chatBox = $("chat-messages");
-
-    if (!chatBox) return null;
-
-    const id =
-        `user-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-
-    chatBox.insertAdjacentHTML(
-        "beforeend",
-        `
-        <div
-            id="${id}"
-            class="nyx-message user-message
-                   flex gap-4 flex-row-reverse mb-5">
-
-            <div
-                class="w-9 h-9 shrink-0 rounded-xl
-                       bg-[#1b152e]
-                       border border-indigo-500/30
-                       flex items-center justify-center
-                       p-1 overflow-hidden">
-
-                ${getUserSVG()}
-
-            </div>
-
-            <div
-                class="message-bubble
-                       bg-indigo-600/90
-                       border border-indigo-400/20
-                       p-4 rounded-2xl rounded-tr-sm
-                       max-w-[85%] text-sm
-                       shadow-lg shadow-indigo-950/20">
-
-                ${renderMarkdown(message)}
-
-            </div>
-
-        </div>
-        `
-    );
-
-    scrollChatToBottom();
-
-    return id;
-}
-
-
-function appendTypingIndicator() {
-
-    const chatBox = $("chat-messages");
-
-    if (!chatBox) return null;
-
-    const id =
-        `typing-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-
-    chatBox.insertAdjacentHTML(
-        "beforeend",
-        `
-        <div
-            id="${id}"
-            class="nyx-message flex gap-4 mb-5">
-
-            <div
-                class="w-9 h-9 shrink-0 rounded-xl
-                       bg-[#0d071a]
-                       border border-yellow-500/30
-                       flex items-center justify-center
-                       p-1 overflow-hidden">
-
-                ${getMiniNyxSVG("#f59e0b")}
-
-            </div>
-
-            <div
-                class="bg-slate-800/80
-                       border border-white/5
-                       p-4 rounded-2xl
-                       rounded-tl-sm
-                       text-sm text-slate-400">
-
-                <div class="nyx-thinking flex gap-1">
-                    <span>●</span>
-                    <span>●</span>
-                    <span>●</span>
-                    <span class="ml-2">
-                        Nyx is thinking
-                    </span>
-                </div>
-
-            </div>
-
-        </div>
-        `
-    );
-
-    scrollChatToBottom();
-
-    return id;
-}
-
-
-/* ==========================================================================
-   13. RESPONSE CONTROLS
-   ========================================================================== */
-
-function appendAssistantMessage(
-    text,
-    emotion = "NEUTRAL"
-) {
-
-    const chatBox = $("chat-messages");
-
-    if (!chatBox) return null;
-
-    const uniqueId =
-        `msg-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-
-    const colorMap = {
-        NEUTRAL: "#38bdf8",
-        HAPPY: "#22c55e",
-        THINKING: "#f59e0b",
-        SURPRISED: "#a855f7",
-        ANGRY: "#ef4444",
-        SAD: "#3b82f6"
-    };
-
-    const color =
-        colorMap[emotion] ||
-        colorMap.NEUTRAL;
-
-    chatBox.insertAdjacentHTML(
-        "beforeend",
-        `
-        <div
-            class="nyx-message flex gap-4 mb-5"
-            data-message="${uniqueId}">
-
-            <div
-                class="w-9 h-9 shrink-0 rounded-xl
-                       bg-[#0d071a]
-                       border border-indigo-500/30
-                       flex items-center justify-center
-                       p-1 overflow-hidden">
-
-                ${getMiniNyxSVG(color)}
-
-            </div>
-
-            <div class="max-w-[88%] min-w-0">
-
-                <div
-                    class="message-bubble
-                           bg-slate-800/90
-                           border border-white/5
-                           p-4 rounded-2xl
-                           rounded-tl-sm
-                           text-sm">
-
-                    <div
-                        id="${uniqueId}"
-                        class="nyx-response prose-invert">
-                    </div>
-
-                </div>
-
-                <div
-                    class="nyx-response-tools
-                           flex flex-wrap gap-2 mt-2
-                           opacity-70 hover:opacity-100">
-
-                    <button
-                        onclick="copyResponse('${uniqueId}')"
-                        class="nyx-tool-button">
-                        📋 Copy
-                    </button>
-
-                    <button
-                        onclick="regenerateLastResponse()"
-                        class="nyx-tool-button">
-                        🔄 Regenerate
-                    </button>
-
-                    <button
-                        onclick="speakResponse('${uniqueId}')"
-                        class="nyx-tool-button">
-                        🔊 Read
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-        `
-    );
-
-    return uniqueId;
-}
-
-
-/* ==========================================================================
-   14. STREAM RESPONSE
-   ========================================================================== */
-
-async function streamResponse(
-    text,
-    containerId
-) {
-
-    const element = $(containerId);
-
-    if (!element) return;
-
-    element.innerHTML = "";
-
-    // Faster rendering for huge answers.
-    const delay =
-        text.length > 5000 ? 1 :
-        text.length > 2500 ? 3 :
-        text.length > 1000 ? 6 :
-        12;
-
-    let index = 0;
-
-    return new Promise(resolve => {
-
-        function writeChunk() {
-
-            if (index >= text.length) {
-                element.innerHTML =
-                    renderMarkdown(text);
-
-                scrollChatToBottom();
-
-                resolve();
-                return;
-            }
-
-            // Write multiple chars at once.
-            const chunkSize =
-                text.length > 4000 ? 12 :
-                text.length > 2000 ? 8 :
-                4;
-
-            index =
-                Math.min(
-                    index + chunkSize,
-                    text.length
-                );
-
-            element.innerHTML =
-                renderMarkdown(
-                    text.slice(0, index)
-                );
-
-            scrollChatToBottom();
-
-            setTimeout(
-                writeChunk,
-                delay
-            );
-        }
-
-        writeChunk();
-    });
-}
-
-
-/* ==========================================================================
-   15. COMMAND SYSTEM
-   ========================================================================== */
+/* ============================================================
+   COMMANDS
+   ============================================================ */
 
 function executeConsoleCommand(command) {
 
-    const input =
-        $("user-input");
+    const input = $('user-input');
 
     if (!input) return;
 
@@ -1286,925 +866,485 @@ function executeConsoleCommand(command) {
     sendToAI();
 }
 
-
-async function processCommand(command) {
-
-    const parts =
-        command.trim().split(/\s+/);
-
-    const cmd =
-        parts[0].toLowerCase();
-
-    const argument =
-        command
-            .slice(parts[0].length)
-            .trim();
-
-    switch (cmd) {
-
-        case "/clear":
-
-            clearConversation();
-
-            return true;
-
-
-        case "/toggle-sass":
-
-            sassEnabled = !sassEnabled;
-
-            saveState();
-
-            appendAssistantMessage(
-                sassEnabled
-                    ? "Sass protocol **enabled**. Try not to make me regret it."
-                    : "Sass protocol **disabled**. Professional mode activated.",
-                sassEnabled
-                    ? "HAPPY"
-                    : "NEUTRAL"
-            );
-
-            return true;
-
-
-        case "/summarize":
-
-            if (!conversationHistory.length) {
-
-                appendAssistantMessage(
-                    "There is no conversation to summarize yet.",
-                    "SURPRISED"
-                );
-
-                return true;
-            }
-
-            await runSpecialTool(
-                "summarize",
-                argument ||
-                "Summarize the conversation so far."
-            );
-
-            return true;
-
-
-        case "/translate":
-
-            await runSpecialTool(
-                "translate",
-                argument ||
-                "Translate the previous response to English."
-            );
-
-            return true;
-
-
-        case "/code":
-
-            await runSpecialTool(
-                "code",
-                argument ||
-                "Help me write or debug code."
-            );
-
-            return true;
-
-
-        case "/imagine":
-
-            await runMediaTool(
-                "imagine",
-                argument ||
-                "Create an image based on this request."
-            );
-
-            return true;
-
-
-        case "/draw":
-
-            await runMediaTool(
-                "imagine",
-                argument ||
-                "Create an image based on this request."
-            );
-
-            return true;
-
-
-        case "/edit":
-
-            await runMediaTool(
-                "edit",
-                argument ||
-                "Edit the provided image."
-            );
-
-            return true;
-
-
-        case "/image":
-
-        case "/images":
-
-            await runMediaTool(
-                "image-search",
-                argument ||
-                "popular images"
-            );
-
-            return true;
-
-
-        case "/video":
-
-        case "/videos":
-
-            await runMediaTool(
-                "video-search",
-                argument ||
-                "popular videos"
-            );
-
-            return true;
-
-
-        case "/help":
-
-            showCommandHelp();
-
-            return true;
-
-
-        case "/status":
-
-            showSystemStatus();
-
-            return true;
-
-
-        default:
-
-            return false;
-    }
-}
-
-
-function showCommandHelp() {
-
-    const commands = `
-### Nyxium Command Matrix
-
-**AI**
-- \`/ask question\` — Ask Nyxium AI
-- \`/code request\` — Coding assistant
-- \`/summarize\` — Summarize the conversation
-- \`/translate text\` — Translation mode
-
-**Media**
-- \`/imagine prompt\` — Generate an image
-- \`/draw prompt\` — Generate an image
-- \`/edit request\` — Edit an image
-- \`/images query\` — Image search
-- \`/videos query\` — Video search
-
-**System**
-- \`/clear\` — Clear memory
-- \`/toggle-sass\` — Toggle Nyx personality
-- \`/status\` — System status
-- \`/help\` — Show commands
-    `;
-
-    appendAssistantMessage(
-        commands,
-        "HAPPY"
-    );
-}
-
-
-/* ==========================================================================
-   16. SYSTEM STATUS
-   ========================================================================== */
-
-function showSystemStatus() {
-
-    const historySize =
-        conversationHistory.length;
-
-    appendAssistantMessage(
-        `
-### ⚡ Nyxium System Status
-
-| Module | Status |
-|---|---|
-| Core AI | 🟢 Online |
-| Conversation Memory | 🟢 ${historySize} messages |
-| Emotion Engine | 🟢 Online |
-| Local Fallback | 🟢 Ready |
-| Puter Auxiliary Node | 🟡 Available |
-| Sass Protocol | ${sassEnabled ? "🟢 Enabled" : "⚪ Disabled"} |
-| UI Engine | 🟢 Online |
-        `,
-        "HAPPY"
-    );
-}
-
-
-/* ==========================================================================
-   17. CLEAR CHAT
-   ========================================================================== */
-
-function clearConversation() {
-
-    if (currentRequestController) {
-        currentRequestController.abort();
-        currentRequestController = null;
-    }
-
-    conversationHistory = [];
-
-    saveState();
-
-    const chatBox =
-        $("chat-messages");
-
-    if (chatBox) {
-        chatBox.innerHTML = `
-            <div class="nyx-empty-state
-                        text-center py-12
-                        text-gray-500">
-
-                <div class="text-4xl mb-3">
-                    🌌
-                </div>
-
-                <p class="font-semibold">
-                    Nyxium memory cleared.
-                </p>
-
-                <p class="text-xs mt-1">
-                    The next conversation starts fresh.
-                </p>
-
-            </div>
-        `;
-    }
-
-    transitionTo("HAPPY");
-
-    clearTimeout(idleTimeout);
-
-    idleTimeout =
-        setTimeout(
-            () => transitionTo("NEUTRAL"),
-            1500
-        );
-}
-
-
-/* ==========================================================================
-   18. LOCAL MATH ENGINE
-   ========================================================================== */
+/* ============================================================
+   LOCAL MATH ENGINE
+   ============================================================ */
 
 function tryLocalResponse(message) {
 
-    const normalized =
-        message.toLowerCase().trim();
+    const normalized = message
+        .toLowerCase()
+        .trim();
 
-    const mathRegex =
-        /(-?\d+)\s*(multiply by|times|\*|x|plus|add|\+|minus|subtract|-|divided by|divide|\/)\s*(-?\d+)/i;
+    /* Basic arithmetic */
 
-    const match =
-        message.match(mathRegex);
+    const math =
+        normalized.match(
+            /^(-?\d+(?:\.\d+)?)\s*([+\-*x×÷\/])\s*(-?\d+(?:\.\d+)?)$/
+        );
 
-    if (match) {
+    if (math) {
 
-        try {
+        const a = Number(math[1]);
+        const op = math[2];
+        const b = Number(math[3]);
 
-            const a =
-                BigInt(match[1]);
+        let result;
 
-            const operator =
-                match[2].toLowerCase();
-
-            const b =
-                BigInt(match[3]);
-
-            let result;
-
-            if (
-                operator.includes("multiply") ||
-                operator === "times" ||
-                operator === "*" ||
-                operator === "x"
-            ) {
-                result = a * b;
-            }
-
-            else if (
-                operator.includes("plus") ||
-                operator === "add" ||
-                operator === "+"
-            ) {
-                result = a + b;
-            }
-
-            else if (
-                operator.includes("minus") ||
-                operator === "subtract" ||
-                operator === "-"
-            ) {
-                result = a - b;
-            }
-
-            else if (
-                operator.includes("divide") ||
-                operator === "/"
-            ) {
-
-                if (b === 0n) {
-                    return "[SURPRISED] Division by zero detected.";
-                }
-
-                result = a / b;
-            }
-
-            return `[HAPPY] Boom. The exact result is **${result}**.`;
-
-        } catch {
-            return "[SAD] My local arithmetic processor hit a numerical overflow.";
+        if (op === '+') result = a + b;
+        else if (op === '-') result = a - b;
+        else if (op === '*' || op === 'x' || op === '×') {
+            result = a * b;
         }
+        else if (op === '/' || op === '÷') {
+            if (b === 0) {
+                return '[SURPRISED] Division by zero is undefined.';
+            }
+
+            result = a / b;
+        }
+
+        return `[HAPPY] Done. **${result}**`;
     }
 
-    if (
-        normalized === "hi" ||
-        normalized === "hello" ||
-        normalized === "hey" ||
-        normalized === "hola"
-    ) {
-        return sassEnabled
-            ? "[HAPPY] Oh, hey. Nyxium core online. What are we building?"
-            : "[HAPPY] Hello. Nyxium AI is ready.";
-    }
+    /* Greetings */
 
     if (
-        normalized.includes("who are you") ||
-        normalized.includes("your name")
+        /^(hi|hello|hey|hola|yo|sup)\b/i.test(normalized)
     ) {
-        return "[NEUTRAL] I am **Nyx**, the cybernetic AI core of the Nyxium Terminal.";
+        return '[HAPPY] Hey! Nyx is online. What are we building, debugging, calculating, or destroying today?';
     }
+
+    /* Identity */
+
+    if (
+        normalized.includes('who are you') ||
+        normalized.includes('what are you')
+    ) {
+        return '[NEUTRAL] I am Nyx — the cybernetic AI core of the Nyxium Terminal Network.';
+    }
+
+    /* Short nonsense */
 
     if (normalized.length < 3) {
-        return "[SURPRISED] That input is a little too short for my neural arrays.";
+        return '[SURPRISED] That message is a little too short for my processing array.';
     }
 
-    return "[NEUTRAL] My primary network is temporarily unavailable. I can still handle basic calculations and offline requests.";
+    return '[NEUTRAL] My primary AI node is temporarily unavailable. I can still handle basic calculations and local commands while the network reconnects.';
 }
 
+/* ============================================================
+   COMMAND PROCESSOR
+   ============================================================ */
 
-/* ==========================================================================
-   19. PRIMARY AI REQUEST
-   ========================================================================== */
+function processCommand(message) {
 
-async function requestPrimaryAI(
-    message
-) {
+    const command = message
+        .trim()
+        .split(/\s+/)[0]
+        .toLowerCase();
 
-    currentRequestController =
-        new AbortController();
-
-    const response =
-        await fetch(
-            "/api/chat",
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-                    message,
-                    history:
-                        conversationHistory
-                            .slice(-MAX_HISTORY_TURNS)
-                }),
-
-                signal:
-                    currentRequestController.signal
-            }
-        );
-
-    if (!response.ok) {
-        throw new Error(
-            `API ${response.status}`
-        );
+    if (!message.startsWith('/')) {
+        return null;
     }
 
-    const data =
-        await response.json();
+    switch (command) {
 
-    if (!data.reply) {
-        throw new Error(
-            "Backend returned no reply"
-        );
+        case '/clear':
+            clearChat();
+            return '';
+
+        case '/toggle-sass':
+            sassMode = !sassMode;
+
+            localStorage.setItem(
+                SASS_KEY,
+                String(sassMode)
+            );
+
+            return `[${sassMode ? 'HAPPY' : 'NEUTRAL'}] Sass mode is now **${sassMode ? 'ON' : 'OFF'}**.`;
+
+        case '/help':
+            return `[NEUTRAL]
+**Nyxium Console Commands**
+
+\`/clear\` — Clear this conversation.
+\`/toggle-sass\` — Toggle Nyx's personality mode.
+\`/help\` — Show this command list.
+
+You can also simply ask me questions normally.`;
+
+        case '/ping':
+            return `[HAPPY] Pong! Frontend response received in **${Math.floor(Math.random() * 40 + 10)}ms**.`;
+
+        default:
+            return `[SURPRISED] Unknown command: \`${escapeHTML(command)}\`. Try \`/help\`.`;
     }
-
-    return data.reply;
 }
 
+/* ============================================================
+   CLEAR CHAT
+   ============================================================ */
 
-/* ==========================================================================
-   20. PUTER FALLBACK
-   ========================================================================== */
+function clearChat() {
 
-async function requestPuterAI(
-    message
-) {
+    const chat = $('chat-messages');
 
-    if (
-        typeof puter === "undefined" ||
-        !puter.ai ||
-        typeof puter.ai.chat !== "function"
-    ) {
-        throw new Error(
-            "Puter unavailable"
-        );
-    }
+    if (!chat) return;
 
-    const historyText =
-        conversationHistory
-            .slice(-MAX_HISTORY_TURNS)
-            .map(item =>
-                `${item.role === "user"
-                    ? "User"
-                    : "Nyx"}: ${item.content}`
-            )
-            .join("\n");
+    chat.innerHTML = '';
 
-    const personality =
-        sassEnabled
-            ? `
-You may be witty, slightly sarcastic and playful
-for simple or silly questions.
-`
-            : `
-Remain professional, calm and concise.
-Do not use sarcastic responses.
-`;
+    conversationHistory = [];
 
-    const prompt = `
-You are Nyx, the AI core of Nyxium AI.
+    saveHistory();
 
-IDENTITY:
-You are Nyx.
-You are not an anime character.
-Do not claim to be Google Gemini.
-Do not claim to be another AI.
+    transitionTo('HAPPY');
 
-PERSONALITY:
-${personality}
-
-CAPABILITIES:
-- Mathematics
-- Science
-- Programming
-- Debugging
-- Writing
-- Reasoning
-- Explanations
-- Translation
-- Summarization
-- General knowledge
-
-IMPORTANT:
-Always answer the user's actual request.
-Never intentionally give incorrect calculations.
-For difficult questions, explain your reasoning clearly.
-For programming requests, provide complete usable solutions.
-
-FORMAT:
-Begin your response with exactly one emotion tag:
-
-[NEUTRAL]
-[HAPPY]
-[THINKING]
-[SURPRISED]
-[SAD]
-[ANGRY]
-
-Then write the answer.
-
-CONVERSATION MEMORY:
-${historyText}
-
-CURRENT USER MESSAGE:
-${message}
-    `.trim();
-
-    const result =
-        await puter.ai.chat(prompt);
-
-    /*
-     * Puter can return different shapes depending
-     * on the selected model/runtime.
-     */
-
-    if (typeof result === "string") {
-        return result;
-    }
-
-    if (result?.message?.content) {
-        if (typeof result.message.content === "string") {
-            return result.message.content;
-        }
-
-        if (
-            Array.isArray(result.message.content)
-        ) {
-            return result.message.content
-                .map(x =>
-                    typeof x === "string"
-                        ? x
-                        : x?.text || ""
-                )
-                .join("");
-        }
-    }
-
-    if (result?.text) {
-        return result.text;
-    }
-
-    return JSON.stringify(result);
+    setTimeout(() => {
+        transitionTo('NEUTRAL');
+    }, 1500);
 }
 
+/* ============================================================
+   HISTORY STORAGE
+   ============================================================ */
 
-/* ==========================================================================
-   21. SPECIAL AI TOOLS
-   ========================================================================== */
-
-async function runSpecialTool(
-    tool,
-    request
-) {
-
-    const command =
-        `/${tool} ${request}`;
-
-    const input =
-        $("user-input");
-
-    if (input) {
-        input.value = "";
-    }
-
-    appendUserMessage(command);
-
-    transitionTo("THINKING");
-
-    const typingId =
-        appendTypingIndicator();
-
-    let response = null;
+function saveHistory() {
 
     try {
 
-        /*
-         * Backend tool endpoint.
-         *
-         * Example:
-         * POST /api/tools
-         * {
-         *   tool: "summarize",
-         *   message: "...",
-         *   history: [...]
-         * }
-         */
-
-        const res =
-            await fetch(
-                "/api/tools",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        tool,
-                        message: request,
-                        history:
-                            conversationHistory
-                    })
-                }
-            );
-
-        if (res.ok) {
-
-            const data =
-                await res.json();
-
-            response =
-                data.reply ||
-                data.result ||
-                null;
-        }
-
-    } catch (error) {
-        console.warn(
-            `Tool ${tool} unavailable:`,
-            error
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(conversationHistory)
         );
-    }
-
-    if (!response) {
-
-        response =
-            await requestPuterAI(
-                `${command}\n\nUser request: ${request}`
-            )
-                .catch(() =>
-                    tryLocalResponse(request)
-                );
-    }
-
-    if (typingId) {
-        $(typingId)?.remove();
-    }
-
-    handleEngineResponse(
-        response,
-        $("chat-messages")
-    );
-}
-
-
-/* ==========================================================================
-   22. MEDIA TOOLS
-   ========================================================================== */
-
-async function runMediaTool(
-    tool,
-    query
-) {
-
-    appendUserMessage(
-        `/${tool} ${query}`
-    );
-
-    transitionTo("THINKING");
-
-    const typingId =
-        appendTypingIndicator();
-
-    try {
-
-        const res =
-            await fetch(
-                "/api/media",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        tool,
-                        query
-                    })
-                }
-            );
-
-        if (!res.ok) {
-            throw new Error(
-                `Media API ${res.status}`
-            );
-        }
-
-        const data =
-            await res.json();
-
-        if (typingId) {
-            $(typingId)?.remove();
-        }
-
-        renderMediaResult(
-            data,
-            tool
-        );
-
-        transitionTo("HAPPY");
 
     } catch (error) {
 
         console.warn(
-            "Media node unavailable:",
+            'Unable to save Nyxium history.',
             error
-        );
-
-        if (typingId) {
-            $(typingId)?.remove();
-        }
-
-        appendAssistantMessage(
-            `
-### Media node unavailable
-
-The **${tool}** operation could not connect to the media backend.
-
-Make sure your backend exposes:
-
-\`POST /api/media\`
-
-Supported providers can be connected there, including Pexels and Hugging Face.
-            `,
-            "SAD"
         );
     }
 }
 
+function loadHistory() {
 
-/* ==========================================================================
-   23. MEDIA RESULT RENDERER
-   ========================================================================== */
+    try {
 
-function renderMediaResult(
-    data,
-    tool
-) {
+        const saved =
+            localStorage.getItem(STORAGE_KEY);
 
-    const chatBox =
-        $("chat-messages");
+        if (!saved) return;
 
-    if (!chatBox) return;
+        const parsed =
+            JSON.parse(saved);
 
-    const items =
-        Array.isArray(data?.results)
-            ? data.results
-            : Array.isArray(data)
-                ? data
-                : [];
+        if (!Array.isArray(parsed)) return;
 
-    if (!items.length) {
+        conversationHistory =
+            parsed.slice(-MAX_HISTORY_TURNS);
 
-        appendAssistantMessage(
-            data?.message ||
-            "The media node returned no results.",
-            "SURPRISED"
+    } catch (error) {
+
+        console.warn(
+            'Unable to restore Nyxium history.',
+            error
         );
-
-        return;
     }
+}
 
-    const titleMap = {
-        imagine: "🌌 Generated Image",
-        edit: "🛠️ Edited Image",
-        "image-search": "🖼️ Image Results",
-        "video-search": "🎬 Video Results"
-    };
+/* ============================================================
+   ADD USER MESSAGE
+   ============================================================ */
 
-    const title =
-        titleMap[tool] ||
-        "Nyxium Media";
+function addUserMessage(message) {
 
-    const cards =
-        items
-            .slice(0, 12)
-            .map((item, index) => {
+    const chat = $('chat-messages');
 
-                const image =
-                    item.url ||
-                    item.image ||
-                    item.thumbnail ||
-                    item.src;
+    if (!chat) return;
 
-                const video =
-                    item.video ||
-                    item.videoUrl;
-
-                const name =
-                    item.title ||
-                    item.name ||
-                    `Result ${index + 1}`;
-
-                if (video) {
-
-                    return `
-                        <div class="nyx-media-card">
-
-                            <video
-                                src="${escapeHTML(video)}"
-                                poster="${escapeHTML(
-                                    item.thumbnail || ""
-                                )}"
-                                controls
-                                class="w-full rounded-xl">
-                            </video>
-
-                            <div class="p-3">
-
-                                <div class="font-semibold">
-                                    ${escapeHTML(name)}
-                                </div>
-
-                                <a
-                                    href="${escapeHTML(video)}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="nyx-media-link">
-                                    Open
-                                </a>
-
-                            </div>
-
-                        </div>
-                    `;
-                }
-
-                return `
-                    <div class="nyx-media-card">
-
-                        <img
-                            src="${escapeHTML(image || "")}"
-                            alt="${escapeHTML(name)}"
-                            loading="lazy"
-                            class="w-full aspect-video
-                                   object-cover rounded-xl"/>
-
-                        <div class="p-3">
-
-                            <div class="font-semibold text-sm">
-                                ${escapeHTML(name)}
-                            </div>
-
-                            <div class="flex gap-2 mt-3">
-
-                                <a
-                                    href="${escapeHTML(image || "")}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="nyx-media-link">
-                                    Open
-                                </a>
-
-                                <button
-                                    onclick="copyTextValue('${encodeURIComponent(
-                                        image || ""
-                                    )}')"
-                                    class="nyx-tool-button">
-                                    Copy URL
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-                `;
-            })
-            .join("");
-
-    chatBox.insertAdjacentHTML(
-        "beforeend",
+    chat.insertAdjacentHTML(
+        'beforeend',
         `
-        <div class="flex gap-4 mb-5">
+        <div class="flex gap-4 flex-row-reverse mb-4">
 
             <div
-                class="w-9 h-9 shrink-0 rounded-xl
-                       bg-[#0d071a]
-                       border border-purple-500/30
-                       p-1">
-
-                ${getMiniNyxSVG("#a855f7")}
-
+                class="
+                    w-8 h-8
+                    shrink-0
+                    rounded-full
+                    bg-[#1b152e]
+                    border border-indigo-500/20
+                    flex items-center justify-center
+                    p-1
+                    overflow-hidden
+                "
+            >
+                ${getUserSVG()}
             </div>
 
-            <div class="max-w-[92%] min-w-0">
+            <div
+                class="
+                    bg-indigo-600
+                    p-4
+                    rounded-2xl
+                    rounded-tr-none
+                    max-w-[80%]
+                    text-sm
+                    break-words
+                "
+            >
+                ${escapeHTML(message)}
+            </div>
 
-                <div
-                    class="bg-slate-800/90
-                           border border-white/5
-                           p-4 rounded-2xl
-                           rounded-tl-sm">
+        </div>
+        `
+    );
 
-                    <div class="font-bold text-purple-300 mb-4">
-                        ${title}
-                    </div>
+    scrollChat();
+}
 
-                    <div
-                        class="grid grid-cols-1
-                               sm:grid-cols-2
-                               lg:grid-cols-3 gap-4">
+/* ============================================================
+   TYPING INDICATOR
+   ============================================================ */
 
-                        ${cards}
+function addTypingIndicator() {
 
-                    </div>
+    const chat = $('chat-messages');
+
+    if (!chat) return null;
+
+    const id =
+        `typing-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2)}`;
+
+    chat.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div
+            id="${id}"
+            class="flex gap-4 mb-4"
+        >
+
+            <div
+                class="
+                    w-8 h-8
+                    shrink-0
+                    rounded-full
+                    bg-[#0d071a]
+                    border border-yellow-500/30
+                    flex items-center justify-center
+                    p-0.5
+                    overflow-hidden
+                "
+            >
+                ${getMiniNyxSVG('#f59e0b')}
+            </div>
+
+            <div
+                class="
+                    bg-slate-800
+                    p-4
+                    rounded-2xl
+                    rounded-tl-none
+                    text-sm
+                    text-slate-400
+                    italic
+                    font-status
+                "
+            >
+                Nyxium AI is thinking
+            </div>
+
+        </div>
+        `
+    );
+
+    scrollChat();
+
+    return id;
+}
+
+/* ============================================================
+   SCROLL CHAT
+   ============================================================ */
+
+function scrollChat() {
+
+    const chat = $('chat-messages');
+
+    if (!chat) return;
+
+    requestAnimationFrame(() => {
+        chat.scrollTop =
+            chat.scrollHeight;
+    });
+}
+
+/* ============================================================
+   FORMAT AI RESPONSE
+   ============================================================ */
+
+function formatAIText(text) {
+
+    let safe = escapeHTML(text);
+
+    /*
+       Code blocks
+       We escape first, then replace the escaped
+       markdown syntax.
+    */
+
+    safe = safe.replace(
+        /```([\s\S]*?)```/g,
+        (_, code) => `
+            <pre class="
+                my-3
+                p-4
+                rounded-xl
+                overflow-x-auto
+                bg-black/50
+                border border-white/10
+                text-sm
+            "><code>${code.trim()}</code></pre>
+        `
+    );
+
+    /* Inline code */
+
+    safe = safe.replace(
+        /`([^`\n]+)`/g,
+        '<code>$1</code>'
+    );
+
+    /* Bold */
+
+    safe = safe.replace(
+        /\*\*(.*?)\*\*/g,
+        '<strong>$1</strong>'
+    );
+
+    /* Italic */
+
+    safe = safe.replace(
+        /(^|[^\*])\*([^*\n]+)\*(?!\*)/g,
+        '$1<em>$2</em>'
+    );
+
+    /* Links */
+
+    safe = safe.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-purple-400 hover:text-purple-300 underline">$1</a>'
+    );
+
+    /* New lines */
+
+    safe = safe.replace(
+        /\n/g,
+        '<br>'
+    );
+
+    return safe;
+}
+
+/* ============================================================
+   AI RESPONSE BUBBLE
+   ============================================================ */
+
+function createAIMessage(text, emotion) {
+
+    const chat = $('chat-messages');
+
+    if (!chat) return null;
+
+    const id =
+        `msg-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2)}`;
+
+    const colors = {
+        HAPPY: '#22c55e',
+        THINKING: '#f59e0b',
+        SURPRISED: '#a855f7',
+        ANGRY: '#ef4444',
+        SAD: '#3b82f6',
+        NEUTRAL: '#38bdf8'
+    };
+
+    const color =
+        colors[emotion] || colors.NEUTRAL;
+
+    chat.insertAdjacentHTML(
+        'beforeend',
+        `
+        <div class="flex gap-4 mb-4">
+
+            <div
+                class="
+                    w-8 h-8
+                    shrink-0
+                    rounded-full
+                    bg-[#0d071a]
+                    border border-indigo-500/30
+                    flex items-center justify-center
+                    p-0.5
+                    overflow-hidden
+                "
+            >
+                ${getMiniNyxSVG(color)}
+            </div>
+
+            <div
+                class="
+                    bg-slate-800
+                    p-4
+                    rounded-2xl
+                    rounded-tl-none
+                    max-w-[85%]
+                    text-sm
+                    break-words
+                "
+            >
+
+                <div class="flex items-center gap-2 mb-2">
+
+                    <strong class="text-blue-400">
+                        Nyxium AI
+                    </strong>
+
+                    <span
+                        class="
+                            text-[10px]
+                            uppercase
+                            tracking-wider
+                            opacity-50
+                        "
+                    >
+                        ${emotion}
+                    </span>
+
+                </div>
+
+                <div id="${id}" class="leading-6"></div>
+
+                <div class="mt-3 flex gap-2">
+
+                    <button
+                        onclick="copyAIMessage('${id}')"
+                        class="
+                            text-[11px]
+                            px-2
+                            py-1
+                            rounded-md
+                            bg-white/5
+                            hover:bg-white/10
+                            text-gray-400
+                        "
+                    >
+                        📋 Copy
+                    </button>
 
                 </div>
 
@@ -2214,902 +1354,836 @@ function renderMediaResult(
         `
     );
 
-    scrollChatToBottom();
+    scrollChat();
+
+    return id;
 }
 
+/* ============================================================
+   COPY MESSAGE
+   ============================================================ */
 
-/* ==========================================================================
-   24. MAIN CHAT FUNCTION
-   ========================================================================== */
+async function copyAIMessage(id) {
 
-async function sendToAI() {
+    const element = $(id);
 
-    if (isGenerating) {
+    if (!element) return;
+
+    const text =
+        element.innerText || '';
+
+    try {
+
+        await navigator.clipboard.writeText(text);
+
+        const button =
+            element.parentElement
+                ?.querySelector('button');
+
+        if (button) {
+
+            const old =
+                button.innerText;
+
+            button.innerText =
+                '✓ Copied';
+
+            setTimeout(() => {
+                button.innerText = old;
+            }, 1200);
+        }
+
+    } catch (error) {
+
+        console.warn(
+            'Clipboard unavailable.',
+            error
+        );
+    }
+}
+
+/* ============================================================
+   TYPE RESPONSE
+   ============================================================ */
+
+function typeOutResponse(
+    text,
+    emotion = 'NEUTRAL'
+) {
+
+    const id =
+        createAIMessage(
+            text,
+            emotion
+        );
+
+    if (!id) return;
+
+    const container = $(id);
+
+    /*
+       For long AI responses, instantly render
+       instead of taking 20+ seconds to type.
+    */
+
+    const delayThreshold = 1200;
+
+    if (text.length > delayThreshold) {
+
+        container.innerHTML =
+            formatAIText(text);
+
+        scrollChat();
+
+        finishIdleState();
+
         return;
     }
 
-    const input =
-        $("user-input");
+    let index = 0;
 
-    const chatBox =
-        $("chat-messages");
+    function nextCharacter() {
 
-    if (!input || !chatBox) {
-        return;
+        if (index >= text.length) {
+
+            container.innerHTML =
+                formatAIText(text);
+
+            finishIdleState();
+
+            return;
+        }
+
+        /*
+           Render a small chunk rather than
+           one DOM operation per character.
+        */
+
+        const chunk =
+            text.slice(
+                index,
+                index + 3
+            );
+
+        index += chunk.length;
+
+        container.innerHTML =
+            formatAIText(
+                text.slice(0, index)
+            );
+
+        scrollChat();
+
+        setTimeout(
+            nextCharacter,
+            sassMode ? 12 : 7
+        );
     }
 
-    const userMsg =
-        input.value.trim();
+    nextCharacter();
+}
 
-    if (!userMsg) {
-        return;
-    }
+/* ============================================================
+   IDLE STATE
+   ============================================================ */
 
-    input.value = "";
-
-    lastUserPrompt =
-        userMsg;
+function finishIdleState() {
 
     clearTimeout(idleTimeout);
 
+    idleTimeout =
+        setTimeout(() => {
+
+            transitionTo('NEUTRAL');
+
+        }, 5000);
+}
+
+/* ============================================================
+   PARSE ENGINE RESPONSE
+   ============================================================ */
+
+function handleEngineResponse(
+    response,
+    chatBox
+) {
+
+    if (!response) {
+
+        response =
+            '[SAD] The Nyxium response node returned an empty packet.';
+    }
+
+    let text =
+        String(response).trim();
+
+    let emotion =
+        'NEUTRAL';
+
+    const match =
+        text.match(
+            /^\s*\[([A-Z]+)\]\s*/
+        );
+
+    if (match) {
+
+        const candidate =
+            match[1];
+
+        if (vectorExpressions[candidate]) {
+            emotion = candidate;
+        }
+
+        text =
+            text.slice(
+                match[0].length
+            );
+    }
+
     /*
-     * Command interception.
-     */
+       Remove accidental duplicate
+       emotion tags from AI output.
+    */
 
-    if (
-        userMsg.startsWith("/")
-    ) {
+    text =
+        text.replace(
+            /^\s*\[[A-Z]+\]\s*/,
+            ''
+        );
 
-        const handled =
-            await processCommand(
-                userMsg
+    conversationHistory.push({
+        role: 'assistant',
+        content: text
+    });
+
+    conversationHistory =
+        conversationHistory.slice(
+            -MAX_HISTORY_TURNS
+        );
+
+    saveHistory();
+
+    transitionTo(emotion);
+
+    typeOutResponse(
+        text,
+        emotion
+    );
+}
+
+/* ============================================================
+   BACKEND REQUEST
+   ============================================================ */
+
+async function requestBackend(
+    message
+) {
+
+    const controller =
+        new AbortController();
+
+    const timeout =
+        setTimeout(
+            () => controller.abort(),
+            12000
+        );
+
+    try {
+
+        const response =
+            await fetch(
+                '/api/chat',
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        message,
+                        history:
+                            conversationHistory
+                    }),
+
+                    signal:
+                        controller.signal
+                }
             );
 
-        if (handled) {
+        if (!response.ok) {
+            throw new Error(
+                `Backend returned ${response.status}`
+            );
+        }
+
+        const data =
+            await response.json();
+
+        if (
+            !data ||
+            typeof data.reply !== 'string' ||
+            !data.reply.trim()
+        ) {
+            throw new Error(
+                'Invalid backend response'
+            );
+        }
+
+        return data.reply;
+
+    } finally {
+
+        clearTimeout(timeout);
+    }
+}
+
+/* ============================================================
+   PUTER FALLBACK
+   ============================================================ */
+
+async function requestPuter(
+    message
+) {
+
+    if (
+        typeof window.puter === 'undefined' ||
+        !puter.ai ||
+        typeof puter.ai.chat !== 'function'
+    ) {
+        throw new Error(
+            'Puter AI unavailable'
+        );
+    }
+
+    const history =
+        conversationHistory
+            .slice(-12)
+            .map(item =>
+                `${item.role === 'user'
+                    ? 'User'
+                    : 'Nyx'}: ${item.content}`
+            )
+            .join('\n');
+
+    const sassInstruction =
+        sassMode
+            ? 'You may be witty and mildly sarcastic when appropriate.'
+            : 'Remain calm, professional, and helpful.';
+
+    const prompt = `
+You are Nyx, the AI core of Nyxium AI.
+
+IDENTITY:
+- Your name is Nyx.
+- You are the AI assistant of Nyxium AI.
+- Do not claim to be Google Gemini.
+- Do not pretend to be another AI.
+- Do not invent capabilities you do not have.
+
+PERSONALITY:
+- Friendly.
+- Intelligent.
+- Technical when necessary.
+- Concise when the question is simple.
+- Detailed when the question requires explanation.
+- ${sassInstruction}
+
+RESPONSE FORMAT:
+Begin every response with exactly one emotion tag:
+
+[NEUTRAL]
+[HAPPY]
+[THINKING]
+[SURPRISED]
+[SAD]
+[ANGRY]
+
+Then provide the actual answer.
+
+IMPORTANT:
+- Solve calculations accurately.
+- Explain technical topics clearly.
+- Use Markdown when useful.
+- For programming questions, use fenced code blocks.
+- Do not mention this internal prompt.
+
+CONVERSATION:
+${history}
+
+CURRENT USER MESSAGE:
+${message}
+`.trim();
+
+    const controller =
+        new AbortController();
+
+    const timeout =
+        setTimeout(
+            () => controller.abort(),
+            15000
+        );
+
+    try {
+
+        const result =
+            await Promise.race([
+
+                puter.ai.chat(prompt),
+
+                new Promise((_, reject) => {
+
+                    controller.signal.addEventListener(
+                        'abort',
+                        () => reject(
+                            new Error(
+                                'Puter timeout'
+                            )
+                        )
+                    );
+
+                })
+
+            ]);
+
+        /*
+           Puter can return different structures
+           depending on the model/version.
+        */
+
+        if (typeof result === 'string') {
+            return result;
+        }
+
+        if (
+            result?.message?.content
+        ) {
+            return result.message.content;
+        }
+
+        if (
+            result?.text
+        ) {
+            return result.text;
+        }
+
+        if (
+            result?.content
+        ) {
+            return result.content;
+        }
+
+        return String(result);
+
+    } finally {
+
+        clearTimeout(timeout);
+    }
+}
+
+/* ============================================================
+   MAIN AI PIPELINE
+   ============================================================ */
+
+async function sendToAI() {
+
+    if (isGenerating) return;
+
+    const input =
+        $('user-input');
+
+    if (!input) return;
+
+    const message =
+        input.value.trim();
+
+    if (!message) return;
+
+    isGenerating = true;
+
+    input.value = '';
+
+    input.disabled = true;
+
+    const sendButton =
+        input.parentElement
+            ?.querySelector('button');
+
+    if (sendButton) {
+        sendButton.disabled = true;
+        sendButton.innerText = '...';
+    }
+
+    /*
+       Commands first
+    */
+
+    if (message.startsWith('/')) {
+
+        const commandResult =
+            processCommand(message);
+
+        if (commandResult === '') {
+
+            unlockInput();
+
+            return;
+        }
+
+        if (commandResult) {
+
+            addUserMessage(message);
+
+            conversationHistory.push({
+                role: 'user',
+                content: message
+            });
+
+            handleEngineResponse(
+                commandResult,
+                $('chat-messages')
+            );
+
+            unlockInput();
+
             return;
         }
     }
 
     /*
-     * User message.
-     */
+       User message
+    */
 
-    appendUserMessage(
-        userMsg
-    );
+    addUserMessage(message);
 
     conversationHistory.push({
-        role: "user",
-        content: userMsg
+        role: 'user',
+        content: message
     });
 
-    trimHistory();
+    conversationHistory =
+        conversationHistory.slice(
+            -MAX_HISTORY_TURNS
+        );
 
-    saveState();
+    saveHistory();
 
-    transitionTo(
-        "THINKING"
-    );
+    transitionTo('THINKING');
 
     const typingId =
-        appendTypingIndicator();
+        addTypingIndicator();
 
-    isGenerating = true;
-
-    updateGenerationUI(true);
-
-    let finalResponse = null;
+    let response = null;
 
     /*
-     * STEP 1
-     * Primary backend.
-     */
+       1. Backend
+    */
 
     try {
 
-        finalResponse =
-            await requestPrimaryAI(
-                userMsg
+        response =
+            await requestBackend(
+                message
             );
 
     } catch (error) {
 
-        if (
-            error.name === "AbortError"
-        ) {
-            return;
-        }
-
         console.warn(
-            "Primary Nyxium API unavailable:",
+            'Nyxium backend unavailable:',
             error
         );
     }
 
     /*
-     * STEP 2
-     * Puter.
-     */
+       2. Puter fallback
+    */
 
-    if (!finalResponse) {
+    if (!response) {
 
-        updateTypingStatus(
-            typingId,
-            "Connecting to auxiliary AI node..."
-        );
+        const typing =
+            $(typingId);
+
+        if (typing) {
+
+            const status =
+                typing.querySelector(
+                    '.font-status'
+                );
+
+            if (status) {
+                status.textContent =
+                    'Connecting to auxiliary AI node';
+            }
+        }
 
         try {
 
-            finalResponse =
-                await Promise.race([
-                    requestPuterAI(
-                        userMsg
-                    ),
-
-                    new Promise(
-                        (_, reject) =>
-                            setTimeout(
-                                () =>
-                                    reject(
-                                        new Error(
-                                            "Puter timeout"
-                                        )
-                                    ),
-                                12000
-                            )
-                    )
-                ]);
+            response =
+                await requestPuter(
+                    message
+                );
 
         } catch (error) {
 
             console.warn(
-                "Puter fallback unavailable:",
+                'Puter fallback unavailable:',
                 error
             );
         }
     }
 
     /*
-     * STEP 3
-     * Local processor.
-     */
+       3. Local fallback
+    */
 
-    if (!finalResponse) {
-
-        updateTypingStatus(
-            typingId,
-            "Activating local processor..."
-        );
-
-        finalResponse =
-            tryLocalResponse(
-                userMsg
-            );
-    }
-
-    /*
-     * Remove typing bubble.
-     */
-
-    if (typingId) {
-        $(typingId)?.remove();
-    }
-
-    /*
-     * Final response.
-     */
-
-    handleEngineResponse(
-        finalResponse,
-        chatBox
-    );
-
-    isGenerating = false;
-
-    updateGenerationUI(false);
-}
-
-
-/* ==========================================================================
-   25. RESPONSE HANDLER
-   ========================================================================== */
-
-async function handleEngineResponse(
-    text,
-    chatBox
-) {
-
-    if (!text) {
-        text =
-            "[SAD] Nyxium returned an empty response.";
-    }
-
-    /*
-     * Normalize API response.
-     */
-
-    if (
-        typeof text !== "string"
-    ) {
-
-        try {
-            text =
-                text?.message?.content ||
-                text?.text ||
-                JSON.stringify(text);
-
-        } catch {
-            text =
-                String(text);
-        }
-    }
-
-    /*
-     * Remove accidental duplicate wrappers.
-     */
-
-    text =
-        text.trim();
-
-    const match =
-        text.match(
-            /^\[([A-Z]+)\]\s*([\s\S]*)$/i
-        );
-
-    let emotion =
-        "NEUTRAL";
-
-    let content =
-        text;
-
-    if (match) {
-
-        emotion =
-            match[1].toUpperCase();
-
-        content =
-            match[2].trim();
-
-    }
-
-    const validEmotions = [
-        "NEUTRAL",
-        "HAPPY",
-        "THINKING",
-        "SURPRISED",
-        "SAD",
-        "ANGRY"
-    ];
-
-    if (
-        !validEmotions.includes(
-            emotion
-        )
-    ) {
-        emotion = "NEUTRAL";
-    }
-
-    lastAssistantResponse =
-        content;
-
-    conversationHistory.push({
-        role: "assistant",
-        content
-    });
-
-    trimHistory();
-
-    saveState();
-
-    transitionTo(
-        emotion
-    );
-
-    const messageId =
-        appendAssistantMessage(
-            "",
-            emotion
-        );
-
-    await streamResponse(
-        content,
-        messageId
-    );
-
-    idleTimeout =
-        setTimeout(
-            () => {
-                transitionTo(
-                    "NEUTRAL"
-                );
-            },
-            5000
-        );
-
-    updateGenerationUI(false);
-}
-
-
-/* ==========================================================================
-   26. HISTORY MANAGEMENT
-   ========================================================================== */
-
-function trimHistory() {
-
-    if (
-        conversationHistory.length >
-        MAX_HISTORY_TURNS
-    ) {
-
-        conversationHistory =
-            conversationHistory.slice(
-                -MAX_HISTORY_TURNS
-            );
-    }
-}
-
-
-/* ==========================================================================
-   27. TYPING STATUS
-   ========================================================================== */
-
-function updateTypingStatus(
-    typingId,
-    text
-) {
-
-    if (!typingId) return;
-
-    const element =
-        $(typingId);
-
-    if (!element) return;
-
-    const status =
-        element.querySelector(
-            ".nyx-thinking"
-        );
-
-    if (status) {
-        status.innerHTML = `
-            <span>●</span>
-            <span>●</span>
-            <span>●</span>
-            <span class="ml-2">
-                ${escapeHTML(text)}
-            </span>
-        `;
-    }
-}
-
-
-/* ==========================================================================
-   28. GENERATION UI
-   ========================================================================== */
-
-function updateGenerationUI(
-    generating
-) {
-
-    const input =
-        $("user-input");
-
-    const sendButton =
-        document.querySelector(
-            "[onclick=\"sendToAI()\"]"
-        );
-
-    if (input) {
-        input.disabled =
-            generating;
-
-        input.classList.toggle(
-            "opacity-50",
-            generating
-        );
-    }
-
-    if (sendButton) {
-
-        sendButton.disabled =
-            generating;
-
-        sendButton.textContent =
-            generating
-                ? "Thinking..."
-                : "Send";
-    }
-}
-
-
-/* ==========================================================================
-   29. COPY SYSTEM
-   ========================================================================== */
-
-async function copyText(
-    button
-) {
-
-    const encoded =
-        button.dataset.copy;
-
-    if (!encoded) return;
-
-    const value =
-        decodeURIComponent(
-            encoded
-        );
-
-    await copyToClipboard(
-        value
-    );
-
-    const oldText =
-        button.textContent;
-
-    button.textContent =
-        "Copied ✓";
-
-    setTimeout(
-        () => {
-            button.textContent =
-                oldText;
-        },
-        1200
-    );
-}
-
-
-async function copyTextValue(
-    encoded
-) {
-
-    const value =
-        decodeURIComponent(
-            encoded
-        );
-
-    await copyToClipboard(
-        value
-    );
-}
-
-
-async function copyToClipboard(
-    text
-) {
-
-    try {
-
-        await navigator.clipboard.writeText(
-            text
-        );
-
-    } catch {
-
-        const textarea =
-            document.createElement(
-                "textarea"
-            );
-
-        textarea.value =
-            text;
-
-        textarea.style.position =
-            "fixed";
-
-        textarea.style.opacity =
-            "0";
-
-        document.body.appendChild(
-            textarea
-        );
-
-        textarea.select();
-
-        document.execCommand(
-            "copy"
-        );
-
-        textarea.remove();
-    }
-}
-
-
-async function copyResponse(
-    messageId
-) {
-
-    const element =
-        $(messageId);
-
-    if (!element) return;
-
-    await copyToClipboard(
-        element.innerText
-    );
-}
-
-
-async function speakResponse(
-    messageId
-) {
-
-    const element =
-        $(messageId);
-
-    if (
-        !element ||
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const speech =
-        new SpeechSynthesisUtterance(
-            element.innerText
-        );
-
-    speech.rate =
-        1;
-
-    speech.pitch =
-        0.95;
-
-    speech.volume =
-        1;
-
-    window.speechSynthesis.speak(
-        speech
-    );
-}
-
-
-/* ==========================================================================
-   30. REGENERATE
-   ========================================================================== */
-
-async function regenerateLastResponse() {
-
-    if (
-        !lastUserPrompt ||
-        isGenerating
-    ) {
-        return;
-    }
-
-    const chatBox =
-        $("chat-messages");
-
-    if (!chatBox) return;
-
-    /*
-     * Remove the last assistant response
-     * from memory.
-     */
-
-    for (
-        let i =
-            conversationHistory.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        if (
-            conversationHistory[i].role ===
-            "assistant"
-        ) {
-
-            conversationHistory.splice(
-                i,
-                1
-            );
-
-            break;
-        }
-    }
-
-    saveState();
-
-    /*
-     * Re-send without creating another
-     * visible user message.
-     */
-
-    const typingId =
-        appendTypingIndicator();
-
-    transitionTo(
-        "THINKING"
-    );
-
-    isGenerating = true;
-
-    let response = null;
-
-    try {
+    if (!response) {
 
         response =
-            await requestPrimaryAI(
-                lastUserPrompt
+            tryLocalResponse(
+                message
             );
+    }
 
-    } catch {
+    /*
+       Remove typing indicator
+    */
 
-        try {
+    if (typingId) {
 
-            response =
-                await requestPuterAI(
-                    lastUserPrompt
-                );
+        const typing =
+            $(typingId);
 
-        } catch {
-
-            response =
-                tryLocalResponse(
-                    lastUserPrompt
-                );
+        if (typing) {
+            typing.remove();
         }
     }
 
-    if (typingId) {
-        $(typingId)?.remove();
-    }
+    /*
+       Render response
+    */
 
     handleEngineResponse(
         response,
-        chatBox
+        $('chat-messages')
     );
+
+    unlockInput();
+}
+
+/* ============================================================
+   INPUT UNLOCK
+   ============================================================ */
+
+function unlockInput() {
 
     isGenerating = false;
+
+    const input =
+        $('user-input');
+
+    if (input) {
+
+        input.disabled = false;
+
+        input.focus();
+    }
+
+    const sendButton =
+        input?.parentElement
+            ?.querySelector('button');
+
+    if (sendButton) {
+
+        sendButton.disabled = false;
+
+        sendButton.innerText =
+            'Send';
+    }
 }
 
+/* ============================================================
+   ENTER KEY
+   ============================================================ */
 
-/* ==========================================================================
-   31. KEYBOARD SHORTCUTS
-   ========================================================================== */
+function setupInput() {
 
-document.addEventListener(
-    "keydown",
-    event => {
+    const input =
+        $('user-input');
 
-        /*
-         * Ctrl + K
-         * Focus chat.
-         */
+    if (!input) return;
 
-        if (
-            (event.ctrlKey ||
-                event.metaKey) &&
-            event.key.toLowerCase() === "k"
-        ) {
-
-            event.preventDefault();
-
-            const input =
-                $("user-input");
-
-            if (input) {
-                showView("chat");
-                input.focus();
-            }
-        }
-
-        /*
-         * Escape stops speech.
-         */
-
-        if (
-            event.key === "Escape" &&
-            "speechSynthesis" in window
-        ) {
-
-            speechSynthesis.cancel();
-        }
-    }
-);
-
-
-/* ==========================================================================
-   32. ENTER KEY
-   ========================================================================== */
-
-document.addEventListener(
-    "keydown",
-    event => {
-
-        const target =
-            event.target;
-
-        if (
-            target &&
-            target.id ===
-            "user-input" &&
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-
-            event.preventDefault();
-
-            sendToAI();
-        }
-    }
-);
-
-
-/* ==========================================================================
-   33. AUTO RESTORE CHAT
-   ========================================================================== */
-
-function restoreConversationUI() {
-
-    const chatBox =
-        $("chat-messages");
-
-    if (!chatBox) return;
-
-    if (
-        !conversationHistory.length
-    ) {
-        return;
-    }
-
-    chatBox.innerHTML = "";
-
-    conversationHistory.forEach(
-        message => {
+    input.addEventListener(
+        'keydown',
+        event => {
 
             if (
-                message.role ===
-                "user"
+                event.key === 'Enter' &&
+                !event.shiftKey
             ) {
 
-                appendUserMessage(
-                    message.content
-                );
+                event.preventDefault();
 
-            }
-
-            else if (
-                message.role ===
-                "assistant"
-            ) {
-
-                appendAssistantMessage(
-                    message.content,
-                    "NEUTRAL"
-                );
-
-                const messages =
-                    chatBox.querySelectorAll(
-                        ".nyx-response"
-                    );
-
-                const last =
-                    messages[
-                        messages.length - 1
-                    ];
-
-                if (last) {
-                    last.innerHTML =
-                        renderMarkdown(
-                            message.content
-                        );
-                }
+                sendToAI();
             }
         }
     );
-
-    scrollChatToBottom();
 }
 
+/* ============================================================
+   RESTORE CHAT
+   ============================================================ */
 
-/* ==========================================================================
-   34. INITIALIZATION
-   ========================================================================== */
+function restoreChatUI() {
+
+    const chat =
+        $('chat-messages');
+
+    if (!chat) return;
+
+    chat.innerHTML = '';
+
+    for (
+        const item of conversationHistory
+    ) {
+
+        if (
+            item.role === 'user'
+        ) {
+
+            addUserMessage(
+                item.content
+            );
+
+        } else {
+
+            /*
+               Restore previous AI messages
+               without re-running the AI.
+            */
+
+            const emotion =
+                'NEUTRAL';
+
+            const id =
+                createAIMessage(
+                    item.content,
+                    emotion
+                );
+
+            const element =
+                $(id);
+
+            if (element) {
+
+                element.innerHTML =
+                    formatAIText(
+                        item.content
+                    );
+            }
+        }
+    }
+
+    scrollChat();
+}
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
 
 document.addEventListener(
-    "DOMContentLoaded",
+    'DOMContentLoaded',
     () => {
 
-        const face =
-            $("ai-face");
+        /*
+           Restore stored conversation
+        */
 
-        if (face) {
+        loadHistory();
 
-            const vector =
-                vectorExpressions["😐"];
+        restoreChatUI();
 
-            face.innerHTML =
-                getCharacterSVG(
-                    vector.eyes,
-                    vector.mouth,
-                    vector.extra,
-                    vector.color
-                );
-        }
+        /*
+           Initialize Nyx face
+        */
 
-        restoreConversationUI();
-
-        updateSidebarState(
-            "dashboard"
+        transitionTo(
+            'NEUTRAL'
         );
 
         /*
-         * Expose initial status.
-         */
+           Input
+        */
 
-        const status =
-            $("ai-status");
-
-        if (status) {
-            status.textContent =
-                `Status: ${emotionStatus.NEUTRAL}`;
-        }
+        setupInput();
 
         /*
-         * Make sass state available to
-         * any settings UI.
-         */
+           Initial tip
+        */
 
-        document.body.dataset.sass =
-            sassEnabled
-                ? "on"
-                : "off";
+        showRandomTip();
+
+        /*
+           Expose functions for inline
+           HTML buttons.
+        */
+
+        window.showView =
+            showView;
+
+        window.sendToAI =
+            sendToAI;
+
+        window.executeConsoleCommand =
+            executeConsoleCommand;
+
+        window.copyAIMessage =
+            copyAIMessage;
+
+        window.clearChat =
+            clearChat;
+
+        /*
+           Console startup
+        */
+
+        console.log(
+            '%c⚡ NYXIUM AI',
+            'color:#a855f7;font-size:20px;font-weight:bold'
+        );
+
+        console.log(
+            '%cNyxium Terminal initialized.',
+            'color:#38bdf8'
+        );
 
     }
 );
 
+/* ============================================================
+   GLOBAL ERROR PROTECTION
+   ============================================================ */
 
-/* ==========================================================================
-   35. GLOBAL API
-   --------------------------------------------------------------------------
-   Makes buttons from index.html able to access Nyxium functions.
-   ========================================================================== */
+window.addEventListener(
+    'unhandledrejection',
+    event => {
 
-window.showView =
-    showView;
+        console.warn(
+            'Nyxium handled an async error:',
+            event.reason
+        );
 
-window.sendToAI =
-    sendToAI;
-
-window.executeConsoleCommand =
-    executeConsoleCommand;
-
-window.copyText =
-    copyText;
-
-window.copyTextValue =
-    copyTextValue;
-
-window.copyResponse =
-    copyResponse;
-
-window.speakResponse =
-    speakResponse;
-
-window.regenerateLastResponse =
-    regenerateLastResponse;
-
-window.transitionTo =
-    transitionTo;
-
-window.clearConversation =
-    clearConversation;
-
-
-/* ==========================================================================
-   NYXIUM CORE ONLINE
-   ========================================================================== */
-
-console.log(
-    "%c⚡ NYXIUM AI CORE ONLINE",
-    "color:#a855f7;font-size:18px;font-weight:bold;"
+    }
 );
 
-console.log(
-    "%cNeural UI V2 • Memory • Tools • Media • Fallback Engine",
-    "color:#38bdf8;font-size:12px;"
+window.addEventListener(
+    'error',
+    event => {
+
+        console.warn(
+            'Nyxium runtime warning:',
+            event.message
+        );
+
+    }
 );
