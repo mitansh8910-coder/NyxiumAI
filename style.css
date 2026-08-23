@@ -1,153 +1,1536 @@
-/* Reset and Base Styles */
+/* =========================================================
+   NYXIUM AI — PREMIUM GALACTIC UI
+   Complete style.css
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* =========================================================
+   ROOT
+   ========================================================= */
+
+:root {
+    --nyx-bg: #06030d;
+    --nyx-bg-2: #0d0618;
+    --nyx-panel: rgba(18, 12, 31, 0.72);
+    --nyx-panel-heavy: rgba(15, 9, 27, 0.92);
+
+    --nyx-purple: #a855f7;
+    --nyx-purple-light: #c084fc;
+    --nyx-indigo: #6366f1;
+    --nyx-blue: #38bdf8;
+    --nyx-cyan: #22d3ee;
+
+    --nyx-border: rgba(255, 255, 255, 0.09);
+    --nyx-border-hover: rgba(168, 85, 247, 0.45);
+
+    --nyx-text: #f8fafc;
+    --nyx-muted: #94a3b8;
+
+    --nyx-success: #22c55e;
+    --nyx-warning: #f59e0b;
+    --nyx-danger: #ef4444;
+
+    --sidebar-width: 260px;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
-    /* Deep Galactic Background Gradient */
-    background: radial-gradient(circle at 70% 30%, #1e0033 0%, #050010 100%);
-    color: #f3f4f6;
     min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    color: var(--nyx-text);
+
+    background:
+        radial-gradient(
+            circle at 75% 15%,
+            rgba(124, 58, 237, 0.18),
+            transparent 32%
+        ),
+        radial-gradient(
+            circle at 20% 85%,
+            rgba(79, 70, 229, 0.12),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #020106 0%,
+            #090313 45%,
+            #12051f 100%
+        );
+
     overflow-x: hidden;
-    margin: 0;
-    /* Hide default cursor to let our custom one shine */
-    cursor: none; 
+
+    cursor: none;
 }
 
-/* Starfield Canvas Background */
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+::selection {
+    background: rgba(168, 85, 247, 0.35);
+    color: white;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        180deg,
+        rgba(168, 85, 247, 0.75),
+        rgba(99, 102, 241, 0.75)
+    );
+
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+        180deg,
+        #c084fc,
+        #818cf8
+    );
+}
+
+/* Firefox */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(168, 85, 247, 0.65) transparent;
+}
+
+/* =========================================================
+   STARFIELD
+   ========================================================= */
+
 #starfield {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
+
     width: 100%;
     height: 100%;
-    z-index: 0; 
+
+    z-index: 0;
+
     pointer-events: none;
 }
 
-/* Sidebar Styling - Ensure high z-index for clickability */
-aside {
-    background: rgba(15, 17, 26, 0.85);
-    backdrop-filter: blur(15px);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    z-index: 50; 
-    position: relative;
-    height: 100vh;
+/* Additional atmospheric glow */
+
+body::before {
+    content: "";
+
+    position: fixed;
+    inset: -30%;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(168, 85, 247, 0.055),
+            transparent 35%
+        );
+
+    animation: cosmicDrift 16s ease-in-out infinite alternate;
+
+    z-index: 0;
 }
 
-/* Glassmorphism Cards */
-.glass-card {
-    background: rgba(18, 23, 33, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 24px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+@keyframes cosmicDrift {
+    from {
+        transform: translate3d(-2%, -1%, 0) scale(1);
+    }
+
+    to {
+        transform: translate3d(2%, 1%, 0) scale(1.08);
+    }
+}
+
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
+
+main {
     position: relative;
-    z-index: 10;
+    z-index: 5;
+
+    min-width: 0;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+aside {
+    position: relative;
+
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+
+    height: 100vh;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(17, 10, 30, 0.94),
+            rgba(6, 3, 13, 0.9)
+        );
+
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+
+    box-shadow:
+        20px 0 60px rgba(0, 0, 0, 0.25);
+
+    z-index: 50;
+
+    overflow: hidden;
+}
+
+/* Sidebar cosmic glow */
+
+aside::before {
+    content: "";
+
+    position: absolute;
+
+    width: 220px;
+    height: 220px;
+
+    top: -100px;
+    left: -80px;
+
+    background: rgba(168, 85, 247, 0.12);
+
+    filter: blur(70px);
+
+    pointer-events: none;
+}
+
+/* Sidebar bottom glow */
+
+aside::after {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    bottom: -100px;
+    right: -80px;
+
+    background: rgba(59, 130, 246, 0.08);
+
+    filter: blur(60px);
+
+    pointer-events: none;
+}
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+aside h1 {
+    position: relative;
+    z-index: 2;
+
+    letter-spacing: -0.03em;
+
+    text-shadow:
+        0 0 15px rgba(129, 140, 248, 0.35);
+}
+
+aside h1::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -12px;
+
+    width: 44px;
+    height: 2px;
+
+    background: linear-gradient(
+        90deg,
+        #a855f7,
+        transparent
+    );
+
+    border-radius: 999px;
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+aside nav {
+    position: relative;
+    z-index: 3;
+}
+
+aside nav button {
+    position: relative;
+
+    min-height: 46px;
+
+    border: 1px solid transparent;
+
+    color: #cbd5e1;
+
+    background: transparent;
+
+    overflow: hidden;
+}
+
+aside nav button::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 50%;
+
+    width: 3px;
+    height: 0;
+
+    transform: translateY(-50%);
+
+    background: linear-gradient(
+        180deg,
+        #c084fc,
+        #6366f1
+    );
+
+    border-radius: 0 6px 6px 0;
+
+    transition: height 0.25s ease;
+}
+
+aside nav button:hover {
+    color: white;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(168, 85, 247, 0.13),
+            rgba(99, 102, 241, 0.05)
+        );
+
+    border-color: rgba(168, 85, 247, 0.14);
+
+    transform: translateX(3px);
+}
+
+aside nav button:hover::before {
+    height: 22px;
+}
+
+aside nav button:active {
+    transform: translateX(3px) scale(0.98);
+}
+
+/* =========================================================
+   VIEW SYSTEM
+   ========================================================= */
+
+.view {
+    display: none;
+
+    animation: viewEnter 0.4s ease both;
+}
+
+.view.active {
+    display: block;
+}
+
+@keyframes viewEnter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   GLASS CARDS
+   ========================================================= */
+
+.glass-card {
+    position: relative;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.055),
+            rgba(255, 255, 255, 0.018)
+        );
+
+    border: 1px solid var(--nyx-border);
+
+    border-radius: 18px;
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.035),
+        0 15px 45px rgba(0, 0, 0, 0.18);
+
+    transition:
+        transform 0.3s cubic-bezier(.2,.8,.2,1),
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
+
+    overflow: hidden;
+}
+
+/* Card shine */
+
+.glass-card::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -120%;
+
+    width: 70%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.045),
+            transparent
+        );
+
+    transform: skewX(-20deg);
+
+    transition: left 0.7s ease;
+
+    pointer-events: none;
+}
+
+.glass-card:hover::before {
+    left: 140%;
 }
 
 .glass-card:hover {
-    transform: translateY(-8px);
-    border-color: #a855f7; /* Purple hover border */
-    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.2);
+    transform: translateY(-5px);
+
+    border-color: var(--nyx-border-hover);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(168, 85, 247, 0.075),
+            rgba(255, 255, 255, 0.02)
+        );
+
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.28),
+        0 0 30px rgba(168, 85, 247, 0.08);
 }
 
-/* Chat UI Improvements */
-#chat-messages {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
+/* =========================================================
+   DASHBOARD HEADERS
+   ========================================================= */
+
+h2 {
+    letter-spacing: -0.035em;
 }
 
-/* Glowing Purple Cursor Ball */
-.cursor-star {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: #a855f7;
-    border-radius: 50%;
-    pointer-events: none;
-    box-shadow: 0 0 15px #a855f7, 0 0 30px #7e22ce;
-    animation: twinkle 0.5s infinite alternate, fadeOut 0.8s linear forwards;
-    z-index: 9999;
+h3 {
+    letter-spacing: -0.02em;
 }
 
-@keyframes twinkle {
-    from { opacity: 0.5; }
-    to { opacity: 1; }
-}
+/* =========================================================
+   BUTTON SYSTEM
+   ========================================================= */
 
-@keyframes fadeOut {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(0); opacity: 0; }
-}
-
-/* Command List Styling */
-code {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #c084fc; /* Light Purple */
-    font-family: monospace;
-}
-
-/* View Control */
-.view { display: none; }
-.view.active { display: block; }
-
-/* Buttons - Ensure high z-index and pointer-events enabled */
 button {
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
     position: relative;
+
+    cursor: pointer;
+
+    border: none;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease,
+        background 0.25s ease;
+
     z-index: 60;
 }
 
-button:active {
-    transform: scale(0.98);
+button:hover {
+    filter: brightness(1.08);
 }
 
-/* ==========================================================================
-   NYXIUM EMOTIONAL ENGINE SECTOR (NEW ADDITIONS)
-   ========================================================================== */
+button:active {
+    transform: scale(0.97);
+}
 
-/* Core Layout Definition for the Avatar Frame */
+/* Primary purple/blue buttons */
+
+.bg-indigo-600,
+.bg-blue-600,
+.bg-purple-600 {
+    box-shadow:
+        0 8px 25px rgba(99, 102, 241, 0.18);
+}
+
+.bg-indigo-600:hover,
+.bg-blue-600:hover,
+.bg-purple-600:hover {
+    box-shadow:
+        0 10px 30px rgba(129, 92, 246, 0.3);
+}
+
+/* =========================================================
+   COMMAND CODE TAGS
+   ========================================================= */
+
+code {
+    display: inline-block;
+
+    padding: 3px 7px;
+
+    color: #d8b4fe;
+
+    background:
+        rgba(168, 85, 247, 0.09);
+
+    border: 1px solid rgba(168, 85, 247, 0.16);
+
+    border-radius: 6px;
+
+    font-family: 'JetBrains Mono', monospace;
+
+    font-size: 0.82em;
+
+    box-shadow:
+        inset 0 0 12px rgba(168, 85, 247, 0.04);
+}
+
+/* =========================================================
+   PREMIUM STATUS
+   ========================================================= */
+
+.text-green-400 {
+    text-shadow:
+        0 0 12px rgba(34, 197, 94, 0.25);
+}
+
+/* =========================================================
+   CHAT CONTAINER
+   ========================================================= */
+
+#chat-messages {
+    position: relative;
+
+    background:
+        radial-gradient(
+            circle at 50% 0%,
+            rgba(168, 85, 247, 0.045),
+            transparent 40%
+        ),
+        rgba(0, 0, 0, 0.28);
+
+    border: 1px solid rgba(255, 255, 255, 0.075);
+
+    border-radius: 18px;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025),
+        inset 0 0 50px rgba(0, 0, 0, 0.15);
+}
+
+/* Chat empty state */
+
+#chat-messages:empty::before {
+    content: "NYXIUM TERMINAL • AWAITING INPUT";
+
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: rgba(148, 163, 184, 0.25);
+
+    font-family: 'JetBrains Mono', monospace;
+
+    font-size: 11px;
+
+    letter-spacing: 0.16em;
+
+    white-space: nowrap;
+
+    pointer-events: none;
+}
+
+/* =========================================================
+   CHAT BUBBLES
+   ========================================================= */
+
+#chat-messages > div {
+    animation: messageEnter 0.28s ease both;
+}
+
+@keyframes messageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(7px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#chat-messages .bg-indigo-600 {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.95),
+            rgba(124, 58, 237, 0.95)
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    box-shadow:
+        0 8px 24px rgba(79, 70, 229, 0.12);
+}
+
+#chat-messages .bg-slate-800 {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(30, 24, 45, 0.95),
+            rgba(15, 12, 25, 0.95)
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+/* =========================================================
+   CHAT INPUT
+   ========================================================= */
+
+#user-input {
+    min-width: 0;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.055),
+            rgba(255, 255, 255, 0.025)
+        );
+
+    border: 1px solid rgba(255, 255, 255, 0.09);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025),
+        0 8px 30px rgba(0, 0, 0, 0.15);
+
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        background 0.25s ease;
+}
+
+#user-input::placeholder {
+    color: #64748b;
+}
+
+#user-input:hover {
+    border-color: rgba(168, 85, 247, 0.25);
+}
+
+#user-input:focus {
+    border-color: rgba(168, 85, 247, 0.65);
+
+    background:
+        rgba(168, 85, 247, 0.045);
+
+    box-shadow:
+        0 0 0 3px rgba(168, 85, 247, 0.08),
+        0 0 35px rgba(168, 85, 247, 0.08);
+}
+
+/* =========================================================
+   AI FACE / CYBERNETIC VISOR
+   ========================================================= */
+
+#ai-face {
+    position: relative;
+
+    transition:
+        transform 0.3s cubic-bezier(.175,.885,.32,1.275),
+        filter 0.3s ease;
+}
+
+#ai-face:hover {
+    transform: scale(1.08);
+    filter:
+        drop-shadow(0 0 12px rgba(168, 85, 247, 0.55));
+}
+
+/* Face frame */
+
+#ai-face svg {
+    overflow: visible;
+}
+
+/* =========================================================
+   VISOR ANIMATION
+   ========================================================= */
+
+@keyframes visor-glow {
+    0%,
+    100% {
+        transform: scale(1);
+        filter:
+            drop-shadow(
+                0 0 8px rgba(168, 85, 247, 0.35)
+            );
+    }
+
+    50% {
+        transform: scale(1.018);
+        filter:
+            drop-shadow(
+                0 0 18px rgba(168, 85, 247, 0.7)
+            );
+    }
+}
+
+.visor-active {
+    animation:
+        visor-glow 3s ease-in-out infinite;
+}
+
+/* =========================================================
+   EMOTION ANIMATIONS
+   ========================================================= */
+
 .emoji-avatar {
     font-size: 3.5rem;
+
     user-select: none;
+
     display: inline-block;
-    /* Spring physics interpolation for frame changes */
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    transition:
+        transform 0.25s cubic-bezier(
+            .175,
+            .885,
+            .32,
+            1.275
+        );
 }
 
-/* Continuous Idle Rhythm Animation while awaiting prompt delivery */
 .idle-pulse {
-    animation: slowCosmicBreathing 4s infinite ease-in-out;
+    animation:
+        slowCosmicBreathing 4s infinite ease-in-out;
 }
 
 @keyframes slowCosmicBreathing {
-    0% { transform: scale(1) translateY(0); }
-    50% { transform: scale(1.04) translateY(-2px); }
-    100% { transform: scale(1) translateY(0); }
+    0% {
+        transform:
+            scale(1)
+            translateY(0);
+    }
+
+    50% {
+        transform:
+            scale(1.04)
+            translateY(-2px);
+    }
+
+    100% {
+        transform:
+            scale(1)
+            translateY(0);
+    }
 }
 
-/* Instant physics pop triggered during programmatic transition frame updates */
 .pop-animation {
-    animation: avatarFramePop 0.22s ease-out;
+    animation:
+        avatarFramePop 0.22s ease-out;
 }
 
 @keyframes avatarFramePop {
-    0% { transform: scale(0.78); }
-    45% { transform: scale(1.18); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(0.78);
+    }
+
+    45% {
+        transform: scale(1.18);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
-/* Smooth scaling and filter hover pop when cursor targets the avatar frame zone */
-#ai-face:hover {
-    transform: scale(1.1) rotate(4deg);
-    filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.5));
+/* =========================================================
+   AI STATUS
+   ========================================================= */
+
+#ai-status {
+    position: relative;
+
+    font-family: 'JetBrains Mono', monospace;
+
+    letter-spacing: 0.03em;
+}
+
+#ai-status::before {
+    content: "";
+
+    display: inline-block;
+
+    width: 7px;
+    height: 7px;
+
+    margin-right: 7px;
+
+    vertical-align: middle;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow:
+        0 0 8px rgba(34, 197, 94, 0.8);
+
+    animation: statusPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%,
+    100% {
+        opacity: 0.55;
+        transform: scale(0.85);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* =========================================================
+   TYPING INDICATOR
+   ========================================================= */
+
+.font-status {
+    position: relative;
+
+    color: #94a3b8;
+
+    font-family: 'JetBrains Mono', monospace;
+
+    font-size: 12px;
+
+    letter-spacing: 0.02em;
+}
+
+.font-status::after {
+    content: "...";
+
+    display: inline-block;
+
+    width: 16px;
+
+    animation: typingDots 1.2s infinite;
+}
+
+@keyframes typingDots {
+    0% {
+        opacity: 0.2;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.2;
+    }
+}
+
+/* =========================================================
+   TIP BOX
+   ========================================================= */
+
+#ai-tip-box > div {
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(99, 102, 241, 0.11),
+            rgba(168, 85, 247, 0.055)
+        );
+
+    box-shadow:
+        0 10px 30px rgba(79, 70, 229, 0.06);
+}
+
+#ai-tip-box > div::after {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -40%;
+
+    width: 30%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.07),
+            transparent
+        );
+
+    transform: skewX(-20deg);
+
+    animation: tipScan 5s ease-in-out infinite;
+}
+
+@keyframes tipScan {
+    0%,
+    65% {
+        left: -40%;
+    }
+
+    100% {
+        left: 130%;
+    }
+}
+
+/* =========================================================
+   COMMAND TOOLBAR
+   ========================================================= */
+
+#chat button {
+    white-space: nowrap;
+}
+
+#chat button:hover {
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   CUSTOM CURSOR STAR
+   ========================================================= */
+
+.cursor-star {
+    position: absolute;
+
+    width: 8px;
+    height: 8px;
+
+    background: #c084fc;
+
+    border-radius: 50%;
+
+    pointer-events: none;
+
+    box-shadow:
+        0 0 8px #a855f7,
+        0 0 18px #7e22ce,
+        0 0 28px rgba(168, 85, 247, 0.4);
+
+    animation:
+        cursorTwinkle 0.45s infinite alternate,
+        cursorFade 0.8s linear forwards;
+
+    z-index: 9999;
+}
+
+@keyframes cursorTwinkle {
+    from {
+        opacity: 0.45;
+        transform: scale(0.75);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+}
+
+@keyframes cursorFade {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+footer {
+    position: relative;
+}
+
+footer a {
+    transition:
+        color 0.2s ease,
+        text-shadow 0.2s ease;
+}
+
+footer a:hover {
+    color: #c084fc;
+
+    text-shadow:
+        0 0 12px rgba(192, 132, 252, 0.4);
+}
+
+/* =========================================================
+   MOBILE NAV / RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    body {
+        cursor: auto;
+    }
+
+    .cursor-star {
+        display: none;
+    }
+
+    aside {
+        width: 220px;
+        min-width: 220px;
+    }
+}
+
+@media (max-width: 700px) {
+
+    body {
+        display: block;
+        overflow-y: auto;
+    }
+
+    aside {
+        width: 100%;
+        min-width: 100%;
+
+        height: auto;
+
+        padding: 16px;
+
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+        position: sticky;
+        top: 0;
+
+        z-index: 100;
+    }
+
+    aside h1 {
+        margin-bottom: 16px !important;
+    }
+
+    aside h1::after {
+        display: none;
+    }
+
+    aside nav {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+
+        gap: 6px;
+    }
+
+    aside nav button {
+        min-height: 42px;
+
+        padding: 8px !important;
+
+        font-size: 12px;
+
+        text-align: center;
+    }
+
+    main {
+        width: 100%;
+
+        padding: 20px !important;
+    }
+
+    #chat-messages {
+        height: 55vh !important;
+    }
+
+    #user-input {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    main {
+        padding: 14px !important;
+    }
+
+    aside nav {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    aside nav button {
+        font-size: 11px;
+    }
+
+    #chat-messages {
+        height: 58vh !important;
+
+        padding: 12px !important;
+    }
+
+    #chat-messages > div > div {
+        max-width: 88% !important;
+    }
+
+    #user-input {
+        padding: 12px !important;
+    }
+
+    #chat .flex.gap-4 {
+        gap: 8px;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+    outline: 2px solid rgba(192, 132, 252, 0.9);
+
+    outline-offset: 3px;
+}
+
+/* =========================================================
+   SPECIAL STATUS COLORS
+   ========================================================= */
+
+.status-online {
+    color: #4ade80;
+}
+
+.status-warning {
+    color: #fbbf24;
+}
+
+.status-error {
+    color: #f87171;
+}
+
+.status-offline {
+    color: #94a3b8;
+}
+
+/* =========================================================
+   UTILITY ANIMATIONS
+   ========================================================= */
+
+.nyx-glow {
+    animation: nyxGlow 3s ease-in-out infinite;
+}
+
+@keyframes nyxGlow {
+    0%,
+    100% {
+        filter:
+            drop-shadow(
+                0 0 4px rgba(168, 85, 247, 0.25)
+            );
+    }
+
+    50% {
+        filter:
+            drop-shadow(
+                0 0 16px rgba(168, 85, 247, 0.55)
+            );
+    }
+}
+
+.nyx-float {
+    animation: nyxFloat 5s ease-in-out infinite;
+}
+
+@keyframes nyxFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* =========================================================
+   LOADING STATE
+   ========================================================= */
+
+.nyx-loading {
+    position: relative;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,0.025),
+            rgba(168,85,247,0.1),
+            rgba(255,255,255,0.025)
+        );
+
+    background-size: 200% 100%;
+
+    animation:
+        loadingSweep 1.5s linear infinite;
+}
+
+@keyframes loadingSweep {
+    from {
+        background-position: 200% 0;
+    }
+
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* =========================================================
+   NOTIFICATION / TOAST SYSTEM
+   ========================================================= */
+
+.nyx-toast {
+    position: fixed;
+
+    right: 24px;
+    bottom: 24px;
+
+    min-width: 280px;
+    max-width: 380px;
+
+    padding: 14px 16px;
+
+    background:
+        rgba(15, 9, 27, 0.92);
+
+    border:
+        1px solid rgba(168, 85, 247, 0.28);
+
+    border-radius: 14px;
+
+    backdrop-filter: blur(20px);
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35),
+        0 0 30px rgba(168, 85, 247, 0.08);
+
+    z-index: 10000;
+
+    animation:
+        toastIn 0.35s ease both;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* =========================================================
+   MODAL SYSTEM
+   ========================================================= */
+
+.nyx-modal-backdrop {
+    position: fixed;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(2, 1, 7, 0.72);
+
+    backdrop-filter: blur(12px);
+
+    z-index: 9990;
+
+    animation: modalFade 0.2s ease both;
+}
+
+.nyx-modal {
+    width: min(620px, 100%);
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25, 15, 42, 0.96),
+            rgba(8, 5, 15, 0.96)
+        );
+
+    border:
+        1px solid rgba(168, 85, 247, 0.25);
+
+    border-radius: 22px;
+
+    padding: 26px;
+
+    box-shadow:
+        0 30px 100px rgba(0, 0, 0, 0.55),
+        0 0 50px rgba(168, 85, 247, 0.08);
+
+    animation:
+        modalEnter 0.3s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes modalFade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* =========================================================
+   COMMAND DIRECTORY
+   ========================================================= */
+
+.command-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    background:
+        rgba(255,255,255,0.025);
+
+    border:
+        1px solid rgba(255,255,255,0.05);
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.command-item:hover {
+    background:
+        rgba(168,85,247,0.07);
+
+    border-color:
+        rgba(168,85,247,0.2);
+
+    transform:
+        translateX(3px);
+}
+
+/* =========================================================
+   PREMIUM BADGE
+   ========================================================= */
+
+.nyx-premium-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    color: #d8b4fe;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(168,85,247,0.14),
+            rgba(99,102,241,0.08)
+        );
+
+    border:
+        1px solid rgba(168,85,247,0.22);
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.04em;
+
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   RESPONSIVE CHAT HEADER
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+    #chat > div:first-child {
+        align-items: flex-start;
+    }
+
+    #chat > div:first-child > div:first-child {
+        gap: 12px;
+    }
+
+    #chat > div:first-child > div:first-child > div:first-child {
+        width: 76px;
+        height: 76px;
+        min-width: 76px;
+        min-height: 76px;
+    }
+}
+
+/* =========================================================
+   FINAL POLISH
+   ========================================================= */
+
+a {
+    text-decoration: none;
+}
+
+img,
+svg {
+    max-width: 100%;
+}
+
+input,
+button,
+textarea {
+    font-family: inherit;
+}
+
+button,
+a,
+input {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent accidental text selection on UI controls */
+
+button,
+.nyx-premium-badge {
+    user-select: none;
 }
