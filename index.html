@@ -5,24 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Nyxium AI</title>
+
   <meta
     name="description"
     content="Nyxium AI — an intelligent AI workspace for chat, coding, analysis and creative tasks."
   >
 
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Puter -->
   <script src="https://js.puter.com/v2/"></script>
 
   <!-- Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- Code highlighting -->
+  <!-- Highlight.js -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css"
   >
+
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/lib/highlight.min.js"></script>
 
+  <!-- Nyxium CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -45,6 +51,7 @@
 
   <div id="app-shell">
 
+
     <!-- =======================================================
          SIDEBAR
     ======================================================== -->
@@ -56,17 +63,24 @@
         <!-- BRAND -->
 
         <div class="brand">
+
           <div class="brand-logo">
             ✦
           </div>
 
           <div class="brand-text">
-            <div class="brand-name">Nyxium AI</div>
+
+            <div class="brand-name">
+              Nyxium AI
+            </div>
+
             <div class="brand-status">
               <span class="status-dot"></span>
               Online
             </div>
+
           </div>
+
         </div>
 
 
@@ -86,37 +100,87 @@
 
         <nav class="sidebar-nav">
 
+          <!-- CHAT -->
+
           <button
             class="nav-item active"
             data-view="chat"
             onclick="showView('chat')"
           >
-            <span class="nav-icon">◈</span>
-            <span>AI Chat</span>
+
+            <span class="nav-icon">
+              ◈
+            </span>
+
+            <span>
+              AI Chat
+            </span>
+
           </button>
+
+
+          <!-- CHAT HISTORY -->
+
+          <button
+            class="nav-item"
+            data-view="history"
+            onclick="showView('history')"
+          >
+
+            <span class="nav-icon">
+              ▤
+            </span>
+
+            <span>
+              Chat History
+            </span>
+
+          </button>
+
+
+          <!-- DASHBOARD -->
 
           <button
             class="nav-item"
             data-view="dashboard"
             onclick="showView('dashboard')"
           >
-            <span class="nav-icon">⌂</span>
-            <span>Dashboard</span>
+
+            <span class="nav-icon">
+              ⌂
+            </span>
+
+            <span>
+              Dashboard
+            </span>
+
           </button>
+
+
+          <!-- TOOLS -->
 
           <button
             class="nav-item"
             data-view="tools"
             onclick="showView('tools')"
           >
-            <span class="nav-icon">✦</span>
-            <span>AI Tools</span>
+
+            <span class="nav-icon">
+              ✦
+            </span>
+
+            <span>
+              AI Tools
+            </span>
+
           </button>
 
         </nav>
 
 
-        <!-- QUICK ACTIONS -->
+        <!-- ===================================================
+             QUICK ACTIONS
+        ==================================================== -->
 
         <div class="sidebar-section">
 
@@ -124,36 +188,60 @@
             QUICK ACTIONS
           </div>
 
+
           <button
             class="quick-action"
             onclick="useQuickPrompt('Explain this concept simply: ')"
           >
-            <span>🧠</span>
+
+            <span>
+              🧠
+            </span>
+
             Explain
+
           </button>
+
 
           <button
             class="quick-action"
             onclick="useQuickPrompt('Help me write code for: ')"
           >
-            <span>⌘</span>
+
+            <span>
+              ⌘
+            </span>
+
             Code
+
           </button>
+
 
           <button
             class="quick-action"
             onclick="useQuickPrompt('Summarize this: ')"
           >
-            <span>▤</span>
+
+            <span>
+              ▤
+            </span>
+
             Summarize
+
           </button>
+
 
           <button
             class="quick-action"
             onclick="useQuickPrompt('Translate this to English: ')"
           >
-            <span>文</span>
+
+            <span>
+              文
+            </span>
+
             Translate
+
           </button>
 
         </div>
@@ -161,16 +249,22 @@
       </div>
 
 
-      <!-- SIDEBAR BOTTOM -->
+      <!-- =====================================================
+           SIDEBAR BOTTOM
+      ====================================================== -->
 
       <div class="sidebar-bottom">
 
         <div class="system-card">
 
           <div class="system-card-header">
-            <span class="system-icon">⚡</span>
+
+            <span class="system-icon">
+              ⚡
+            </span>
 
             <div>
+
               <div class="system-title">
                 Nyxium Core
               </div>
@@ -178,9 +272,11 @@
               <div class="system-subtitle">
                 System operational
               </div>
+
             </div>
 
             <span class="system-live"></span>
+
           </div>
 
         </div>
@@ -190,8 +286,13 @@
           class="discord-button"
           onclick="window.open('https://discord.gg/PBnxckkCzf','_blank')"
         >
-          <span>◉</span>
+
+          <span>
+            ◉
+          </span>
+
           Join Nyxium Discord
+
         </button>
 
       </div>
@@ -201,7 +302,7 @@
 
 
     <!-- =======================================================
-         MAIN APPLICATION
+         MAIN CONTENT
     ======================================================== -->
 
     <main id="main-content">
@@ -215,6 +316,7 @@
         id="chat"
         class="view active"
       >
+
 
         <!-- CHAT HEADER -->
 
@@ -232,14 +334,16 @@
             </button>
 
 
-            <!-- AVATAR -->
+            <!-- AI AVATAR -->
 
             <div class="ai-avatar-container">
 
-              <div
+              <img
                 id="ai-face"
                 class="ai-face"
-              ></div>
+                src="https://cdn.discordapp.com/attachments/1510306687687462952/1541024431198044221/nyxim.png?ex=6a8c1657&is=6a8ac4d7&hm=2812e46952c909bfc65b3592929e24381fabc9e267314329e69be52f94703d38&"
+                alt="Nyxium AI"
+              >
 
               <span
                 id="avatar-status-dot"
@@ -274,7 +378,7 @@
           </div>
 
 
-          <!-- CHAT HEADER ACTIONS -->
+          <!-- HEADER ACTIONS -->
 
           <div class="chat-header-actions">
 
@@ -283,8 +387,13 @@
               onclick="toggleSass()"
               title="Toggle personality"
             >
-              <span id="sass-icon">✦</span>
+
+              <span id="sass-icon">
+                ✦
+              </span>
+
             </button>
+
 
             <button
               class="header-icon-button"
@@ -314,7 +423,8 @@
             class="chat-messages"
           >
 
-            <!-- WELCOME SCREEN -->
+
+            <!-- WELCOME -->
 
             <div
               id="welcome-screen"
@@ -323,9 +433,11 @@
 
               <div class="welcome-orb">
 
-                <div class="welcome-orb-inner">
-                  ✦
-                </div>
+                <img
+                  src="https://cdn.discordapp.com/attachments/1510306687687462952/1541024431198044221/nyxim.png?ex=6a8c1657&is=6a8ac4d7&hm=2812e46952c909bfc65b3592929e24381fabc9e267314329e69be52f94703d38&"
+                  alt="Nyxium"
+                  class="welcome-avatar"
+                >
 
               </div>
 
@@ -333,6 +445,7 @@
               <h2>
                 What can I help you with?
               </h2>
+
 
               <p>
                 Ask Nyxium AI anything — from coding and schoolwork
@@ -344,55 +457,103 @@
 
               <div class="starter-grid">
 
+
                 <button
                   class="starter-card"
                   onclick="useQuickPrompt('Explain quantum computing in simple words.')"
                 >
-                  <span class="starter-icon">⚛</span>
+
+                  <span class="starter-icon">
+                    ⚛
+                  </span>
 
                   <span>
-                    <strong>Explain something</strong>
-                    <small>Make a difficult topic simple</small>
+
+                    <strong>
+                      Explain something
+                    </strong>
+
+                    <small>
+                      Make a difficult topic simple
+                    </small>
+
                   </span>
+
                 </button>
+
 
 
                 <button
                   class="starter-card"
                   onclick="useQuickPrompt('Help me write a clean and modern website.')"
                 >
-                  <span class="starter-icon">⌘</span>
+
+                  <span class="starter-icon">
+                    ⌘
+                  </span>
 
                   <span>
-                    <strong>Build something</strong>
-                    <small>Code, websites and projects</small>
+
+                    <strong>
+                      Build something
+                    </strong>
+
+                    <small>
+                      Code, websites and projects
+                    </small>
+
                   </span>
+
                 </button>
+
 
 
                 <button
                   class="starter-card"
                   onclick="useQuickPrompt('Give me a detailed summary of: ')"
                 >
-                  <span class="starter-icon">▤</span>
+
+                  <span class="starter-icon">
+                    ▤
+                  </span>
 
                   <span>
-                    <strong>Summarize</strong>
-                    <small>Turn long text into useful notes</small>
+
+                    <strong>
+                      Summarize
+                    </strong>
+
+                    <small>
+                      Turn long text into useful notes
+                    </small>
+
                   </span>
+
                 </button>
+
 
 
                 <button
                   class="starter-card"
                   onclick="useQuickPrompt('Give me some creative ideas for: ')"
                 >
-                  <span class="starter-icon">✧</span>
+
+                  <span class="starter-icon">
+                    ✧
+                  </span>
 
                   <span>
-                    <strong>Brainstorm</strong>
-                    <small>Ideas, stories and projects</small>
+
+                    <strong>
+                      Brainstorm
+                    </strong>
+
+                    <small>
+                      Ideas, stories and projects
+                    </small>
+
                   </span>
+
                 </button>
 
               </div>
@@ -406,10 +567,11 @@
 
 
         <!-- ===================================================
-             INPUT AREA
+             COMPOSER
         ==================================================== -->
 
         <div class="composer-wrapper">
+
 
           <div id="ai-tip-box"></div>
 
@@ -455,6 +617,7 @@
 
             <div class="composer-bottom">
 
+
               <div class="composer-tools">
 
                 <button
@@ -465,6 +628,7 @@
                   ✦
                 </button>
 
+
                 <button
                   class="composer-tool"
                   onclick="useQuickPrompt('Write code for: ')"
@@ -472,6 +636,7 @@
                 >
                   &lt;/&gt;
                 </button>
+
 
                 <span class="composer-hint">
                   Enter to send · Shift + Enter for new line
@@ -489,13 +654,14 @@
                   0 / 12000
                 </span>
 
+
                 <button
                   id="send-button"
                   class="send-button"
                   onclick="sendToAI()"
                   aria-label="Send message"
                 >
-                  <span>↑</span>
+                  ↑
                 </button>
 
               </div>
@@ -516,6 +682,116 @@
 
 
       <!-- =====================================================
+           CHAT HISTORY
+      ====================================================== -->
+
+      <section
+        id="history"
+        class="view"
+      >
+
+        <div class="page-container">
+
+          <div class="page-heading">
+
+            <div>
+
+              <span class="eyebrow">
+                NYXIUM ARCHIVE
+              </span>
+
+              <h2>
+                Chat History
+              </h2>
+
+              <p>
+                Continue one of your previous conversations.
+              </p>
+
+            </div>
+
+
+            <button
+              class="primary-button"
+              onclick="startNewChat()"
+            >
+              ＋ New Chat
+            </button>
+
+          </div>
+
+
+          <!-- HISTORY SEARCH -->
+
+          <div class="history-toolbar">
+
+            <div class="history-search">
+
+              <span>
+                ⌕
+              </span>
+
+              <input
+                id="history-search-input"
+                type="text"
+                placeholder="Search conversations..."
+                autocomplete="off"
+              >
+
+            </div>
+
+
+            <button
+              class="history-clear-button"
+              onclick="clearAllChatHistory()"
+            >
+              Clear history
+            </button>
+
+          </div>
+
+
+          <!-- HISTORY LIST -->
+
+          <div
+            id="chat-history-list"
+            class="chat-history-list"
+          >
+
+            <!-- chat.js fills this -->
+
+            <div class="history-empty">
+
+              <div class="history-empty-icon">
+                ◈
+              </div>
+
+              <h3>
+                No previous chats
+              </h3>
+
+              <p>
+                Your conversations will appear here automatically.
+              </p>
+
+              <button
+                class="primary-button"
+                onclick="startNewChat()"
+              >
+                Start a chat
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =====================================================
            DASHBOARD
       ====================================================== -->
 
@@ -526,9 +802,11 @@
 
         <div class="page-container">
 
+
           <div class="page-heading">
 
             <div>
+
               <span class="eyebrow">
                 NYXIUM SYSTEM
               </span>
@@ -540,7 +818,9 @@
               <p>
                 Everything you need to interact with Nyxium AI.
               </p>
+
             </div>
+
 
             <button
               class="primary-button"
@@ -557,33 +837,76 @@
           <div class="stats-grid">
 
             <div class="stat-card">
-              <span class="stat-icon">◈</span>
-              <span class="stat-label">AI Status</span>
-              <strong>ONLINE</strong>
+
+              <span class="stat-icon">
+                ◈
+              </span>
+
+              <span class="stat-label">
+                AI Status
+              </span>
+
+              <strong>
+                ONLINE
+              </strong>
+
             </div>
 
-            <div class="stat-card">
-              <span class="stat-icon">⚡</span>
-              <span class="stat-label">Response Mode</span>
-              <strong>HYBRID</strong>
-            </div>
 
             <div class="stat-card">
-              <span class="stat-icon">🧠</span>
-              <span class="stat-label">Memory</span>
-              <strong>ACTIVE</strong>
+
+              <span class="stat-icon">
+                ⚡
+              </span>
+
+              <span class="stat-label">
+                Response Mode
+              </span>
+
+              <strong>
+                HYBRID
+              </strong>
+
             </div>
 
+
             <div class="stat-card">
-              <span class="stat-icon">✦</span>
-              <span class="stat-label">Interface</span>
-              <strong>NYXIUM</strong>
+
+              <span class="stat-icon">
+                🧠
+              </span>
+
+              <span class="stat-label">
+                Memory
+              </span>
+
+              <strong>
+                ACTIVE
+              </strong>
+
+            </div>
+
+
+            <div class="stat-card">
+
+              <span class="stat-icon">
+                ✦
+              </span>
+
+              <span class="stat-label">
+                Interface
+              </span>
+
+              <strong>
+                NYXIUM
+              </strong>
+
             </div>
 
           </div>
 
 
-          <!-- FEATURES -->
+          <!-- CORE CAPABILITIES -->
 
           <div class="dashboard-section">
 
@@ -591,42 +914,79 @@
               Core capabilities
             </h3>
 
+
             <div class="feature-grid">
 
+
               <div class="feature-card">
-                <div class="feature-icon">🧠</div>
-                <h4>Intelligent Chat</h4>
+
+                <div class="feature-icon">
+                  🧠
+                </div>
+
+                <h4>
+                  Intelligent Chat
+                </h4>
+
                 <p>
                   Context-aware conversations with memory and
                   natural responses.
                 </p>
+
               </div>
 
+
               <div class="feature-card">
-                <div class="feature-icon">⌘</div>
-                <h4>Programming</h4>
+
+                <div class="feature-icon">
+                  ⌘
+                </div>
+
+                <h4>
+                  Programming
+                </h4>
+
                 <p>
                   Debug, explain and generate code with formatted
                   code blocks.
                 </p>
+
               </div>
 
+
               <div class="feature-card">
-                <div class="feature-icon">📄</div>
-                <h4>Analysis</h4>
+
+                <div class="feature-icon">
+                  📄
+                </div>
+
+                <h4>
+                  Analysis
+                </h4>
+
                 <p>
                   Analyze information, summarize content and
                   organize complex ideas.
                 </p>
+
               </div>
 
+
               <div class="feature-card">
-                <div class="feature-icon">✧</div>
-                <h4>Creative Mode</h4>
+
+                <div class="feature-icon">
+                  ✧
+                </div>
+
+                <h4>
+                  Creative Mode
+                </h4>
+
                 <p>
                   Generate ideas, stories, concepts and creative
                   content.
                 </p>
+
               </div>
 
             </div>
@@ -641,6 +1001,7 @@
             <div class="section-heading">
 
               <div>
+
                 <h3>
                   Command directory
                 </h3>
@@ -648,6 +1009,7 @@
                 <p>
                   Nyxium terminal operations.
                 </p>
+
               </div>
 
               <span class="online-pill">
@@ -659,35 +1021,42 @@
 
             <div class="command-directory">
 
+
               <div class="command-row">
                 <code>/ask</code>
                 <span>Ask Nyxium AI anything.</span>
               </div>
+
 
               <div class="command-row">
                 <code>/clear</code>
                 <span>Clear the current conversation.</span>
               </div>
 
+
               <div class="command-row">
                 <code>/toggle-sass</code>
                 <span>Toggle Nyxium's playful personality.</span>
               </div>
+
 
               <div class="command-row">
                 <code>/help</code>
                 <span>Display available commands.</span>
               </div>
 
+
               <div class="command-row">
                 <code>/code</code>
                 <span>Switch into programming-focused assistance.</span>
               </div>
 
+
               <div class="command-row">
                 <code>/summarize</code>
                 <span>Summarize provided content.</span>
               </div>
+
 
               <div class="command-row">
                 <code>/translate</code>
@@ -715,9 +1084,11 @@
 
         <div class="page-container">
 
+
           <div class="page-heading">
 
             <div>
+
               <span class="eyebrow">
                 NYXIUM TOOLKIT
               </span>
@@ -729,6 +1100,7 @@
               <p>
                 Quick access to Nyxium's specialized workflows.
               </p>
+
             </div>
 
           </div>
@@ -736,20 +1108,32 @@
 
           <div class="tools-grid">
 
+
             <button
               class="tool-card"
               onclick="useQuickPrompt('Help me write and improve this code: ')"
             >
-              <div class="tool-card-icon">⌘</div>
+
+              <div class="tool-card-icon">
+                ⌘
+              </div>
 
               <div>
-                <h3>Code Assistant</h3>
+
+                <h3>
+                  Code Assistant
+                </h3>
+
                 <p>
                   Generate, debug and explain code.
                 </p>
+
               </div>
 
-              <span>→</span>
+              <span>
+                →
+              </span>
+
             </button>
 
 
@@ -757,16 +1141,27 @@
               class="tool-card"
               onclick="useQuickPrompt('Summarize the following text clearly: ')"
             >
-              <div class="tool-card-icon">▤</div>
+
+              <div class="tool-card-icon">
+                ▤
+              </div>
 
               <div>
-                <h3>Summarizer</h3>
+
+                <h3>
+                  Summarizer
+                </h3>
+
                 <p>
                   Turn large text into concise notes.
                 </p>
+
               </div>
 
-              <span>→</span>
+              <span>
+                →
+              </span>
+
             </button>
 
 
@@ -774,16 +1169,27 @@
               class="tool-card"
               onclick="useQuickPrompt('Translate the following text: ')"
             >
-              <div class="tool-card-icon">文</div>
+
+              <div class="tool-card-icon">
+                文
+              </div>
 
               <div>
-                <h3>Translator</h3>
+
+                <h3>
+                  Translator
+                </h3>
+
                 <p>
                   Translate content naturally.
                 </p>
+
               </div>
 
-              <span>→</span>
+              <span>
+                →
+              </span>
+
             </button>
 
 
@@ -791,16 +1197,27 @@
               class="tool-card"
               onclick="useQuickPrompt('Analyze this and give me the important points: ')"
             >
-              <div class="tool-card-icon">⌁</div>
+
+              <div class="tool-card-icon">
+                ⌁
+              </div>
 
               <div>
-                <h3>Analyzer</h3>
+
+                <h3>
+                  Analyzer
+                </h3>
+
                 <p>
                   Break down complex information.
                 </p>
+
               </div>
 
-              <span>→</span>
+              <span>
+                →
+              </span>
+
             </button>
 
 
@@ -808,16 +1225,27 @@
               class="tool-card"
               onclick="useQuickPrompt('Give me creative ideas for: ')"
             >
-              <div class="tool-card-icon">✧</div>
+
+              <div class="tool-card-icon">
+                ✧
+              </div>
 
               <div>
-                <h3>Idea Engine</h3>
+
+                <h3>
+                  Idea Engine
+                </h3>
+
                 <p>
                   Brainstorm concepts and possibilities.
                 </p>
+
               </div>
 
-              <span>→</span>
+              <span>
+                →
+              </span>
+
             </button>
 
 
@@ -825,16 +1253,27 @@
               class="tool-card"
               onclick="useQuickPrompt('Teach me this topic step by step: ')"
             >
-              <div class="tool-card-icon">🎓</div>
+
+              <div class="tool-card-icon">
+                🎓
+              </div>
 
               <div>
-                <h3>Study Mode</h3>
+
+                <h3>
+                  Study Mode
+                </h3>
+
                 <p>
                   Learn difficult topics step by step.
                 </p>
+
               </div>
 
-              <span>→</span>
+              <span>
+                →
+              </span>
+
             </button>
 
           </div>
@@ -850,7 +1289,7 @@
 
 
   <!-- =========================================================
-       MOBILE OVERLAY
+       MOBILE SIDEBAR OVERLAY
   ========================================================== -->
 
   <div
@@ -861,7 +1300,7 @@
 
 
   <!-- =========================================================
-       TOAST
+       TOAST SYSTEM
   ========================================================== -->
 
   <div
@@ -872,7 +1311,7 @@
 
 
   <!-- =========================================================
-       APP SCRIPT
+       NYXIUM APP
   ========================================================== -->
 
   <script src="src/chat.js"></script>
