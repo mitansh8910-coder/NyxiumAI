@@ -1,2312 +1,1773 @@
-/* ============================================================
+/* =========================================================
    NYXIUM AI — CHAT ENGINE
-   Version: 2.0
-   ============================================================ */
-
-/* ------------------------------------------------------------
-   GLOBAL STATE
------------------------------------------------------------- */
-
-let conversationHistory = [];
-const MAX_HISTORY_TURNS = 12;
-
-let currentEmotion = "NEUTRAL";
-let idleTimeout = null;
-let lastUserMessage = "";
-let lastAssistantMessage = "";
-let sassEnabled = true;
-let isGenerating = false;
-
-const nyxiumTips = [
-  "Ask Nyxium AI to explain difficult topics step-by-step.",
-  "Use Summarize to turn long text into quick notes.",
-  "Use Translate to translate text between languages.",
-  "Use Code mode for debugging, explanations, and programming help.",
-  "You can continue a conversation without repeating previous context."
-];
-
-
-/* ============================================================
-   NAVIGATION
-============================================================ */
-
-function showView(viewId) {
-  document.querySelectorAll(".view").forEach(view => {
-    view.classList.remove("active");
-  });
-
-  const target = document.getElementById(viewId);
-
-  if (target) {
-    target.classList.add("active");
-  }
-
-  if (viewId === "chat") {
-    showRandomTip();
-
-    setTimeout(() => {
-      const input = document.getElementById("user-input");
-      if (input) input.focus();
-    }, 100);
-  }
-}
-
-
-/* ============================================================
-   SAFE HTML HELPERS
------------------------------------------------------------- */
-
-function escapeHTML(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-
-/* ============================================================
-   MARKDOWN RENDERER
------------------------------------------------------------- */
-
-function renderMarkdown(text) {
-  if (!text) return "";
-
-  let safe = escapeHTML(text);
-
-  /*
-    Protect fenced code blocks first.
-  */
-
-  const codeBlocks = [];
-
-  safe = safe.replace(
-    /```([a-zA-Z0-9_+-]*)\n?([\s\S]*?)```/g,
-    (_, language, code) => {
-      const id = `code-${codeBlocks.length}`;
-
-      codeBlocks.push({
-        id,
-        language: language || "text",
-        code
-      });
-
-      return `___CODE_BLOCK_${codeBlocks.length - 1}___`;
-    }
-  );
-
-  /*
-    Inline code
-  */
-
-  safe = safe.replace(
-    /`([^`\n]+)`/g,
-    '<code class="nyx-inline-code">$1</code>'
-  );
-
-  /*
-    Bold
-  */
-
-  safe = safe.replace(
-    /\*\*(.*?)\*\*/g,
-    "<strong>$1</strong>"
-  );
-
-  /*
-    Italic
-  */
-
-  safe = safe.replace(
-    /(^|[^\*])\*([^*\n]+)\*/g,
-    "$1<em>$2</em>"
-  );
-
-  /*
-    Headings
-  */
-
-  safe = safe.replace(
-    /^### (.+)$/gm,
-    '<h4 class="nyx-heading nyx-h3">$1</h4>'
-  );
-
-  safe = safe.replace(
-    /^## (.+)$/gm,
-    '<h3 class="nyx-heading nyx-h2">$1</h3>'
-  );
-
-  safe = safe.replace(
-    /^# (.+)$/gm,
-    '<h2 class="nyx-heading nyx-h1">$1</h2>'
-  );
-
-  /*
-    Unordered lists
-  */
-
-  safe = safe.replace(
-    /^(?:[-*]) (.+)$/gm,
-    '<li class="nyx-list-item">$1</li>'
-  );
-
-  safe = safe.replace(
-    /(<li class="nyx-list-item">.*<\/li>)/gs,
-    '<ul class="nyx-list">$1</ul>'
-  );
-
-  /*
-    Ordered lists
-  */
-
-  safe = safe.replace(
-    /^\d+\.\s+(.+)$/gm,
-    '<li class="nyx-ordered-item">$1</li>'
-  );
-
-  safe = safe.replace(
-    /(<li class="nyx-ordered-item">.*<\/li>)/gs,
-    '<ol class="nyx-list">$1</ol>'
-  );
-
-  /*
-    Links
-  */
-
-  safe = safe.replace(
-    /(https?:\/\/[^\s<]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer" class="nyx-link">$1</a>'
-  );
-
-  /*
-    Paragraphs / line breaks
-  */
-
-  safe = safe.replace(/\n{2,}/g, "</p><p>");
-  safe = safe.replace(/\n/g, "<br>");
-
-  safe = `<p>${safe}</p>`;
-
-  /*
-    Restore code blocks.
-  */
-
-  codeBlocks.forEach(block => {
-    const escapedCode = block.code;
-
-    const codeHTML = `
-      <div class="nyx-code-wrapper">
-        <div class="nyx-code-header">
-          <span>${escapeHTML(block.language)}</span>
-
-          <button
-            class="nyx-copy-code"
-            onclick="copyTextFromCode(this)"
-            type="button"
-          >
-            Copy
-          </button>
-        </div>
-
-        <pre><code>${escapedCode}</code></pre>
-      </div>
-    `;
-
-    safe = safe.replace(
-      `___CODE_BLOCK_${block.id.split("-")[1]}___`,
-      codeHTML
-    );
-  });
-
-  return safe;
-}
-
-
-/* ============================================================
-   COPY SYSTEM
------------------------------------------------------------- */
-
-async function copyText(text, button = null) {
-  try {
-    await navigator.clipboard.writeText(text);
-
-    if (button) {
-      const oldText = button.innerText;
-      button.innerText = "Copied ✓";
-
-      setTimeout(() => {
-        button.innerText = oldText;
-      }, 1500);
-    }
-
-    return true;
-  } catch (error) {
-    console.warn("Clipboard error:", error);
-    return false;
-  }
-}
-
-
-function copyTextFromCode(button) {
-  const wrapper = button.closest(".nyx-code-wrapper");
-
-  if (!wrapper) return;
-
-  const code = wrapper.querySelector("code");
-
-  if (!code) return;
-
-  copyText(code.innerText, button);
-}
-
-
-function copyMessage(button) {
-  const message = button.closest(".nyx-ai-message");
-
-  if (!message) return;
-
-  const content = message.querySelector(".nyx-message-content");
-
-  if (!content) return;
-
-  copyText(content.innerText, button);
-}
-
-
-/* ============================================================
-   TIP SYSTEM
------------------------------------------------------------- */
-
-function showRandomTip() {
-  const tipBox = document.getElementById("ai-tip-box");
-
-  if (!tipBox) return;
-
-  const tip =
-    nyxiumTips[Math.floor(Math.random() * nyxiumTips.length)];
-
-  tipBox.innerHTML = `
-    <div class="nyx-tip">
-      <div class="nyx-tip-icon">✦</div>
-
-      <div>
-        <strong>Nyxium AI Tip</strong>
-        <p>${escapeHTML(tip)}</p>
-      </div>
-
-      <button
-        type="button"
-        class="nyx-tip-close"
-        onclick="this.parentElement.remove()"
-      >
-        ×
-      </button>
-    </div>
-  `;
-}
-
-
-/* ============================================================
-   NYXIUM AI VISOR
------------------------------------------------------------- */
-
-function getCharacterSVG(
-  eyesPath,
-  mouthPath,
-  auxiliaryElements = "",
-  glowColor = "#38bdf8"
-) {
-  return `
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-
-      <defs>
-
-        <filter
-          id="neon-glow"
-          x="-30%"
-          y="-30%"
-          width="160%"
-          height="160%"
-        >
-          <feGaussianBlur
-            stdDeviation="2.2"
-            result="blur"
-          />
-
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-
-        <pattern
-          id="visor-grid"
-          width="6"
-          height="6"
-          patternUnits="userSpaceOnUse"
-        >
-          <line
-            x1="0"
-            y1="0"
-            x2="6"
-            y2="0"
-            stroke="${glowColor}"
-            stroke-opacity="0.08"
-            stroke-width="0.8"
-          />
-
-          <line
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="6"
-            stroke="${glowColor}"
-            stroke-opacity="0.08"
-            stroke-width="0.8"
-          />
-        </pattern>
-
-        <linearGradient
-          id="helm-grad"
-          x1="0%"
-          y1="0%"
-          x2="100%"
-          y2="100%"
-        >
-          <stop offset="0%" stop-color="#251445"/>
-          <stop offset="50%" stop-color="#100720"/>
-          <stop offset="100%" stop-color="#05010e"/>
-        </linearGradient>
-
-      </defs>
-
-      <path
-        d="M20 28 C20 15 80 15 80 28 L84 50 C84 70 74 84 50 88 C26 84 16 70 16 50Z"
-        fill="url(#helm-grad)"
-        stroke="#6b21a8"
-        stroke-width="2.5"
-      />
-
-      <path
-        d="M16 35 L7 28 L15 48Z"
-        fill="#4c1d95"
-        stroke="#a855f7"
-        stroke-width="1.2"
-      />
-
-      <circle
-        cx="8"
-        cy="29"
-        r="1.5"
-        fill="${glowColor}"
-        filter="url(#neon-glow)"
-      />
-
-      <path
-        d="M84 35 L93 28 L85 48Z"
-        fill="#4c1d95"
-        stroke="#a855f7"
-        stroke-width="1.2"
-      />
-
-      <circle
-        cx="92"
-        cy="29"
-        r="1.5"
-        fill="${glowColor}"
-        filter="url(#neon-glow)"
-      />
-
-      <path
-        d="M23 38 C23 32 77 32 77 38 L73 66 C73 73 64 79 50 79 C36 79 27 73 27 66Z"
-        fill="#04010a"
-        stroke="#1e1b4b"
-        stroke-width="1.5"
-      />
-
-      <path
-        d="M23 38 C23 32 77 32 77 38 L73 66 C73 73 64 79 50 79 C36 79 27 73 27 66Z"
-        fill="url(#visor-grid)"
-      />
-
-      <path
-        d="M27 44 L27 40 L31 40"
-        fill="none"
-        stroke="${glowColor}"
-        stroke-width="1"
-        opacity="0.4"
-      />
-
-      <path
-        d="M73 44 L73 40 L69 40"
-        fill="none"
-        stroke="${glowColor}"
-        stroke-width="1"
-        opacity="0.4"
-      />
-
-      <path
-        d="M27 62 L27 66 L31 66"
-        fill="none"
-        stroke="${glowColor}"
-        stroke-width="1"
-        opacity="0.4"
-      />
-
-      <path
-        d="M73 62 L73 66 L69 66"
-        fill="none"
-        stroke="${glowColor}"
-        stroke-width="1"
-        opacity="0.4"
-      />
-
-      <g filter="url(#neon-glow)">
-        ${eyesPath}
-        ${mouthPath}
-        ${auxiliaryElements}
-      </g>
-
-    </svg>
-  `;
-}
-
-
-function getMiniNyxSVG(glowColor = "#38bdf8") {
-  return `
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-
-      <defs>
-        <filter
-          id="mini-glow"
-          x="-20%"
-          y="-20%"
-          width="140%"
-          height="140%"
-        >
-          <feGaussianBlur
-            stdDeviation="3"
-            result="blur"
-          />
-
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-
-      <path
-        d="M20 28 C20 15 80 15 80 28 L84 50 C84 70 74 84 50 88 C26 84 16 70 16 50Z"
-        fill="#0f0720"
-        stroke="#6b21a8"
-        stroke-width="4"
-      />
-
-      <path
-        d="M23 38 C23 32 77 32 77 38 L73 66 C73 73 64 79 50 79 C36 79 27 73 27 66Z"
-        fill="#04010a"
-        stroke="#1e1b4b"
-        stroke-width="2"
-      />
-
-      <g filter="url(#mini-glow)">
-        <rect
-          x="33"
-          y="44"
-          width="10"
-          height="4"
-          rx="2"
-          fill="${glowColor}"
-        />
-
-        <rect
-          x="57"
-          y="44"
-          width="10"
-          height="4"
-          rx="2"
-          fill="${glowColor}"
-        />
-
-        <line
-          x1="44"
-          y1="62"
-          x2="56"
-          y2="62"
-          stroke="${glowColor}"
-          stroke-width="3.5"
-          stroke-linecap="round"
-        />
-      </g>
-
-    </svg>
-  `;
-}
-
-
-function getUserSVG() {
-  return `
-    <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle
-        cx="50"
-        cy="35"
-        r="18"
-        fill="#c4b5fd"
-      />
-
-      <path
-        d="M20 83 C20 64 80 64 80 83Z"
-        fill="#c4b5fd"
-      />
-    </svg>
-  `;
-}
-
-
-/* ============================================================
-   EXPRESSIONS
------------------------------------------------------------- */
-
-const vectorExpressions = {
-
-  "😐": {
-    eyes: `
-      <rect x="33" y="44" width="10" height="4" rx="2" fill="#38bdf8"/>
-      <rect x="57" y="44" width="10" height="4" rx="2" fill="#38bdf8"/>
-    `,
-    mouth: `
-      <line x1="44" y1="62" x2="56" y2="62"
-        stroke="#38bdf8"
-        stroke-width="2.5"
-        stroke-linecap="round"/>
-    `,
-    extra: "",
-    color: "#38bdf8"
-  },
-
-  "😊": {
-    eyes: `
-      <path d="M31 48 Q38 41 43 48"
-        fill="none"
-        stroke="#22c55e"
-        stroke-width="3"
-        stroke-linecap="round"/>
-
-      <path d="M57 48 Q62 41 69 48"
-        fill="none"
-        stroke="#22c55e"
-        stroke-width="3"
-        stroke-linecap="round"/>
-    `,
-    mouth: `
-      <path d="M40 60 Q50 71 60 60"
-        fill="none"
-        stroke="#22c55e"
-        stroke-width="3"
-        stroke-linecap="round"/>
-    `,
-    extra: "",
-    color: "#22c55e"
-  },
-
-  "🤔": {
-    eyes: `
-      <path
-        d="M31 43 L41 47"
-        stroke="#f59e0b"
-        stroke-width="3"
-        stroke-linecap="round"
-      />
-
-      <rect
-        x="57"
-        y="44"
-        width="10"
-        height="4"
-        rx="2"
-        fill="#f59e0b"
-      />
-    `,
-    mouth: `
-      <path
-        d="M42 62 Q46 58 50 62 T58 62"
-        fill="none"
-        stroke="#f59e0b"
-        stroke-width="2.5"
-        stroke-linecap="round"
-      />
-    `,
-    extra: "",
-    color: "#f59e0b"
-  },
-
-  "😲": {
-    eyes: `
-      <circle
-        cx="37"
-        cy="46"
-        r="3.5"
-        fill="none"
-        stroke="#a855f7"
-        stroke-width="2.5"
-      />
-
-      <circle
-        cx="63"
-        cy="46"
-        r="3.5"
-        fill="none"
-        stroke="#a855f7"
-        stroke-width="2.5"
-      />
-    `,
-    mouth: `
-      <circle
-        cx="50"
-        cy="62"
-        r="4.5"
-        fill="none"
-        stroke="#a855f7"
-        stroke-width="3"
-      />
-    `,
-    extra: "",
-    color: "#a855f7"
-  },
-
-  "😠": {
-    eyes: `
-      <path
-        d="M31 48 L41 43"
-        stroke="#ef4444"
-        stroke-width="3.5"
-        stroke-linecap="round"
-      />
-
-      <path
-        d="M69 48 L59 43"
-        stroke="#ef4444"
-        stroke-width="3.5"
-        stroke-linecap="round"
-      />
-    `,
-    mouth: `
-      <path
-        d="M41 62 L45 59 L49 64 L53 59 L57 62"
-        fill="none"
-        stroke="#ef4444"
-        stroke-width="2.8"
-        stroke-linecap="round"
-      />
-    `,
-    extra: "",
-    color: "#ef4444"
-  },
-
-  "🙁": {
-    eyes: `
-      <rect
-        x="33"
-        y="47"
-        width="10"
-        height="2"
-        rx="1"
-        fill="#3b82f6"
-      />
-
-      <rect
-        x="57"
-        y="47"
-        width="10"
-        height="2"
-        rx="1"
-        fill="#3b82f6"
-      />
-    `,
-    mouth: `
-      <path
-        d="M43 65 Q50 58 57 65"
-        fill="none"
-        stroke="#3b82f6"
-        stroke-width="2.2"
-        stroke-linecap="round"
-      />
-    `,
-    extra: "",
-    color: "#3b82f6"
-  },
-
-  "😢": {
-    eyes: `
-      <path
-        d="M32 42 L38 48 M38 42 L32 48"
-        stroke="#3b82f6"
-        stroke-width="2.5"
-        stroke-linecap="round"
-      />
-
-      <path
-        d="M62 42 L68 48 M68 42 L62 48"
-        stroke="#3b82f6"
-        stroke-width="2.5"
-        stroke-linecap="round"
-      />
-    `,
-    mouth: `
-      <line
-        x1="42"
-        y1="63"
-        x2="58"
-        y2="63"
-        stroke="#3b82f6"
-        stroke-width="2.5"
-        stroke-linecap="round"
-      />
-    `,
-    extra: "",
-    color: "#3b82f6"
-  }
-};
-
-
-/* ============================================================
-   EMOTION ENGINE
------------------------------------------------------------- */
-
-const emotionMap = {
-  NEUTRAL: "😐",
-  HAPPY: "😊",
-  THINKING: "🤔",
-  SAD: "😢",
-  ANGRY: "😠",
-  SURPRISED: "😲"
-};
-
-
-function transitionTo(targetEmotion) {
-
-  if (!emotionMap[targetEmotion]) {
-    targetEmotion = "NEUTRAL";
-  }
-
-  const face = document.getElementById("ai-face");
-  const status = document.getElementById("ai-status");
-
-  if (!face) return;
-
-  const emoji = emotionMap[targetEmotion];
-  const vector = vectorExpressions[emoji];
-
-  currentEmotion = targetEmotion;
-
-  if (status) {
-
-    const statusMap = {
-      NEUTRAL: "Online • Ready",
-      HAPPY: "Online • Engaged",
-      THINKING: "Processing request...",
-      SAD: "System • Degraded",
-      ANGRY: "System • Alert",
-      SURPRISED: "System • Attention"
+   Real AI integration + tools + commands + Markdown
+   ========================================================= */
+
+(() => {
+    "use strict";
+
+    /* =====================================================
+       STATE
+    ===================================================== */
+
+    const state = {
+        messages: [],
+        sass: true,
+        generating: false,
+        currentTool: null,
+        maxHistory: 30
     };
 
-    status.innerText =
-      statusMap[targetEmotion] || "Online • Ready";
-  }
-
-  face.classList.remove("pop-animation");
-  void face.offsetWidth;
-  face.classList.add("pop-animation");
-
-  face.innerHTML = getCharacterSVG(
-    vector.eyes,
-    vector.mouth,
-    vector.extra,
-    vector.color
-  );
-}
-
-
-/* ============================================================
-   CHAT MESSAGE UI
------------------------------------------------------------- */
-
-function addUserMessage(text) {
-
-  const chatBox = document.getElementById("chat-messages");
-
-  if (!chatBox) return;
-
-  chatBox.insertAdjacentHTML(
-    "beforeend",
-    `
-      <div class="nyx-message nyx-user-message">
-
-        <div class="nyx-message-body">
-
-          <div class="nyx-message-label">
-            You
-          </div>
-
-          <div class="nyx-message-content">
-            ${renderMarkdown(text)}
-          </div>
-
-        </div>
-
-        <div class="nyx-avatar nyx-user-avatar">
-          ${getUserSVG()}
-        </div>
-
-      </div>
-    `
-  );
-
-  scrollChat();
-}
-
-
-function addTypingMessage() {
-
-  const chatBox = document.getElementById("chat-messages");
-
-  if (!chatBox) return null;
-
-  const id =
-    "typing-" +
-    Date.now() +
-    "-" +
-    Math.floor(Math.random() * 10000);
-
-  chatBox.insertAdjacentHTML(
-    "beforeend",
-    `
-      <div
-        id="${id}"
-        class="nyx-message nyx-ai-message"
-      >
-
-        <div class="nyx-avatar nyx-ai-avatar">
-          ${getMiniNyxSVG("#f59e0b")}
-        </div>
-
-        <div class="nyx-message-body">
-
-          <div class="nyx-message-label">
-            Nyxium AI
-          </div>
-
-          <div class="nyx-thinking-box">
-
-            <span>Processing</span>
-
-            <div class="nyx-thinking-dots">
-              <i></i>
-              <i></i>
-              <i></i>
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-    `
-  );
-
-  scrollChat();
-
-  return id;
-}
-
-
-function removeTypingMessage(id) {
-
-  const element = document.getElementById(id);
-
-  if (element) {
-    element.remove();
-  }
-}
-
-
-/* ============================================================
-   AI RESPONSE
------------------------------------------------------------- */
-
-function addAIMessage(text, emotion = "NEUTRAL") {
-
-  const chatBox =
-    document.getElementById("chat-messages");
-
-  if (!chatBox) return;
-
-  const id =
-    "ai-message-" +
-    Date.now() +
-    "-" +
-    Math.floor(Math.random() * 10000);
-
-  let avatarColor = "#38bdf8";
-
-  const colors = {
-    HAPPY: "#22c55e",
-    THINKING: "#f59e0b",
-    SURPRISED: "#a855f7",
-    ANGRY: "#ef4444",
-    SAD: "#3b82f6"
-  };
-
-  if (colors[emotion]) {
-    avatarColor = colors[emotion];
-  }
-
-  chatBox.insertAdjacentHTML(
-    "beforeend",
-    `
-      <div
-        class="nyx-message nyx-ai-message"
-        data-message-id="${id}"
-      >
-
-        <div class="nyx-avatar nyx-ai-avatar">
-          ${getMiniNyxSVG(avatarColor)}
-        </div>
-
-        <div class="nyx-message-body">
-
-          <div class="nyx-message-label">
-            Nyxium AI
-          </div>
-
-          <div
-            id="${id}"
-            class="nyx-message-content"
-          ></div>
-
-          <div class="nyx-message-actions">
-
-            <button
-              type="button"
-              onclick="copyMessage(this)"
-            >
-              Copy
-            </button>
-
-            <button
-              type="button"
-              onclick="regenerateLastResponse()"
-            >
-              Regenerate
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-    `
-  );
-
-  const container =
-    document.getElementById(id);
-
-  if (!container) return;
-
-  /*
-    Render the entire response progressively
-    without destroying Markdown.
-  */
-
-  let index = 0;
-
-  function stream() {
-
-    if (index < text.length) {
-
-      index += Math.floor(
-        Math.random() * 3
-      ) + 1;
-
-      if (index > text.length) {
-        index = text.length;
-      }
-
-      container.innerHTML =
-        renderMarkdown(text.substring(0, index));
-
-      scrollChat();
-
-      setTimeout(stream, 12);
-
-    } else {
-
-      container.innerHTML =
-        renderMarkdown(text);
-
-      scrollChat();
-
-      idleTimeout =
-        setTimeout(() => {
-          transitionTo("NEUTRAL");
-        }, 5000);
-    }
-  }
-
-  stream();
-}
-
-
-/* ============================================================
-   CHAT SCROLL
------------------------------------------------------------- */
-
-function scrollChat() {
-
-  const chatBox =
-    document.getElementById("chat-messages");
-
-  if (!chatBox) return;
-
-  requestAnimationFrame(() => {
-    chatBox.scrollTo({
-      top: chatBox.scrollHeight,
-      behavior: "smooth"
-    });
-  });
-}
-
-
-/* ============================================================
-   EMPTY CHAT STATE
------------------------------------------------------------- */
-
-function showChatWelcome() {
-
-  const chatBox =
-    document.getElementById("chat-messages");
-
-  if (!chatBox || chatBox.children.length > 0) {
-    return;
-  }
-
-  chatBox.innerHTML = `
-    <div class="nyx-welcome">
-
-      <div class="nyx-welcome-icon">
-        ${getMiniNyxSVG("#a855f7")}
-      </div>
-
-      <h3>Welcome to Nyxium AI</h3>
-
-      <p>
-        Ask questions, write code, summarize text,
-        translate languages, or explore ideas.
-      </p>
-
-      <div class="nyx-suggestion-grid">
-
-        <button
-          onclick="useSuggestion('Explain quantum computing in simple terms')"
-        >
-          <span>🧠</span>
-          <strong>Explain something</strong>
-          <small>Learn a difficult concept</small>
-        </button>
-
-        <button
-          onclick="useSuggestion('Summarize this: ')"
-        >
-          <span>📝</span>
-          <strong>Summarize</strong>
-          <small>Turn text into key points</small>
-        </button>
-
-        <button
-          onclick="useSuggestion('Translate this to Hindi: ')"
-        >
-          <span>🌐</span>
-          <strong>Translate</strong>
-          <small>Translate between languages</small>
-        </button>
-
-        <button
-          onclick="useSuggestion('Help me debug this code: ')"
-        >
-          <span>💻</span>
-          <strong>Code</strong>
-          <small>Debug and explain code</small>
-        </button>
-
-      </div>
-
-    </div>
-  `;
-}
-
-
-function useSuggestion(text) {
-
-  const input =
-    document.getElementById("user-input");
-
-  if (!input) return;
-
-  input.value = text;
-  input.focus();
-
-  if (!text.endsWith(": ")) {
-    sendToAI();
-  }
-}
-
-
-/* ============================================================
-   TOOL BUTTONS
------------------------------------------------------------- */
-
-function getComposerText() {
-
-  const input =
-    document.getElementById("user-input");
-
-  if (!input) return "";
-
-  return input.value.trim();
-}
-
-
-function useAIExplain() {
-
-  const text = getComposerText();
-
-  if (!text) {
-    focusComposer("Type or paste something you want Nyxium AI to explain.");
-    return;
-  }
-
-  sendToolPrompt(
-    `Explain the following clearly and accurately. Break difficult concepts into simple steps when useful:\n\n${text}`
-  );
-}
-
-
-function useAISummarize() {
-
-  const text = getComposerText();
-
-  if (!text) {
-    focusComposer("Paste the text you want Nyxium AI to summarize.");
-    return;
-  }
-
-  sendToolPrompt(
-    `Summarize the following text. Give the key points first and preserve important facts:\n\n${text}`
-  );
-}
-
-
-function useAITranslate(language = "English") {
-
-  const text = getComposerText();
-
-  if (!text) {
-    focusComposer("Type or paste the text you want translated.");
-    return;
-  }
-
-  sendToolPrompt(
-    `Translate the following text into ${language}. Preserve its meaning and tone. Return only the translation unless a brief clarification is necessary:\n\n${text}`
-  );
-}
-
-
-function useAICode() {
-
-  const text = getComposerText();
-
-  if (!text) {
-    focusComposer("Describe the code you want help with.");
-    return;
-  }
-
-  sendToolPrompt(
-    `Act as a programming expert. Analyze the following request or code, identify problems, and provide a correct solution with clear explanation:\n\n${text}`
-  );
-}
-
-
-function useAIImagine() {
-
-  const text = getComposerText();
-
-  if (!text) {
-    focusComposer("Describe the image you want to create.");
-    return;
-  }
-
-  sendToolPrompt(
-    `Create a detailed image-generation prompt based on this request. Include subject, environment, composition, lighting, camera style, colors, atmosphere, and important visual details:\n\n${text}`
-  );
-}
-
-
-function focusComposer(placeholder) {
-
-  const input =
-    document.getElementById("user-input");
-
-  if (!input) return;
-
-  if (!input.value.trim()) {
-    input.placeholder = placeholder;
-  }
-
-  input.focus();
-}
-
-
-function sendToolPrompt(prompt) {
-
-  const input =
-    document.getElementById("user-input");
-
-  if (!input) return;
-
-  input.value = prompt;
-
-  sendToAI();
-}
-
-
-/* ============================================================
-   TRANSLATE LANGUAGE MENU
------------------------------------------------------------- */
-
-function openTranslateMenu(button) {
-
-  const existing =
-    document.getElementById("translate-menu");
-
-  if (existing) {
-    existing.remove();
-    return;
-  }
-
-  const menu =
-    document.createElement("div");
-
-  menu.id = "translate-menu";
-
-  menu.className =
-    "nyx-translate-menu";
-
-  const languages = [
-    "English",
-    "Hindi",
-    "Spanish",
-    "French",
-    "German",
-    "Japanese",
-    "Korean",
-    "Chinese",
-    "Russian",
-    "Arabic"
-  ];
-
-  menu.innerHTML = `
-    <div class="nyx-translate-title">
-      Translate to
-    </div>
-
-    ${languages.map(language => `
-      <button
-        type="button"
-        onclick="useAITranslate('${language}')"
-      >
-        ${language}
-      </button>
-    `).join("")}
-  `;
-
-  document.body.appendChild(menu);
-
-  const rect =
-    button.getBoundingClientRect();
-
-  menu.style.left =
-    `${Math.min(
-      rect.left,
-      window.innerWidth - 210
-    )}px`;
-
-  menu.style.top =
-    `${rect.top - menu.offsetHeight - 8}px`;
-
-  setTimeout(() => {
-
-    document.addEventListener(
-      "click",
-      function closeMenu(event) {
-
-        if (
-          !menu.contains(event.target) &&
-          event.target !== button
-        ) {
-          menu.remove();
-
-          document.removeEventListener(
-            "click",
-            closeMenu
-          );
+    const STORAGE_KEY = "nyxium_ai_history_v3";
+    const SASS_KEY = "nyxium_ai_sass";
+
+    /* =====================================================
+       DOM
+    ===================================================== */
+
+    const $ = (id) => document.getElementById(id);
+
+    const input = $("user-input");
+    const sendButton = $("send-button");
+    const chatMessages = $("chat-messages");
+    const chatScroll = $("chat-scroll-area");
+    const welcomeScreen = $("welcome-screen");
+    const characterCount = $("character-count");
+    const aiStatus = $("ai-status");
+    const aiFace = $("ai-face");
+    const sidebar = $("sidebar");
+    const sidebarOverlay = $("sidebar-overlay");
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+
+    function init() {
+        loadState();
+        setupInput();
+        setupMarkdown();
+        updateCharacterCount();
+        updateAvatar("idle");
+        updateStatus("Ready when you are");
+
+        if (state.messages.length > 0) {
+            hideWelcome();
+            renderHistory();
         }
 
-      },
-      { once: true }
-    );
+        window.addEventListener("resize", () => {
+            autoResize();
+        });
 
-  }, 0);
-}
-
-
-/* ============================================================
-   COMMAND SYSTEM
------------------------------------------------------------- */
-
-function executeConsoleCommand(command) {
-
-  const input =
-    document.getElementById("user-input");
-
-  if (!input) return;
-
-  if (command === "/clear") {
-    clearChat();
-    return;
-  }
-
-  if (command === "/toggle-sass") {
-    sassEnabled = !sassEnabled;
-
-    transitionTo(
-      sassEnabled ? "HAPPY" : "NEUTRAL"
-    );
-
-    addAIMessage(
-      sassEnabled
-        ? "Sass protocol enabled. I can be witty again."
-        : "Sass protocol disabled. Switching to professional mode.",
-      sassEnabled ? "HAPPY" : "NEUTRAL"
-    );
-
-    return;
-  }
-
-  input.value = command;
-  input.focus();
-  sendToAI();
-}
-
-
-function clearChat() {
-
-  const chatBox =
-    document.getElementById("chat-messages");
-
-  if (!chatBox) return;
-
-  chatBox.innerHTML = "";
-
-  conversationHistory = [];
-
-  lastUserMessage = "";
-  lastAssistantMessage = "";
-
-  transitionTo("HAPPY");
-
-  setTimeout(() => {
-    transitionTo("NEUTRAL");
-  }, 1200);
-
-  showChatWelcome();
-}
-
-
-/* ============================================================
-   LOCAL MATH ENGINE
------------------------------------------------------------- */
-
-function tryLocalResponse(message) {
-
-  const msg =
-    message.trim();
-
-  const mathRegex =
-    /^(-?\d+(?:\.\d+)?)\s*(\+|-|\*|x|×|\/|÷)\s*(-?\d+(?:\.\d+)?)$/;
-
-  const match =
-    msg.match(mathRegex);
-
-  if (match) {
-
-    const a =
-      Number(match[1]);
-
-    const operator =
-      match[2];
-
-    const b =
-      Number(match[3]);
-
-    let result;
-
-    switch (operator) {
-
-      case "+":
-        result = a + b;
-        break;
-
-      case "-":
-        result = a - b;
-        break;
-
-      case "*":
-      case "x":
-      case "×":
-        result = a * b;
-        break;
-
-      case "/":
-      case "÷":
-        result =
-          b === 0
-            ? "undefined — division by zero"
-            : a / b;
-        break;
+        console.log("Nyxium AI initialized.");
     }
 
-    return `[HAPPY] The answer is **${result}**.`;
-  }
+    /* =====================================================
+       MARKDOWN
+    ===================================================== */
 
-
-  const normalized =
-    msg.toLowerCase();
-
-
-  if (
-    /^(hi|hello|hey|hola|yo)\b/.test(normalized)
-  ) {
-    return sassEnabled
-      ? "[HAPPY] Hey! Nyxium AI is online. What are we building, solving, or breaking today?"
-      : "[HAPPY] Hello! Nyxium AI is ready to help.";
-  }
-
-
-  if (
-    normalized.includes("who are you") ||
-    normalized.includes("what are you")
-  ) {
-    return "[NEUTRAL] I’m **Nyxium AI**, an AI assistant built for the Nyxium ecosystem. The cybernetic visor you see is my visual mascot.";
-  }
-
-
-  if (normalized === "1+1") {
-    return sassEnabled
-      ? "[HAPPY] **2**. Humanity survives another mathematical challenge."
-      : "[HAPPY] **2**.";
-  }
-
-
-  return null;
-}
-
-
-/* ============================================================
-   AI RESPONSE NORMALIZATION
------------------------------------------------------------- */
-
-function extractPuterText(response) {
-
-  if (!response) return null;
-
-  if (typeof response === "string") {
-    return response;
-  }
-
-  if (response.message) {
-
-    if (typeof response.message === "string") {
-      return response.message;
+    function setupMarkdown() {
+        if (window.marked) {
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+        }
     }
 
-    if (response.message.content) {
-      return response.message.content;
-    }
-  }
+    function renderMarkdown(text) {
+        if (!text) return "";
 
-  if (response.content) {
-    return response.content;
-  }
+        if (!window.marked) {
+            return escapeHTML(text).replace(/\n/g, "<br>");
+        }
 
-  if (response.text) {
-    return response.text;
-  }
-
-  return String(response);
-}
-
-
-/* ============================================================
-   MAIN AI REQUEST
------------------------------------------------------------- */
-
-async function requestNyxiumAI(userMsg) {
-
-  /*
-    1. Backend
-  */
-
-  try {
-
-    const response =
-      await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          message: userMsg,
-          history: conversationHistory
-        })
-      });
-
-    if (response.ok) {
-
-      const data =
-        await response.json();
-
-      if (data && data.reply) {
-        return data.reply;
-      }
+        try {
+            return marked.parse(text);
+        } catch {
+            return escapeHTML(text).replace(/\n/g, "<br>");
+        }
     }
 
-  } catch (error) {
+    function escapeHTML(text) {
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
-    console.warn(
-      "Nyxium backend unavailable:",
-      error
-    );
+    /* =====================================================
+       CODE HIGHLIGHTING
+    ===================================================== */
 
-  }
+    function highlightCode(container) {
+        if (!container || !window.hljs) return;
+
+        container.querySelectorAll("pre code").forEach((block) => {
+            try {
+                hljs.highlightElement(block);
+            } catch (error) {
+                console.warn("Highlight error:", error);
+            }
+        });
+    }
+
+    /* =====================================================
+       STORAGE
+    ===================================================== */
+
+    function loadState() {
+        try {
+            const history = localStorage.getItem(STORAGE_KEY);
+
+            if (history) {
+                state.messages = JSON.parse(history);
+
+                if (!Array.isArray(state.messages)) {
+                    state.messages = [];
+                }
+            }
+
+            const sass = localStorage.getItem(SASS_KEY);
+
+            if (sass !== null) {
+                state.sass = sass === "true";
+            }
+
+        } catch (error) {
+            console.warn("Could not load Nyxium state:", error);
+
+            state.messages = [];
+        }
+    }
+
+    function saveState() {
+        try {
+            const trimmed = state.messages.slice(-state.maxHistory);
+
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(trimmed)
+            );
+
+            localStorage.setItem(
+                SASS_KEY,
+                String(state.sass)
+            );
+
+        } catch (error) {
+            console.warn("Could not save Nyxium state:", error);
+        }
+    }
+
+    /* =====================================================
+       INPUT
+    ===================================================== */
+
+    function setupInput() {
+        if (!input) return;
+
+        input.addEventListener("input", () => {
+            autoResize();
+            updateCharacterCount();
+        });
+
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+
+                if (!state.generating) {
+                    sendToAI();
+                }
+            }
+        });
+    }
+
+    function autoResize() {
+        if (!input) return;
+
+        input.style.height = "auto";
+
+        const height = Math.min(
+            Math.max(input.scrollHeight, 30),
+            190
+        );
+
+        input.style.height = `${height}px`;
+    }
+
+    function updateCharacterCount() {
+        if (!input || !characterCount) return;
+
+        characterCount.textContent =
+            `${input.value.length} / 12000`;
+    }
+
+    /* =====================================================
+       STATUS / AVATAR
+    ===================================================== */
+
+    function updateStatus(text) {
+        if (aiStatus) {
+            aiStatus.textContent = text;
+        }
+    }
+
+    function updateAvatar(mode = "idle") {
+        if (!aiFace) return;
+
+        aiFace.classList.remove("pop-animation");
+
+        /*
+         * Small CSS-friendly Nyxium visor.
+         * Kept deliberately small — not a huge avatar.
+         */
+
+        const colors = {
+            idle: "rgba(167,139,250,0.85)",
+            thinking: "rgba(56,189,248,0.95)",
+            speaking: "rgba(139,92,246,1)",
+            error: "rgba(239,68,68,0.95)"
+        };
+
+        const color = colors[mode] || colors.idle;
+
+        aiFace.innerHTML = `
+            <div style="
+                width:27px;
+                height:11px;
+                border:1px solid ${color};
+                border-radius:8px;
+                background:
+                    linear-gradient(
+                        90deg,
+                        transparent,
+                        ${color},
+                        transparent
+                    );
+                box-shadow:
+                    0 0 12px ${color};
+                position:relative;
+            ">
+                <span style="
+                    position:absolute;
+                    left:6px;
+                    top:3px;
+                    width:4px;
+                    height:4px;
+                    border-radius:50%;
+                    background:${color};
+                    box-shadow:9px 0 0 ${color};
+                "></span>
+            </div>
+        `;
+
+        void aiFace.offsetWidth;
+        aiFace.classList.add("pop-animation");
+    }
+
+    /* =====================================================
+       WELCOME
+    ===================================================== */
+
+    function hideWelcome() {
+        if (welcomeScreen) {
+            welcomeScreen.style.display = "none";
+        }
+    }
+
+    function showWelcome() {
+        if (welcomeScreen) {
+            welcomeScreen.style.display = "";
+        }
+    }
+
+    /* =====================================================
+       MESSAGE CREATION
+    ===================================================== */
+
+    function createMessageElement(role, content, options = {}) {
+        const row = document.createElement("div");
+
+        row.className =
+            `message-row ${role}`;
+
+        const avatar = document.createElement("div");
+
+        avatar.className = "message-avatar";
+
+        if (role === "user") {
+            avatar.innerHTML = `
+                <span style="
+                    font-size:12px;
+                    opacity:.75;
+                ">●</span>
+            `;
+        } else {
+            avatar.innerHTML = `
+                <span style="
+                    width:20px;
+                    height:8px;
+                    display:block;
+                    border:1px solid #a78bfa;
+                    border-radius:6px;
+                    box-shadow:0 0 8px rgba(167,139,250,.5);
+                "></span>
+            `;
+        }
+
+        const body = document.createElement("div");
+
+        body.className = "message-body";
+
+        const contentElement = document.createElement("div");
+
+        contentElement.className = "message-content";
+
+        if (options.raw === true) {
+            contentElement.textContent = content;
+        } else {
+            contentElement.innerHTML =
+                renderMarkdown(content);
+        }
+
+        body.appendChild(contentElement);
+
+        /*
+         * AI actions
+         */
+
+        if (role === "assistant" && !options.typing) {
+            const actions = document.createElement("div");
+
+            actions.className = "message-actions";
+
+            actions.innerHTML = `
+                <button
+                    class="message-action"
+                    data-action="copy"
+                    title="Copy response"
+                >
+                    Copy
+                </button>
+
+                <button
+                    class="message-action"
+                    data-action="regenerate"
+                    title="Regenerate response"
+                >
+                    Regenerate
+                </button>
+            `;
+
+            actions
+                .querySelector('[data-action="copy"]')
+                .addEventListener("click", () => {
+                    copyText(content);
+                });
+
+            actions
+                .querySelector('[data-action="regenerate"]')
+                .addEventListener("click", () => {
+                    regenerateLast();
+                });
+
+            body.appendChild(actions);
+        }
+
+        row.appendChild(avatar);
+        row.appendChild(body);
+
+        return row;
+    }
+
+    function addMessage(role, content, save = true) {
+        hideWelcome();
+
+        const element =
+            createMessageElement(role, content);
+
+        chatMessages.appendChild(element);
+
+        if (save) {
+            state.messages.push({
+                role,
+                content,
+                timestamp: Date.now()
+            });
+
+            state.messages =
+                state.messages.slice(-state.maxHistory);
+
+            saveState();
+        }
+
+        scrollToBottom();
+
+        highlightCode(element);
+
+        return element;
+    }
+
+    /* =====================================================
+       HISTORY
+    ===================================================== */
+
+    function renderHistory() {
+        if (!chatMessages) return;
+
+        chatMessages.innerHTML = "";
+
+        if (!state.messages.length) {
+            showWelcome();
+            return;
+        }
+
+        hideWelcome();
+
+        state.messages.forEach((message) => {
+            const element =
+                createMessageElement(
+                    message.role,
+                    message.content
+                );
+
+            chatMessages.appendChild(element);
+
+            highlightCode(element);
+        });
+
+        scrollToBottom();
+    }
+
+    /* =====================================================
+       TYPING INDICATOR
+    ===================================================== */
+
+    function showTyping() {
+        removeTyping();
+
+        const row = document.createElement("div");
+
+        row.id = "nyxium-typing";
+
+        row.className = "message-row assistant";
+
+        row.innerHTML = `
+            <div class="message-avatar">
+                <span style="
+                    width:20px;
+                    height:8px;
+                    display:block;
+                    border:1px solid #a78bfa;
+                    border-radius:6px;
+                    box-shadow:0 0 8px rgba(167,139,250,.5);
+                "></span>
+            </div>
+
+            <div class="message-body">
+
+                <div class="message-content">
+
+                    <div class="typing-indicator">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        chatMessages.appendChild(row);
+
+        scrollToBottom();
+    }
+
+    function removeTyping() {
+        const typing = $("nyxium-typing");
+
+        if (typing) {
+            typing.remove();
+        }
+    }
+
+    /* =====================================================
+       SCROLL
+    ===================================================== */
+
+    function scrollToBottom() {
+        if (!chatScroll) return;
+
+        requestAnimationFrame(() => {
+            chatScroll.scrollTo({
+                top: chatScroll.scrollHeight,
+                behavior: "smooth"
+            });
+        });
+    }
+
+    /* =====================================================
+       TOOL DETECTION
+    ===================================================== */
+
+    function detectTool(text) {
+        const lower = text.trim().toLowerCase();
+
+        if (
+            lower.startsWith("/summarize") ||
+            lower.startsWith("/summary")
+        ) {
+            return "summarize";
+        }
+
+        if (
+            lower.startsWith("/translate")
+        ) {
+            return "translate";
+        }
+
+        if (
+            lower.startsWith("/code")
+        ) {
+            return "code";
+        }
+
+        if (
+            lower.startsWith("/explain")
+        ) {
+            return "explain";
+        }
+
+        if (
+            lower.startsWith("/analyze")
+        ) {
+            return "analyze";
+        }
+
+        if (
+            lower.startsWith("/study")
+        ) {
+            return "study";
+        }
+
+        return state.currentTool;
+    }
+
+    /* =====================================================
+       TOOL PROMPT BUILDERS
+    ===================================================== */
+
+    function buildToolPrompt(tool, userText) {
+        switch (tool) {
+
+            case "summarize":
+                return `
+You are Nyxium AI's Summarizer.
+
+Summarize the user's provided content accurately.
+
+Requirements:
+- Preserve important facts.
+- Remove unnecessary repetition.
+- Use clear headings when useful.
+- Use concise bullet points when appropriate.
+- Do not invent information.
+- If the text is already short, explain its key point instead of unnecessarily shortening it.
+
+USER CONTENT:
+${userText}
+                `.trim();
 
 
-  /*
-    2. Puter AI fallback
-  */
+            case "translate":
+                return `
+You are Nyxium AI's Translator.
 
-  if (
-    typeof puter !== "undefined" &&
-    puter.ai &&
-    typeof puter.ai.chat === "function"
-  ) {
+Translate the user's content naturally.
 
-    const historyText =
-      conversationHistory
-        .slice(-MAX_HISTORY_TURNS)
-        .map(item => {
+Important:
+- Preserve the original meaning.
+- Preserve tone where possible.
+- Do not add explanations unless needed.
+- If the requested target language is not explicitly specified, infer it from the instruction.
+- Do not summarize the content.
 
-          const role =
-            item.role === "user"
-              ? "User"
-              : "Nyxium AI";
-
-          return `${role}: ${item.content}`;
-
-        })
-        .join("\n");
+USER REQUEST:
+${userText}
+                `.trim();
 
 
-    const systemPrompt = `
+            case "explain":
+                return `
+You are Nyxium AI's Explanation Engine.
+
+Explain the user's topic clearly.
+
+Requirements:
+- Start with a simple explanation.
+- Break difficult concepts into smaller parts.
+- Give an example when useful.
+- Avoid unnecessary jargon.
+- Match the user's apparent level.
+- Be accurate.
+
+USER REQUEST:
+${userText}
+                `.trim();
+
+
+            case "code":
+                return `
+You are Nyxium AI's Programming Assistant.
+
+Help with the programming request below.
+
+Requirements:
+- Give working code where appropriate.
+- Use Markdown code blocks.
+- Explain important parts.
+- Identify bugs clearly.
+- Do not fabricate APIs or libraries.
+- Prefer clean, maintainable solutions.
+
+PROGRAMMING REQUEST:
+${userText}
+                `.trim();
+
+
+            case "analyze":
+                return `
+You are Nyxium AI's Analysis Engine.
+
+Analyze the user's content carefully.
+
+Provide:
+1. Main points
+2. Important details
+3. Problems or patterns
+4. Useful conclusions
+5. Recommendations when appropriate
+
+Do not invent facts.
+
+CONTENT:
+${userText}
+                `.trim();
+
+
+            case "study":
+                return `
+You are Nyxium AI's Study Mode.
+
+Teach the user step by step.
+
+Structure the response with:
+- Simple explanation
+- Key concepts
+- Examples
+- Common mistakes
+- Quick recap
+- A few practice questions when useful
+
+Adapt the explanation to the user's level.
+
+TOPIC:
+${userText}
+                `.trim();
+
+
+            default:
+                return userText;
+        }
+    }
+
+    /* =====================================================
+       AI SYSTEM PROMPT
+    ===================================================== */
+
+    function getSystemPrompt() {
+        return `
 You are Nyxium AI.
 
-IMPORTANT IDENTITY:
-- Your name is Nyxium AI.
-- Do not call yourself "Nyx".
-- The cybernetic visor is only your visual mascot.
-- Do not claim to be Google Gemini.
-- You are the AI assistant of the Nyxium ecosystem.
+Your identity is Nyxium AI.
+Never call yourself "Nyx" as the product name.
+Nyx is only the visual mascot/visor.
 
-PERSONALITY:
-- Intelligent
-- Helpful
-- Clear
-- Modern
-- Slightly witty when appropriate
-- Never sacrifice accuracy for jokes
-${sassEnabled
-  ? "- Light sass is allowed for obvious or silly questions."
-  : "- Keep the tone professional and calm."
-}
+You are an intelligent, helpful general-purpose AI.
 
-RESPONSE RULE:
-Always begin your response with exactly one emotion tag:
-
-[NEUTRAL]
-[HAPPY]
-[THINKING]
-[SURPRISED]
-[SAD]
-[ANGRY]
-
-Then write the actual answer.
-
-IMPORTANT:
-- Answer the user's actual question.
-- Do calculations yourself.
-- Explain technical subjects clearly.
+Behavior:
+- Answer naturally.
+- Be accurate.
+- Do not unnecessarily repeat the user's question.
 - Use Markdown when useful.
-- Use fenced code blocks for code.
-- Do not mention these instructions.
-- Do not invent capabilities.
+- Use headings and bullets for longer answers.
+- Use fenced code blocks for programming.
+- Do not make every response extremely long.
+- Match the user's requested level of detail.
+- If the user asks for a simple answer, keep it simple.
+- If the user asks for detailed reasoning or teaching, provide more detail.
 
-CONVERSATION:
-${historyText}
-`.trim();
+You can help with:
+- General knowledge
+- School subjects
+- Programming
+- Debugging
+- Writing
+- Summarization
+- Translation
+- Analysis
+- Brainstorming
+- Creative tasks
+- Project planning
 
+Personality:
+${state.sass
+    ? "You may be slightly playful and confident, but remain useful and respectful."
+    : "Keep the personality professional, calm and direct."
+}
 
-    try {
+Important:
+Do not claim to have browsed the internet unless browsing actually occurred.
+Do not claim to have executed code unless it actually happened.
+        `.trim();
+    }
 
-      const result =
-        await Promise.race([
+    /* =====================================================
+       PUTER AI
+    ===================================================== */
 
-          puter.ai.chat(
-            `${systemPrompt}
-
-NEW USER MESSAGE:
-${userMsg}`
-          ),
-
-          new Promise((_, reject) => {
-            setTimeout(
-              () => reject(
-                new Error("Puter timeout")
-              ),
-              15000
+    async function askPuterAI(prompt) {
+        if (
+            !window.puter ||
+            !puter.ai ||
+            typeof puter.ai.chat !== "function"
+        ) {
+            throw new Error(
+                "Puter AI is not available."
             );
-          })
+        }
 
-        ]);
+        /*
+         * Puter supports a normal prompt string.
+         * We include the Nyxium system behavior directly
+         * in the prompt so the browser version works
+         * without requiring our own backend.
+         */
 
-      const text =
-        extractPuterText(result);
+        const historyText =
+            state.messages
+                .slice(-12)
+                .map((message) => {
+                    const speaker =
+                        message.role === "user"
+                            ? "USER"
+                            : "NYXIUM AI";
 
-      if (text) {
-        return text;
-      }
+                    return `${speaker}:\n${message.content}`;
+                })
+                .join("\n\n");
 
-    } catch (error) {
+        const fullPrompt = `
+${getSystemPrompt()}
 
-      console.warn(
-        "Puter AI unavailable:",
-        error
-      );
+CONVERSATION HISTORY:
+${historyText || "(No previous conversation.)"}
 
+CURRENT REQUEST:
+${prompt}
+
+Respond as Nyxium AI.
+        `.trim();
+
+        const response =
+            await puter.ai.chat(fullPrompt);
+
+        return extractPuterText(response);
     }
 
-  }
+    /* =====================================================
+       PUTER RESPONSE PARSER
+    ===================================================== */
 
+    function extractPuterText(response) {
+        if (typeof response === "string") {
+            return response;
+        }
 
-  /*
-    3. Local fallback
-  */
+        if (!response) {
+            return "";
+        }
 
-  const local =
-    tryLocalResponse(userMsg);
+        if (
+            response.message &&
+            typeof response.message.content === "string"
+        ) {
+            return response.message.content;
+        }
 
-  if (local) {
-    return local;
-  }
+        if (
+            response.message &&
+            Array.isArray(response.message.content)
+        ) {
+            return response.message.content
+                .map((part) => {
+                    if (typeof part === "string") {
+                        return part;
+                    }
 
+                    return part?.text || "";
+                })
+                .join("");
+        }
 
-  /*
-    4. Final fallback
-  */
+        if (
+            response.content &&
+            typeof response.content === "string"
+        ) {
+            return response.content;
+        }
 
-  return "[SAD] I couldn't reach the Nyxium AI processing nodes right now. Please try again in a moment.";
-}
+        if (Array.isArray(response.content)) {
+            return response.content
+                .map((part) => {
+                    if (typeof part === "string") {
+                        return part;
+                    }
 
+                    return part?.text || "";
+                })
+                .join("");
+        }
 
-/* ============================================================
-   SEND MESSAGE
------------------------------------------------------------- */
+        if (response.text) {
+            return String(response.text);
+        }
 
-async function sendToAI() {
+        /*
+         * Some Puter response variants expose
+         * the result through toString().
+         */
 
-  if (isGenerating) return;
+        try {
+            const converted = String(response);
 
-  const input =
-    document.getElementById("user-input");
+            if (
+                converted &&
+                converted !== "[object Object]"
+            ) {
+                return converted;
+            }
+        } catch {}
 
-  if (!input) return;
+        return "";
+    }
 
-  const userMsg =
-    input.value.trim();
+    /* =====================================================
+       MAIN SEND FUNCTION
+    ===================================================== */
 
-  if (!userMsg) return;
+    async function sendToAI() {
+        if (state.generating) return;
 
-  input.value = "";
+        const raw = input?.value?.trim();
 
-  input.style.height = "auto";
+        if (!raw) {
+            showToast("Type something first.");
+            return;
+        }
 
-  lastUserMessage =
-    userMsg;
+        /*
+         * Commands are handled before sending to AI.
+         */
 
-  /*
-    Slash commands
-  */
+        if (handleCommand(raw)) {
+            input.value = "";
+            autoResize();
+            updateCharacterCount();
+            return;
+        }
 
-  if (userMsg === "/clear") {
+        const tool = detectTool(raw);
 
-    clearChat();
-    return;
-  }
+        let aiPrompt = raw;
 
-  if (userMsg === "/toggle-sass") {
+        /*
+         * Remove command prefix before specialized prompts.
+         */
 
-    executeConsoleCommand(
-      "/toggle-sass"
-    );
+        if (tool) {
+            aiPrompt = removeToolPrefix(raw, tool);
+            aiPrompt = buildToolPrompt(tool, aiPrompt);
+        }
 
-    return;
-  }
+        state.generating = true;
 
+        if (sendButton) {
+            sendButton.disabled = true;
+        }
 
-  /*
-    Remove welcome screen
-  */
+        input.disabled = true;
 
-  const welcome =
-    document.querySelector(".nyx-welcome");
+        hideWelcome();
 
-  if (welcome) {
-    welcome.remove();
-  }
+        addMessage("user", raw);
 
+        input.value = "";
+        autoResize();
+        updateCharacterCount();
 
-  /*
-    User message
-  */
+        updateStatus(
+            tool
+                ? `Using ${tool} mode...`
+                : "Thinking..."
+        );
 
-  addUserMessage(userMsg);
+        updateAvatar("thinking");
 
+        showTyping();
 
-  /*
-    Conversation history
-  */
+        try {
+            const answer =
+                await askPuterAI(aiPrompt);
 
-  conversationHistory.push({
-    role: "user",
-    content: userMsg
-  });
+            removeTyping();
 
-  if (
-    conversationHistory.length >
-    MAX_HISTORY_TURNS
-  ) {
-    conversationHistory.shift();
-  }
+            if (!answer || !answer.trim()) {
+                throw new Error(
+                    "Nyxium returned an empty response."
+                );
+            }
 
+            addMessage(
+                "assistant",
+                answer.trim()
+            );
 
-  /*
-    AI state
-  */
+            updateStatus("Ready when you are");
+            updateAvatar("speaking");
 
-  transitionTo("THINKING");
+            setTimeout(() => {
+                updateAvatar("idle");
+            }, 900);
 
-  isGenerating = true;
+        } catch (error) {
+            console.error(
+                "Nyxium AI error:",
+                error
+            );
 
-  const sendButton =
-    document.querySelector(".nyx-send-button");
+            removeTyping();
 
-  if (sendButton) {
-    sendButton.disabled = true;
-    sendButton.innerHTML = "●";
-  }
+            const message =
+                getFriendlyError(error);
 
+            addMessage(
+                "assistant",
+                message
+            );
 
-  /*
-    Typing UI
-  */
+            updateStatus("Connection error");
+            updateAvatar("error");
 
-  const typingId =
-    addTypingMessage();
+            showToast(
+                "Nyxium couldn't complete that request."
+            );
 
+        } finally {
+            state.generating = false;
 
-  try {
+            input.disabled = false;
 
-    const response =
-      await requestNyxiumAI(
-        userMsg
-      );
+            if (sendButton) {
+                sendButton.disabled = false;
+            }
 
-    removeTypingMessage(
-      typingId
-    );
+            input.focus();
 
+            state.currentTool = null;
 
-    /*
-      Parse emotion
-    */
+            setTimeout(() => {
+                if (!state.generating) {
+                    updateStatus("Ready when you are");
+                    updateAvatar("idle");
+                }
+            }, 1200);
+        }
+    }
 
-    let emotion =
-      "NEUTRAL";
+    /* =====================================================
+       TOOL PREFIX
+    ===================================================== */
 
-    let content =
-      response || "";
+    function removeToolPrefix(text, tool) {
+        let result = text.trim();
 
+        const prefixes = {
+            summarize: [
+                "/summarize",
+                "/summary"
+            ],
 
-    const emotionMatch =
-      content.match(
-        /^\s*\[(NEUTRAL|HAPPY|THINKING|SURPRISED|SAD|ANGRY)\]\s*/i
-      );
+            translate: [
+                "/translate"
+            ],
 
+            code: [
+                "/code"
+            ],
 
-    if (emotionMatch) {
+            explain: [
+                "/explain"
+            ],
 
-      emotion =
-        emotionMatch[1].toUpperCase();
+            analyze: [
+                "/analyze"
+            ],
 
-      content =
-        content.substring(
-          emotionMatch[0].length
+            study: [
+                "/study"
+            ]
+        };
+
+        for (const prefix of prefixes[tool] || []) {
+            if (
+                result
+                    .toLowerCase()
+                    .startsWith(prefix)
+            ) {
+                result =
+                    result.slice(prefix.length).trim();
+
+                break;
+            }
+        }
+
+        /*
+         * If the user used a quick-action phrase such as:
+         *
+         * "Summarize this: ..."
+         *
+         * remove the wrapper while keeping the content.
+         */
+
+        const wrappers = {
+            summarize: [
+                /^summarize\s*(this|the following|this text)?\s*:?\s*/i,
+                /^give me a detailed summary of\s*:?\s*/i
+            ],
+
+            translate: [
+                /^translate\s*(this|the following|this text)?\s*:?\s*/i
+            ],
+
+            code: [
+                /^write code for\s*:?\s*/i,
+                /^help me write and improve this code\s*:?\s*/i
+            ],
+
+            analyze: [
+                /^analyze\s*(this)?\s*:?\s*/i,
+                /^analyze this and give me the important points\s*:?\s*/i
+            ],
+
+            explain: [
+                /^explain\s*(this|the following)?\s*:?\s*/i
+            ],
+
+            study: [
+                /^teach me this topic step by step\s*:?\s*/i
+            ]
+        };
+
+        for (const regex of wrappers[tool] || []) {
+            result = result.replace(regex, "");
+        }
+
+        return result.trim() || text.trim();
+    }
+
+    /* =====================================================
+       COMMANDS
+    ===================================================== */
+
+    function handleCommand(text) {
+        const lower = text.trim().toLowerCase();
+
+        if (lower === "/clear") {
+            clearConversation();
+            return true;
+        }
+
+        if (
+            lower === "/toggle-sass" ||
+            lower === "/sass"
+        ) {
+            toggleSass();
+            return true;
+        }
+
+        if (lower === "/help") {
+            showHelp();
+            return true;
+        }
+
+        if (lower === "/ping") {
+            addMessage(
+                "assistant",
+                "Pong. **Nyxium AI is online.** ⚡"
+            );
+
+            return true;
+        }
+
+        if (lower === "/new") {
+            startNewChat();
+            return true;
+        }
+
+        if (lower === "/summarize") {
+            state.currentTool = "summarize";
+
+            setInput(
+                "Summarize this: "
+            );
+
+            return true;
+        }
+
+        if (lower === "/translate") {
+            state.currentTool = "translate";
+
+            setInput(
+                "Translate this to English: "
+            );
+
+            return true;
+        }
+
+        if (lower === "/code") {
+            state.currentTool = "code";
+
+            setInput(
+                "Write code for: "
+            );
+
+            return true;
+        }
+
+        if (lower === "/explain") {
+            state.currentTool = "explain";
+
+            setInput(
+                "Explain this simply: "
+            );
+
+            return true;
+        }
+
+        if (lower === "/analyze") {
+            state.currentTool = "analyze";
+
+            setInput(
+                "Analyze this: "
+            );
+
+            return true;
+        }
+
+        if (lower === "/study") {
+            state.currentTool = "study";
+
+            setInput(
+                "Teach me this topic step by step: "
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /* =====================================================
+       HELP
+    ===================================================== */
+
+    function showHelp() {
+        addMessage(
+            "assistant",
+            `
+## Nyxium AI Commands
+
+- \`/clear\` — Clear the conversation
+- \`/new\` — Start a new chat
+- \`/summarize\` — Summarize content
+- \`/translate\` — Translate content
+- \`/explain\` — Explain a topic
+- \`/analyze\` — Analyze content
+- \`/code\` — Programming mode
+- \`/study\` — Study mode
+- \`/toggle-sass\` — Toggle personality
+- \`/ping\` — Check Nyxium status
+
+You can also use the buttons in the sidebar or AI Tools page.
+            `.trim()
         );
     }
 
+    /* =====================================================
+       QUICK PROMPTS
+    ===================================================== */
+
+    window.useQuickPrompt = function(prompt) {
+        showView("chat");
+
+        const detected = detectTool(prompt);
+
+        /*
+         * Recognize the existing HTML button text.
+         */
+
+        const lower = prompt.toLowerCase();
+
+        if (
+            lower.includes("summarize") ||
+            lower.includes("summary")
+        ) {
+            state.currentTool = "summarize";
+        } else if (
+            lower.includes("translate")
+        ) {
+            state.currentTool = "translate";
+        } else if (
+            lower.includes("write code") ||
+            lower.includes("programming") ||
+            lower.includes("code for")
+        ) {
+            state.currentTool = "code";
+        } else if (
+            lower.includes("analyze")
+        ) {
+            state.currentTool = "analyze";
+        } else if (
+            lower.includes("explain")
+        ) {
+            state.currentTool = "explain";
+        } else if (
+            lower.includes("teach me")
+        ) {
+            state.currentTool = "study";
+        } else {
+            state.currentTool = detected;
+        }
+
+        setInput(prompt);
+
+        setTimeout(() => {
+            input?.focus();
+            autoResize();
+        }, 50);
+    };
+
+    function setInput(text) {
+        if (!input) return;
+
+        input.value = text;
+
+        autoResize();
+        updateCharacterCount();
 
-    /*
-      Save assistant response
-    */
-
-    lastAssistantMessage =
-      content;
-
-    conversationHistory.push({
-      role: "assistant",
-      content
-    });
-
-    if (
-      conversationHistory.length >
-      MAX_HISTORY_TURNS
-    ) {
-      conversationHistory.shift();
-    }
-
-
-    transitionTo(
-      emotion
-    );
-
-
-    /*
-      Render response
-    */
-
-    addAIMessage(
-      content,
-      emotion
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Nyxium AI error:",
-      error
-    );
-
-    removeTypingMessage(
-      typingId
-    );
-
-    transitionTo(
-      "SAD"
-    );
-
-    addAIMessage(
-      "Something went wrong while processing that request. Please try again.",
-      "SAD"
-    );
-
-  } finally {
-
-    isGenerating = false;
-
-    if (sendButton) {
-
-      sendButton.disabled = false;
-
-      sendButton.innerHTML =
-        "Send <span>➤</span>";
-    }
-
-  }
-}
-
-
-/* ============================================================
-   REGENERATE
------------------------------------------------------------- */
-
-async function regenerateLastResponse() {
-
-  if (
-    isGenerating ||
-    !lastUserMessage
-  ) {
-    return;
-  }
-
-
-  /*
-    Remove last assistant response
-  */
-
-  const messages =
-    document.querySelectorAll(
-      ".nyx-ai-message"
-    );
-
-  const last =
-    messages[messages.length - 1];
-
-  if (last) {
-    last.remove();
-  }
-
-
-  /*
-    Remove last assistant history entry
-  */
-
-  if (
-    conversationHistory.length &&
-    conversationHistory[
-      conversationHistory.length - 1
-    ].role === "assistant"
-  ) {
-
-    conversationHistory.pop();
-
-  }
-
-
-  /*
-    Re-request
-  */
-
-  isGenerating = true;
-
-  transitionTo(
-    "THINKING"
-  );
-
-  const typingId =
-    addTypingMessage();
-
-
-  try {
-
-    const response =
-      await requestNyxiumAI(
-        lastUserMessage
-      );
-
-    removeTypingMessage(
-      typingId
-    );
-
-
-    let emotion =
-      "NEUTRAL";
-
-    let content =
-      response || "";
-
-
-    const match =
-      content.match(
-        /^\s*\[(NEUTRAL|HAPPY|THINKING|SURPRISED|SAD|ANGRY)\]\s*/i
-      );
-
-
-    if (match) {
-
-      emotion =
-        match[1].toUpperCase();
-
-      content =
-        content.substring(
-          match[0].length
-        );
-    }
-
-
-    lastAssistantMessage =
-      content;
-
-
-    conversationHistory.push({
-      role: "assistant",
-      content
-    });
-
-
-    if (
-      conversationHistory.length >
-      MAX_HISTORY_TURNS
-    ) {
-      conversationHistory.shift();
-    }
-
-
-    transitionTo(
-      emotion
-    );
-
-    addAIMessage(
-      content,
-      emotion
-    );
-
-  } catch (error) {
-
-    removeTypingMessage(
-      typingId
-    );
-
-    addAIMessage(
-      "Regeneration failed. Please try again.",
-      "SAD"
-    );
-
-  } finally {
-
-    isGenerating = false;
-
-  }
-}
-
-
-/* ============================================================
-   INPUT AUTO RESIZE
------------------------------------------------------------- */
-
-function setupComposer() {
-
-  const input =
-    document.getElementById("user-input");
-
-  if (!input) return;
-
-
-  input.addEventListener(
-    "input",
-    () => {
-
-      input.style.height =
-        "auto";
-
-      input.style.height =
-        Math.min(
-          input.scrollHeight,
-          180
-        ) + "px";
-
-    }
-  );
-
-
-  input.addEventListener(
-    "keydown",
-    event => {
-
-      /*
-        Enter = send
-        Shift + Enter = new line
-      */
-
-      if (
-        event.key === "Enter" &&
-        !event.shiftKey
-      ) {
-
-        event.preventDefault();
-
-        sendToAI();
-
-      }
-
-    }
-  );
-
-}
-
-
-/* ============================================================
-   KEYBOARD SHORTCUTS
------------------------------------------------------------- */
-
-document.addEventListener(
-  "keydown",
-  event => {
-
-    /*
-      Ctrl + K
-      Focus chat
-    */
-
-    if (
-      event.ctrlKey &&
-      event.key.toLowerCase() === "k"
-    ) {
-
-      event.preventDefault();
-
-      const input =
-        document.getElementById(
-          "user-input"
-        );
-
-      if (input) {
         input.focus();
-      }
 
+        const length = input.value.length;
+
+        try {
+            input.setSelectionRange(
+                length,
+                length
+            );
+        } catch {}
     }
 
+    /* =====================================================
+       NEW CHAT
+    ===================================================== */
 
-    /*
-      Escape
-    */
+    window.startNewChat = function() {
+        if (state.generating) {
+            showToast(
+                "Wait for the current response to finish."
+            );
 
-    if (event.key === "Escape") {
+            return;
+        }
 
-      const menu =
-        document.getElementById(
-          "translate-menu"
+        state.messages = [];
+        state.currentTool = null;
+
+        saveState();
+
+        if (chatMessages) {
+            chatMessages.innerHTML = "";
+
+            if (welcomeScreen) {
+                chatMessages.appendChild(
+                    welcomeScreen
+                );
+            }
+        }
+
+        showWelcome();
+
+        updateStatus("Ready when you are");
+        updateAvatar("idle");
+
+        showView("chat");
+
+        if (input) {
+            input.value = "";
+
+            autoResize();
+            updateCharacterCount();
+
+            input.focus();
+        }
+
+        showToast("New chat started.");
+    };
+
+    /* =====================================================
+       CLEAR CONVERSATION
+    ===================================================== */
+
+    window.clearConversation = function() {
+        state.messages = [];
+        state.currentTool = null;
+
+        saveState();
+
+        if (chatMessages) {
+            chatMessages.innerHTML = "";
+
+            if (welcomeScreen) {
+                chatMessages.appendChild(
+                    welcomeScreen
+                );
+            }
+        }
+
+        showWelcome();
+
+        updateStatus("Ready when you are");
+        updateAvatar("idle");
+
+        showToast("Conversation cleared.");
+    };
+
+    /* =====================================================
+       SASS
+    ===================================================== */
+
+    window.toggleSass = function() {
+        state.sass = !state.sass;
+
+        saveState();
+
+        const icon = $("sass-icon");
+
+        if (icon) {
+            icon.textContent =
+                state.sass ? "✦" : "•";
+        }
+
+        showToast(
+            state.sass
+                ? "Nyxium personality enabled."
+                : "Nyxium personality set to professional."
+        );
+    };
+
+    /* =====================================================
+       COPY
+    ===================================================== */
+
+    async function copyText(text) {
+        try {
+            await navigator.clipboard.writeText(
+                text
+            );
+
+            showToast("Copied to clipboard.");
+        } catch {
+            const area =
+                document.createElement("textarea");
+
+            area.value = text;
+
+            document.body.appendChild(area);
+
+            area.select();
+
+            document.execCommand("copy");
+
+            area.remove();
+
+            showToast("Copied to clipboard.");
+        }
+    }
+
+    /* =====================================================
+       REGENERATE
+    ===================================================== */
+
+    async function regenerateLast() {
+        if (state.generating) return;
+
+        const lastUser =
+            [...state.messages]
+                .reverse()
+                .find(
+                    (message) =>
+                        message.role === "user"
+                );
+
+        if (!lastUser) {
+            showToast("Nothing to regenerate.");
+            return;
+        }
+
+        /*
+         * Remove the last assistant response.
+         */
+
+        const lastAssistantIndex =
+            state.messages
+                .map((m) => m.role)
+                .lastIndexOf("assistant");
+
+        if (lastAssistantIndex !== -1) {
+            state.messages.splice(
+                lastAssistantIndex,
+                1
+            );
+
+            saveState();
+        }
+
+        renderHistory();
+
+        /*
+         * Temporarily remove user message from the
+         * visible history and send again without creating
+         * another user bubble.
+         */
+
+        state.generating = true;
+
+        input.disabled = true;
+
+        if (sendButton) {
+            sendButton.disabled = true;
+        }
+
+        updateStatus("Regenerating...");
+        updateAvatar("thinking");
+
+        showTyping();
+
+        try {
+            const answer =
+                await askPuterAI(
+                    lastUser.content
+                );
+
+            removeTyping();
+
+            addMessage(
+                "assistant",
+                answer
+            );
+
+            updateStatus("Ready when you are");
+            updateAvatar("idle");
+
+        } catch (error) {
+            removeTyping();
+
+            addMessage(
+                "assistant",
+                getFriendlyError(error)
+            );
+
+            updateAvatar("error");
+
+        } finally {
+            state.generating = false;
+
+            input.disabled = false;
+
+            if (sendButton) {
+                sendButton.disabled = false;
+            }
+
+            input.focus();
+        }
+    }
+
+    /* =====================================================
+       ERROR HANDLING
+    ===================================================== */
+
+    function getFriendlyError(error) {
+        const raw =
+            error?.message ||
+            String(error || "");
+
+        console.error(
+            "Nyxium raw error:",
+            raw
         );
 
-      if (menu) {
-        menu.remove();
-      }
+        if (
+            raw.toLowerCase().includes("puter")
+        ) {
+            return `
+### Nyxium AI connection issue
 
+I couldn't reach the AI engine right now.
+
+Please check that the **Puter.js** service is available and try again.
+            `.trim();
+        }
+
+        if (
+            raw.toLowerCase().includes("network") ||
+            raw.toLowerCase().includes("fetch")
+        ) {
+            return `
+### Network error
+
+Nyxium AI couldn't connect to its AI engine.
+
+Check your internet connection and try again.
+            `.trim();
+        }
+
+        return `
+### Something went wrong
+
+Nyxium AI couldn't complete that request.
+
+Please try again.
+        `.trim();
     }
 
-  }
-);
+    /* =====================================================
+       TOAST
+    ===================================================== */
 
+    function showToast(message) {
+        const container =
+            $("toast-container");
 
-/* ============================================================
-   INITIALIZATION
------------------------------------------------------------- */
+        if (!container) return;
 
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
+        const toast =
+            document.createElement("div");
 
-    /*
-      Initialize visor
-    */
+        toast.className =
+            "nyxium-toast";
 
-    transitionTo(
-      "NEUTRAL"
-    );
+        toast.textContent = message;
 
+        container.appendChild(toast);
 
-    /*
-      Initialize chat
-    */
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transform =
+                "translateY(6px)";
 
-    showChatWelcome();
+            setTimeout(() => {
+                toast.remove();
+            }, 220);
 
+        }, 2300);
+    }
 
-    /*
-      Composer
-    */
+    /* =====================================================
+       VIEW SYSTEM
+    ===================================================== */
 
-    setupComposer();
+    window.showView = function(viewName) {
+        document
+            .querySelectorAll(".view")
+            .forEach((view) => {
+                view.classList.remove("active");
+            });
 
+        const target =
+            $(viewName);
 
-    /*
-      Tip
-    */
+        if (target) {
+            target.classList.add("active");
+        }
 
-    showRandomTip();
+        document
+            .querySelectorAll(".nav-item")
+            .forEach((button) => {
+                button.classList.toggle(
+                    "active",
+                    button.dataset.view === viewName
+                );
+            });
 
-  }
-);
+        /*
+         * Close mobile sidebar.
+         */
 
+        if (
+            window.innerWidth <= 760 &&
+            sidebar?.classList.contains("mobile-open")
+        ) {
+            toggleSidebar();
+        }
+    };
 
-/* ============================================================
-   BACKWARD COMPATIBILITY
------------------------------------------------------------- */
+    /* =====================================================
+       SIDEBAR
+    ===================================================== */
 
-window.showView =
-  showView;
+    window.toggleSidebar = function() {
+        if (!sidebar) return;
 
-window.sendToAI =
-  sendToAI;
+        sidebar.classList.toggle(
+            "mobile-open"
+        );
 
-window.executeConsoleCommand =
-  executeConsoleCommand;
+        sidebarOverlay?.classList.toggle(
+            "active"
+        );
+    };
 
-window.useAIExplain =
-  useAIExplain;
+    /* =====================================================
+       CHAT COMMAND SUGGESTIONS
+    ===================================================== */
 
-window.useAISummarize =
-  useAISummarize;
+    function updateCommandSuggestions() {
+        const suggestions =
+            $("command-suggestions");
 
-window.useAITranslate =
-  useAITranslate;
+        if (!suggestions || !input) return;
 
-window.useAICode =
-  useAICode;
+        const value =
+            input.value.trim();
 
-window.useAIImagine =
-  useAIImagine;
+        if (value.startsWith("/")) {
+            suggestions.style.display =
+                "flex";
+        } else {
+            suggestions.style.display =
+                "none";
+        }
+    }
 
-window.openTranslateMenu =
-  openTranslateMenu;
+    /* =====================================================
+       INPUT OBSERVER
+    ===================================================== */
 
-window.copyMessage =
-  copyMessage;
+    if (input) {
+        input.addEventListener(
+            "input",
+            updateCommandSuggestions
+        );
+    }
 
-window.copyTextFromCode =
-  copyTextFromCode;
+    /* =====================================================
+       FRIENDLY QUICK TOOL API
+       ===================================================== */
 
-window.regenerateLastResponse =
-  regenerateLastResponse;
+    window.nyxiumTools = {
 
-window.clearChat =
-  clearChat;
+        summarize(text) {
+            setInput(
+                `Summarize this clearly:\n\n${text}`
+            );
 
-window.useSuggestion =
-  useSuggestion;
+            state.currentTool =
+                "summarize";
+        },
+
+        translate(text, language = "English") {
+            setInput(
+                `Translate this to ${language}:\n\n${text}`
+            );
+
+            state.currentTool =
+                "translate";
+        },
+
+        explain(text) {
+            setInput(
+                `Explain this simply:\n\n${text}`
+            );
+
+            state.currentTool =
+                "explain";
+        },
+
+        analyze(text) {
+            setInput(
+                `Analyze this:\n\n${text}`
+            );
+
+            state.currentTool =
+                "analyze";
+        },
+
+        code(text) {
+            setInput(
+                `Write code for:\n\n${text}`
+            );
+
+            state.currentTool =
+                "code";
+        },
+
+        study(text) {
+            setInput(
+                `Teach me this topic step by step:\n\n${text}`
+            );
+
+            state.currentTool =
+                "study";
+        }
+
+    };
+
+    /* =====================================================
+       GLOBAL EXPORTS
+       ===================================================== */
+
+    window.sendToAI = sendToAI;
+
+    window.copyNyxiumText = copyText;
+
+    /* =====================================================
+       START
+    ===================================================== */
+
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            init
+        );
+    } else {
+        init();
+    }
+
+})();
