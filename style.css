@@ -2694,3 +2694,12 @@ button[data-action="chat-history"],
 button[data-view="chat-history"] {
     display: none !important;
 }
+/* Hide ONLY the Chat History sidebar button */
+.sidebar-nav .nav-item[data-view="history"] {
+    display: none !important;
+}
+
+/* Hide ONLY the Chat History page */
+#history {
+    display: none !important;
+}
